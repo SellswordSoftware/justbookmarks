@@ -26,32 +26,32 @@ func (t NodeType) String() string {
 
 // Bookmark represents a single bookmark entry.
 type Bookmark struct {
-	ID           string    // unique identifier, generated on parse
-	Title        string
-	URL          string
-	Icon         string    // inline base64 data URI
-	IconURI      string    // URL to icon
-	AddDate      time.Time // empty if not set
-	LastModified time.Time // empty if not set
-	Meta         string    // notes or arbitrary metadata
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	URL          string    `json:"url"`
+	Icon         string    `json:"icon"`
+	IconURI      string    `json:"iconURI"`
+	AddDate      time.Time `json:"addDate"`
+	LastModified time.Time `json:"lastModified"`
+	Meta         string    `json:"meta"`
 }
 
 // Folder represents a bookmark folder that can contain children.
 type Folder struct {
-	ID           string    // unique identifier, generated on parse
-	Name         string
-	Icon         string
-	AddDate      time.Time
-	LastModified time.Time
-	Meta         string
-	Children     []Node
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	Icon         string    `json:"icon"`
+	AddDate      time.Time `json:"addDate"`
+	LastModified time.Time `json:"lastModified"`
+	Meta         string    `json:"meta"`
+	Children     []Node    `json:"children"`
 }
 
 // Node is a discriminated union of Folder or Bookmark.
 type Node struct {
-	Type     NodeType
-	Folder   *Folder   // non-nil if TypeFolder
-	Bookmark *Bookmark // non-nil if TypeBookmark
+	Type     NodeType  `json:"type"`
+	Folder   *Folder   `json:"folder"`
+	Bookmark *Bookmark `json:"bookmark"`
 }
 
 // ID returns the node's ID regardless of type.

@@ -41,8 +41,11 @@ func findRootDL(n *html.Node, result **html.Node) {
 }
 
 // parseDL parses the children of a <DL> element into []Node.
+// Always returns a non-nil slice (empty []Node, never nil) so that
+// JSON serialization produces [] instead of null — the frontend
+// Svelte {#each} iterates over null incorrectly.
 func parseDL(dl *html.Node) []Node {
-	var nodes []Node
+	nodes := []Node{}
 	for c := dl.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "dt" {
 			nodes = append(nodes, parseDT(c)...)

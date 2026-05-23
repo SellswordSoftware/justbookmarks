@@ -3,11 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
+
+	"github.com/SellswordSoftware/justbookmarks/internal/wailsapi"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx      context.Context
+	handler  *wailsapi.Handler
+	filePath string
 }
 
 // NewApp creates a new App application struct
@@ -21,7 +26,34 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+// GetFilePath returns the file path passed via CLI arg.
+func (a *App) GetFilePath() string {
+	return a.filePath
+}
+
+// OpenFilePicker shows a native file picker dialog and returns the selected path.
+func (a *App) OpenFilePicker() string {
+	if a.ctx == nil {
+		return ""
+	}
+
+	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Open Bookmark File",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "HTML Files", Pattern: "*.html"},
+			{DisplayName: "All Files", Pattern: "*.*"},
+		},
+	})
+	if err != nil {
+		return ""
+	}
+	return file
+}
+
+// LoadBookmarkFile loads the bookmark file into the handler and returns any error.
+func (a *App) LoadBookmarkFile(path string) error {
+	if a.handler == nil {
+		return fmt.Errorf("handler not initialized")
+	}
+	return a.handler.LoadFile(path)
 }
