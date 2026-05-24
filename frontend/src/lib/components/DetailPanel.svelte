@@ -1,15 +1,18 @@
-<script>
-	import { treeStore } from '../stores/treeStore.svelte.js';
+<script lang="ts">
+	import { treeStore } from '../stores/treeStore.svelte.ts';
+	import { isFolderNode } from '../types';
 	import FolderDetail from './FolderDetail.svelte';
 	import BookmarkDetail from './BookmarkDetail.svelte';
 	import MoveDialog from './MoveDialog.svelte';
 
-	$: selectedNode = treeStore.selectedNodeId ? treeStore.getNode(treeStore.selectedNodeId) : null;
+	const selectedNode = $derived(
+		treeStore.selectedNodeId ? treeStore.getNode(treeStore.selectedNodeId) : null
+	);
 </script>
 
 <div class="h-full overflow-y-auto bg-base-100">
 	{#if selectedNode}
-		{#if selectedNode.type === 0}
+		{#if isFolderNode(selectedNode)}
 			<FolderDetail folder={selectedNode} />
 		{:else}
 			<BookmarkDetail bookmark={selectedNode} />

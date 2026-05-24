@@ -43,6 +43,12 @@ func TestSerializeSimple(t *testing.T) {
 	if !strings.Contains(output, ">Example<") {
 		t.Error("missing bookmark title")
 	}
+	if !strings.Contains(output, `ADD_DATE="1700000000"`) {
+		t.Error("missing folder add date")
+	}
+	if !strings.Contains(output, `ADD_DATE="1700000001"`) {
+		t.Error("missing bookmark add date")
+	}
 }
 
 func TestSerializeHTMLEscape(t *testing.T) {
@@ -182,6 +188,48 @@ func TestSerializeOmitsEmptyAttrs(t *testing.T) {
 	}
 	if strings.Contains(output, "LAST_MODIFIED") {
 		t.Error("should omit LAST_MODIFIED when not set")
+	}
+}
+
+func TestSerializeRoundTripPreservesTimestamps(t *testing.T) {
+	nodes := []Node{
+		{
+			Type: TypeFolder,
+			Folder: &Folder{
+				ID:           "f1",
+				Name:         "Folder",
+				AddDate:      time.Unix(1700000000, 0),
+				LastModified: time.Unix(1700000002, 0),
+				Children: []Node{
+					{
+						Type: TypeBookmark,
+						Bookmark: &Bookmark{
+							ID:           "b1",
+							Title:        "Example",
+							URL:          "https://example.com",
+							AddDate:      time.Unix(1700000001, 0),
+							LastModified: time.Unix(1700000003, 0),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	serialized := Serialize(nodes)
+	roundTrip, err := Parse([]byte(serialized))
+	if err != nil {
+		t.Fatalf("round-trip parse failed: %v", err)
+	}
+
+	folder := roundTrip[0].Folder
+	if folder.AddDate.Unix() != 1700000000 || folder.LastModified.Unix() != 1700000002 {
+		t.Fatalf("folder timestamps not preserved: %#v", folder)
+	}
+
+	bookmark := folder.Children[0].Bookmark
+	if bookmark.AddDate.Unix() != 1700000001 || bookmark.LastModified.Unix() != 1700000003 {
+		t.Fatalf("bookmark timestamps not preserved: %#v", bookmark)
 	}
 }
 

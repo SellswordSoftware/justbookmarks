@@ -1,9 +1,15 @@
-<script>
-	import { AddBookmark, FetchPageTitle } from '../api.js';
-	import { uiStore } from '../stores/uiStore.svelte.js';
-	import { treeStore } from '../stores/treeStore.svelte.js';
+<script lang="ts">
+	import { AddBookmark, FetchPageTitle } from '../api';
+	import { getErrorMessage } from '../errors';
+	import { uiStore } from '../stores/uiStore.svelte.ts';
+	import { treeStore } from '../stores/treeStore.svelte.ts';
 
-	let { parentFolderId, onAdded } = $props();
+	interface Props {
+		parentFolderId: string;
+		onAdded?: () => void;
+	}
+
+	let { parentFolderId, onAdded }: Props = $props();
 
 	let url = $state('');
 	let title = $state('');
@@ -12,7 +18,7 @@
 	let lastAutoTitle = $state('');
 	let fetchSequence = 0;
 
-	function canFetchTitle(value) {
+	function canFetchTitle(value: string): boolean {
 		try {
 			const parsed = new URL(value.trim());
 			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
@@ -69,10 +75,10 @@
 			title = '';
 			lastAutoTitle = '';
 			error = '';
-			treeStore.refresh();
+			await treeStore.refresh();
 			if (onAdded) onAdded();
-		} catch (e) {
-			error = e.message || 'Failed to add bookmark';
+		} catch (caughtError: unknown) {
+			error = getErrorMessage(caughtError, 'Failed to add bookmark');
 			uiStore.showToast(error, 'error');
 		}
 	}
@@ -82,7 +88,7 @@
 <div class="bg-base-200 rounded-lg p-3">
 	<div class="flex items-center gap-2 mb-2">
 		<span class="text-sm font-semibold">New Bookmark</span>
-		<button class="btn btn-ghost btn-xs" onclick={() => onAdded?.()}>
+		<button class="btn btn-ghost btn-xs" aria-label="Close add bookmark form" title="Close add bookmark form" onclick={() => onAdded?.()}>
 			<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 			</svg>

@@ -36,6 +36,15 @@ type Bookmark struct {
 	Meta         string    `json:"meta"`
 }
 
+// BookmarkPatch preserves omitted-vs-empty semantics for partial updates.
+type BookmarkPatch struct {
+	Title   *string `json:"title,omitempty"`
+	URL     *string `json:"url,omitempty"`
+	Icon    *string `json:"icon,omitempty"`
+	IconURI *string `json:"iconURI,omitempty"`
+	Meta    *string `json:"meta,omitempty"`
+}
+
 // Folder represents a bookmark folder that can contain children.
 type Folder struct {
 	ID           string    `json:"id"`

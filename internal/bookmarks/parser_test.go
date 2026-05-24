@@ -151,3 +151,51 @@ func TestParseInvalidHTML(t *testing.T) {
 		t.Error("expected error for invalid HTML")
 	}
 }
+
+func TestParseFolderChildrenFromFollowingDL(t *testing.T) {
+	data := []byte(`<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+<DL><p>
+    <DT><H3>Uncategorized</H3>
+    <DL><p>
+        <DT><H3>test</H3>
+        <DL><p>
+            <DT><A HREF="https://google.com">Google</A>
+        </DL><p>
+    </DL><p>
+</DL><p>`)
+
+	nodes, err := Parse(data)
+	if err != nil {
+		t.Fatalf("parse error: %v", err)
+	}
+
+	if len(nodes) != 1 {
+		t.Fatalf("expected 1 root node, got %d", len(nodes))
+	}
+
+	uncategorized := nodes[0]
+	if uncategorized.Folder == nil || uncategorized.Folder.Name != "Uncategorized" {
+		t.Fatalf("expected root folder Uncategorized, got %#v", uncategorized.Folder)
+	}
+
+	if len(uncategorized.Folder.Children) != 1 {
+		t.Fatalf("expected Uncategorized to have 1 child, got %d", len(uncategorized.Folder.Children))
+	}
+
+	testFolder := uncategorized.Folder.Children[0]
+	if testFolder.Folder == nil || testFolder.Folder.Name != "test" {
+		t.Fatalf("expected nested folder test, got %#v", testFolder.Folder)
+	}
+
+	if len(testFolder.Folder.Children) != 1 {
+		t.Fatalf("expected test folder to have 1 child, got %d", len(testFolder.Folder.Children))
+	}
+
+	google := testFolder.Folder.Children[0]
+	if google.Bookmark == nil || google.Bookmark.Title != "Google" {
+		t.Fatalf("expected nested bookmark Google, got %#v", google.Bookmark)
+	}
+}

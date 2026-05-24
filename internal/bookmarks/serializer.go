@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html"
 	"strings"
+	"time"
 )
 
 // Serialize converts a slice of root-level nodes into a Netscape Bookmarks HTML string.
@@ -95,6 +96,10 @@ func writeAttrIfSet(b *strings.Builder, name string, t any) {
 	case int64:
 		if v != 0 {
 			b.WriteString(fmt.Sprintf(` %s="%d"`, name, v))
+		}
+	case time.Time:
+		if !v.IsZero() {
+			b.WriteString(fmt.Sprintf(` %s="%d"`, name, v.Unix()))
 		}
 	}
 }

@@ -64,6 +64,26 @@ export namespace bookmarks {
 	        this.folderPath = source["folderPath"];
 	    }
 	}
+	export class BookmarkPatch {
+	    title?: string;
+	    url?: string;
+	    icon?: string;
+	    iconURI?: string;
+	    meta?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BookmarkPatch(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.title = source["title"];
+	        this.url = source["url"];
+	        this.icon = source["icon"];
+	        this.iconURI = source["iconURI"];
+	        this.meta = source["meta"];
+	    }
+	}
 	export class Node {
 	    type: number;
 	    folder?: Folder;

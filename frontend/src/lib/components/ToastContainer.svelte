@@ -1,7 +1,8 @@
-<script>
-	import { uiStore } from '../stores/uiStore.svelte.js';
+<script lang="ts">
+	import type { ToastType } from '../types';
+	import { uiStore } from '../stores/uiStore.svelte.ts';
 
-	const typeClasses = {
+	const typeClasses: Record<ToastType, string> = {
 		info: 'toast-info',
 		success: 'toast-success',
 		error: 'toast-error',

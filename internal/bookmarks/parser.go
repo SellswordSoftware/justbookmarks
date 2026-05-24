@@ -62,7 +62,7 @@ func parseDT(dt *html.Node) []Node {
 		}
 		switch c.Data {
 		case "h3":
-			return []Node{parseFolder(c)}
+			return []Node{parseFolder(dt, c)}
 		case "a":
 			return []Node{parseBookmark(c)}
 		}
@@ -71,7 +71,7 @@ func parseDT(dt *html.Node) []Node {
 }
 
 // parseFolder parses an <H3> element into a Folder node.
-func parseFolder(h3 *html.Node) Node {
+func parseFolder(dt, h3 *html.Node) Node {
 	folder := &Folder{
 		ID: GenerateID(),
 	}
@@ -96,11 +96,15 @@ func parseFolder(h3 *html.Node) Node {
 	// Folder name is the text content of <H3>.
 	folder.Name = extractText(h3)
 
-	// Look for the next sibling <DL> that contains this folder's children.
 	var childrenDL *html.Node
-	for sib := h3.NextSibling; sib != nil; sib = sib.NextSibling {
-		if sib.Type == html.ElementNode && sib.Data == "dl" {
-			childrenDL = sib
+	for _, start := range []*html.Node{h3.NextSibling, dt.NextSibling} {
+		for sib := start; sib != nil; sib = sib.NextSibling {
+			if sib.Type == html.ElementNode && sib.Data == "dl" {
+				childrenDL = sib
+				break
+			}
+		}
+		if childrenDL != nil {
 			break
 		}
 	}

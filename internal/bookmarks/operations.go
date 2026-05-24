@@ -89,8 +89,7 @@ func AddFolder(nodes []Node, parentID string, name string) ([]Node, error) {
 }
 
 // UpdateBookmark modifies an existing bookmark's fields.
-// Only non-empty fields are updated.
-func UpdateBookmark(nodes []Node, id string, bm Bookmark) error {
+func UpdateBookmark(nodes []Node, id string, patch BookmarkPatch) error {
 	node := FindNode(nodes, id)
 	if node == nil {
 		return ErrNotFound
@@ -98,20 +97,20 @@ func UpdateBookmark(nodes []Node, id string, bm Bookmark) error {
 	if node.Type != TypeBookmark {
 		return errors.New("node is not a bookmark")
 	}
-	if bm.Title != "" {
-		node.Bookmark.Title = bm.Title
+	if patch.Title != nil {
+		node.Bookmark.Title = *patch.Title
 	}
-	if bm.URL != "" {
-		node.Bookmark.URL = bm.URL
+	if patch.URL != nil {
+		node.Bookmark.URL = *patch.URL
 	}
-	if bm.Icon != "" {
-		node.Bookmark.Icon = bm.Icon
+	if patch.Icon != nil {
+		node.Bookmark.Icon = *patch.Icon
 	}
-	if bm.IconURI != "" {
-		node.Bookmark.IconURI = bm.IconURI
+	if patch.IconURI != nil {
+		node.Bookmark.IconURI = *patch.IconURI
 	}
-	if bm.Meta != "" {
-		node.Bookmark.Meta = bm.Meta
+	if patch.Meta != nil {
+		node.Bookmark.Meta = *patch.Meta
 	}
 	node.Bookmark.LastModified = time.Now()
 	return nil
@@ -210,16 +209,20 @@ func MoveNode(nodes []Node, nodeID, newParentID string, newIndex int) ([]Node, e
 		return nodes, ErrCircularMove
 	}
 
+	oldParent := FindParent(nodes, nodeID)
+	oldIndex := -1
+
 	// Remove from current location
 	var removed Node
-	if parent := FindParent(nodes, nodeID); parent == nil {
+	if oldParent == nil {
 		// Root-level node
 		removed = *FindNode(nodes, nodeID)
 		nodes = deleteFromSlice(nodes, nodeID)
 	} else {
-		children := &parent.Folder.Children
+		children := &oldParent.Folder.Children
 		for i := range *children {
 			if (*children)[i].ID() == nodeID {
+				oldIndex = i
 				removed = (*children)[i]
 				*children = append((*children)[:i], (*children)[i+1:]...)
 				break
@@ -237,11 +240,14 @@ func MoveNode(nodes []Node, nodeID, newParentID string, newIndex int) ([]Node, e
 	}
 
 	children := newParent.Folder.Children
-	if newIndex < 0 {
-		newIndex = 0
-	}
-	if newIndex > len(children) {
+	if newIndex < 0 || newIndex > len(children) {
 		newIndex = len(children)
+	}
+
+	// When reordering within the same folder, removing the item first shifts
+	// later indices left by one.
+	if oldParent != nil && oldParent.ID() == newParentID && oldIndex >= 0 && oldIndex < newIndex {
+		newIndex--
 	}
 
 	children = append(children, Node{})

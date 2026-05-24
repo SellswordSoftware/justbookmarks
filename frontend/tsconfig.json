@@ -1,7 +1,8 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" },
-  ],
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["svelte", "vite/client", "node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte", "vite.config.ts"],
+  "exclude": ["wailsjs"]
 }

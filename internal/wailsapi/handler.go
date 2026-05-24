@@ -76,7 +76,9 @@ func (h *Handler) AddBookmark(parentID string, bm bookmarks.Bookmark) (string, e
 	if err != nil {
 		return "", err
 	}
-	h.save()
+	if err := h.save(); err != nil {
+		return "", err
+	}
 	return bm.ID, nil
 }
 
@@ -87,18 +89,19 @@ func (h *Handler) AddFolder(parentID string, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	h.save()
+	if err := h.save(); err != nil {
+		return "", err
+	}
 	return "", nil
 }
 
 // UpdateBookmark updates a bookmark and auto-saves.
-func (h *Handler) UpdateBookmark(id string, bm bookmarks.Bookmark) error {
-	err := bookmarks.UpdateBookmark(h.tree, id, bm)
+func (h *Handler) UpdateBookmark(id string, patch bookmarks.BookmarkPatch) error {
+	err := bookmarks.UpdateBookmark(h.tree, id, patch)
 	if err != nil {
 		return err
 	}
-	h.save()
-	return nil
+	return h.save()
 }
 
 // UpdateFolderName renames a folder and auto-saves.
@@ -107,8 +110,7 @@ func (h *Handler) UpdateFolderName(id string, name string) error {
 	if err != nil {
 		return err
 	}
-	h.save()
-	return nil
+	return h.save()
 }
 
 // DeleteNode deletes a node and auto-saves.
@@ -118,8 +120,7 @@ func (h *Handler) DeleteNode(id string) error {
 	if err != nil {
 		return err
 	}
-	h.save()
-	return nil
+	return h.save()
 }
 
 // MoveNode moves a node and auto-saves.
@@ -129,8 +130,7 @@ func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) error {
 	if err != nil {
 		return err
 	}
-	h.save()
-	return nil
+	return h.save()
 }
 
 // FetchPageTitle fetches the <title> from a URL.
@@ -227,12 +227,15 @@ func (h *Handler) OpenURL(pageURL string) error {
 }
 
 // save writes the current tree back to the HTML file.
-func (h *Handler) save() {
+func (h *Handler) save() error {
 	if h.filePath == "" {
-		return
+		return nil
 	}
 	output := bookmarks.Serialize(h.tree)
-	_ = os.WriteFile(h.filePath, []byte(output), 0644)
+	if err := os.WriteFile(h.filePath, []byte(output), 0644); err != nil {
+		return fmt.Errorf("failed to save bookmarks: %w", err)
+	}
+	return nil
 }
 
 // FilePath returns the currently loaded file path.

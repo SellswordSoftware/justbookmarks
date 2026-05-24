@@ -202,9 +202,11 @@ func TestAddFolderNotFound(t *testing.T) {
 func TestUpdateBookmark(t *testing.T) {
 	nodes := buildTestTree()
 
-	err := UpdateBookmark(nodes, "b-root1", Bookmark{
-		Title: "Updated Title",
-		URL:   "https://updated.example.com",
+	title := "Updated Title"
+	url := "https://updated.example.com"
+	err := UpdateBookmark(nodes, "b-root1", BookmarkPatch{
+		Title: &title,
+		URL:   &url,
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -221,7 +223,8 @@ func TestUpdateBookmark(t *testing.T) {
 
 func TestUpdateBookmarkNotFound(t *testing.T) {
 	nodes := buildTestTree()
-	err := UpdateBookmark(nodes, "nonexistent", Bookmark{Title: "X"})
+	title := "X"
+	err := UpdateBookmark(nodes, "nonexistent", BookmarkPatch{Title: &title})
 	if err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
@@ -229,9 +232,31 @@ func TestUpdateBookmarkNotFound(t *testing.T) {
 
 func TestUpdateBookmarkOnFolder(t *testing.T) {
 	nodes := buildTestTree()
-	err := UpdateBookmark(nodes, "f-root", Bookmark{Title: "X"})
+	title := "X"
+	err := UpdateBookmark(nodes, "f-root", BookmarkPatch{Title: &title})
 	if err == nil {
 		t.Error("expected error when updating a folder as a bookmark")
+	}
+}
+
+func TestUpdateBookmarkAllowsClearingFields(t *testing.T) {
+	nodes := buildTestTree()
+
+	empty := ""
+	err := UpdateBookmark(nodes, "b-root1", BookmarkPatch{
+		Title: &empty,
+		Meta:  &empty,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	bm := FindNode(nodes, "b-root1").Bookmark
+	if bm.Title != "" {
+		t.Errorf("expected title to be cleared, got %q", bm.Title)
+	}
+	if bm.Meta != "" {
+		t.Errorf("expected meta to be cleared, got %q", bm.Meta)
 	}
 }
 
@@ -362,6 +387,43 @@ func TestMoveBookmarkPosition(t *testing.T) {
 	root := nodes[0].Folder
 	if root.Children[0].Bookmark.ID != "b-root2" {
 		t.Error("b-root2 should be first child of root")
+	}
+}
+
+func TestMoveBookmarkAppendWithNegativeIndex(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := MoveNode(nodes, "b-root1", "f-sub", -1)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	sub := FindNode(nodes, "f-sub")
+	if len(sub.Folder.Children) != 2 {
+		t.Fatalf("expected 2 children in sub, got %d", len(sub.Folder.Children))
+	}
+	if sub.Folder.Children[1].Bookmark.ID != "b-root1" {
+		t.Error("b-root1 should be appended to the end of sub")
+	}
+}
+
+func TestMoveBookmarkWithinSameFolderLaterPosition(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := MoveNode(nodes, "b-root1", "f-root", 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root := FindNode(nodes, "f-root")
+	if got := root.Folder.Children[0].Folder.ID; got != "f-sub" {
+		t.Fatalf("expected first child to remain f-sub, got %s", got)
+	}
+	if got := root.Folder.Children[1].Bookmark.ID; got != "b-root1" {
+		t.Fatalf("expected b-root1 to move after f-sub, got %s", got)
+	}
+	if got := root.Folder.Children[2].Bookmark.ID; got != "b-root2" {
+		t.Fatalf("expected b-root2 to remain last, got %s", got)
 	}
 }
 

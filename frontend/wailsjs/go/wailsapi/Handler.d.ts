@@ -26,6 +26,6 @@ export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<void>;
 
 export function OpenURL(arg1:string):Promise<void>;
 
-export function UpdateBookmark(arg1:string,arg2:bookmarks.Bookmark):Promise<void>;
+export function UpdateBookmark(arg1:string,arg2:bookmarks.BookmarkPatch):Promise<void>;
 
 export function UpdateFolderName(arg1:string,arg2:string):Promise<void>;

@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/SellswordSoftware/justbookmarks/internal/wailsapi"
 	"github.com/wailsapp/wails/v2"
@@ -16,6 +17,10 @@ import (
 var assets embed.FS
 
 func main() {
+	if runtime.GOOS == "linux" && os.Getenv("GDK_BACKEND") == "" {
+		_ = os.Setenv("GDK_BACKEND", "x11")
+	}
+
 	app := NewApp()
 	handler := wailsapi.NewHandler()
 
@@ -28,9 +33,12 @@ func main() {
 	app.filePath = filePath
 
 	err := wails.Run(&options.App{
-		Title:  "justbookmarks",
-		Width:  1200,
-		Height: 800,
+		Title:     "JustBookmarks",
+		Width:     1200,
+		Height:    800,
+		MinWidth:  900,
+		MinHeight: 640,
+		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

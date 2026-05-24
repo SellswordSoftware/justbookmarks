@@ -1,9 +1,16 @@
-<script>
-	import { UpdateBookmark, FetchPageTitle, FetchFavicon, OpenURL } from '../api.js';
-	import { treeStore } from '../stores/treeStore.svelte.js';
-	import { uiStore } from '../stores/uiStore.svelte.js';
+<script lang="ts">
+	import { DeleteNode, FetchFavicon, FetchPageTitle, OpenURL, UpdateBookmark } from '../api';
+	import { getErrorMessage } from '../errors';
+	import { moveDialogStore } from '../stores/moveDialogStore.svelte.ts';
+	import { treeStore } from '../stores/treeStore.svelte.ts';
+	import { uiStore } from '../stores/uiStore.svelte.ts';
+	import type { BookmarkNode } from '../types';
 
-	let { bookmark } = $props();
+	interface Props {
+		bookmark: BookmarkNode;
+	}
+
+	let { bookmark }: Props = $props();
 	let editing = $state(false);
 	let title = $state('');
 	let url = $state('');
@@ -14,8 +21,13 @@
 	let faviconError = $state('');
 	let lastAutoTitle = $state('');
 	let fetchSequence = 0;
+	const notesFieldId = $derived(`bookmark-notes-${bookmark?.id ?? 'current'}`);
 
-	function canFetchTitle(value) {
+	function hasRealDate(value: string): boolean {
+		return Boolean(value) && !String(value).startsWith('0001-01-01');
+	}
+
+	function canFetchTitle(value: string): boolean {
 		try {
 			const parsed = new URL(value.trim());
 			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
@@ -78,18 +90,18 @@
 			titleError = 'URL is required';
 			return;
 		}
-		const result = await UpdateBookmark(bookmark.id, {
-			title: title.trim(),
-			url: url.trim(),
-			meta: meta.trim(),
-		});
-		if (result) {
-			titleError = result;
-			return;
+		try {
+			await UpdateBookmark(bookmark.id, {
+				title: title.trim(),
+				url: url.trim(),
+				meta: meta.trim(),
+			});
+			editing = false;
+			await treeStore.refresh();
+			uiStore.showToast('Bookmark updated', 'success');
+		} catch (caughtError: unknown) {
+			titleError = getErrorMessage(caughtError, 'Failed to update bookmark');
 		}
-		editing = false;
-		uiStore.showToast('Bookmark updated', 'success');
-		treeStore.refresh();
 	}
 
 	async function fetchFavicon() {
@@ -100,11 +112,11 @@
 			const dataUri = await FetchFavicon(url.trim());
 			if (dataUri) {
 				await UpdateBookmark(bookmark.id, { icon: dataUri });
-				treeStore.refresh();
+				await treeStore.refresh();
 				uiStore.showToast('Favicon fetched', 'success');
 			}
-		} catch (e) {
-			faviconError = e.message || 'Failed to fetch favicon';
+		} catch (caughtError: unknown) {
+			faviconError = getErrorMessage(caughtError, 'Failed to fetch favicon');
 			uiStore.showToast(faviconError, 'error');
 		} finally {
 			fetchingFavicon = false;
@@ -114,8 +126,8 @@
 	async function openInBrowser() {
 		try {
 			await OpenURL(bookmark.bookmark.url);
-		} catch (e) {
-			uiStore.showToast('Failed to open URL: ' + e.message, 'error');
+		} catch (caughtError: unknown) {
+			uiStore.showToast(`Failed to open URL: ${getErrorMessage(caughtError)}`, 'error');
 		}
 	}
 
@@ -125,12 +137,20 @@
 			`Delete "${bookmark.bookmark.title}"?`,
 			'Delete',
 			async () => {
-				await import('../api.js').then((api) => api.DeleteNode(bookmark.id));
-				treeStore.selectedNodeId = '';
-				treeStore.refresh();
-				uiStore.showToast('Bookmark deleted', 'success');
+				try {
+					await DeleteNode(bookmark.id);
+					treeStore.clearSelection();
+					await treeStore.refresh();
+					uiStore.showToast('Bookmark deleted', 'success');
+				} catch (caughtError: unknown) {
+					uiStore.showToast(getErrorMessage(caughtError, 'Failed to delete bookmark'), 'error');
+				}
 			}
 		);
+	}
+
+	function showMoveDialog() {
+		moveDialogStore.showMoveDialog(bookmark.id, bookmark.bookmark.title || bookmark.bookmark.url);
 	}
 </script>
 
@@ -177,8 +197,8 @@
 					href={bookmark.bookmark.url}
 					target="_blank"
 					class="text-sm text-primary break-all hover:underline"
-					onclick={(e) => {
-						e.preventDefault();
+					onclick={(event: MouseEvent) => {
+						event.preventDefault();
 						openInBrowser();
 					}}
 				>
@@ -193,10 +213,10 @@
 
 		<!-- Dates -->
 		<div class="text-xs opacity-40 mt-2 space-y-0.5">
-			{#if bookmark.bookmark.addDate}
+			{#if hasRealDate(bookmark.bookmark.addDate)}
 				<p>Added: {new Date(bookmark.bookmark.addDate).toLocaleString()}</p>
 			{/if}
-			{#if bookmark.bookmark.lastModified}
+			{#if hasRealDate(bookmark.bookmark.lastModified)}
 				<p>Modified: {new Date(bookmark.bookmark.lastModified).toLocaleString()}</p>
 			{/if}
 		</div>
@@ -204,9 +224,10 @@
 
 	<!-- Notes -->
 	<div class="p-4 border-t border-base-300">
-		<label class="label-text text-xs opacity-50 mb-1 block">Notes</label>
+		<label class="label-text text-xs opacity-50 mb-1 block" for={notesFieldId}>Notes</label>
 		{#if editing}
 			<textarea
+				id={notesFieldId}
 				bind:value={meta}
 				class="textarea textarea-bordered w-full h-20"
 				placeholder="Add notes..."
@@ -226,6 +247,7 @@
 		{:else}
 			<button class="btn btn-sm btn-primary" onclick={() => editing = true}>Edit</button>
 			<button class="btn btn-sm btn-ghost" onclick={openInBrowser}>Open</button>
+			<button class="btn btn-sm btn-ghost" onclick={showMoveDialog}>Move To...</button>
 			<button class="btn btn-sm btn-ghost" onclick={fetchFavicon} disabled={fetchingFavicon}>
 				{#if fetchingFavicon}
 					<span class="loading loading-spinner loading-xs"></span>
