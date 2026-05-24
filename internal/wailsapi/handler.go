@@ -29,14 +29,9 @@ func NewHandler() *Handler {
 
 // LoadFile loads a Netscape bookmark HTML file and parses it into the tree.
 func (h *Handler) LoadFile(path string) error {
-	data, err := os.ReadFile(path)
+	tree, err := loadNodesFromPath(path)
 	if err != nil {
-		return fmt.Errorf("failed to read file: %w", err)
-	}
-
-	tree, err := bookmarks.Parse(data)
-	if err != nil {
-		return fmt.Errorf("failed to parse bookmarks: %w", err)
+		return err
 	}
 
 	h.filePath = path
@@ -152,6 +147,44 @@ func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) error {
 		return err
 	}
 	return h.save()
+}
+
+// PreviewImportMerge loads another bookmark file and reports what would be merged.
+func (h *Handler) PreviewImportMerge(path string) (bookmarks.MergePreview, error) {
+	if h.filePath == "" {
+		return bookmarks.MergePreview{}, fmt.Errorf("no bookmark file is currently loaded")
+	}
+
+	incoming, err := loadNodesFromPath(path)
+	if err != nil {
+		return bookmarks.MergePreview{}, err
+	}
+
+	return bookmarks.PreviewMerge(h.tree, incoming)
+}
+
+// ApplyImportMerge loads another bookmark file, merges additive changes, and saves once.
+func (h *Handler) ApplyImportMerge(path string) (bookmarks.MergeApplyResult, error) {
+	if h.filePath == "" {
+		return bookmarks.MergeApplyResult{}, fmt.Errorf("no bookmark file is currently loaded")
+	}
+
+	incoming, err := loadNodesFromPath(path)
+	if err != nil {
+		return bookmarks.MergeApplyResult{}, err
+	}
+
+	merged, result, err := bookmarks.ApplyMerge(h.tree, incoming)
+	if err != nil {
+		return bookmarks.MergeApplyResult{}, err
+	}
+
+	h.tree = merged
+	if err := h.save(); err != nil {
+		return bookmarks.MergeApplyResult{}, err
+	}
+
+	return result, nil
 }
 
 // FetchPageTitle fetches the <title> from a URL.
@@ -436,4 +469,18 @@ func (h *Handler) save() error {
 // FilePath returns the currently loaded file path.
 func (h *Handler) FilePath() string {
 	return h.filePath
+}
+
+func loadNodesFromPath(path string) ([]bookmarks.Node, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file: %w", err)
+	}
+
+	tree, err := bookmarks.Parse(data)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse bookmarks: %w", err)
+	}
+
+	return tree, nil
 }

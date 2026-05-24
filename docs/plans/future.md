@@ -1,12 +1,9 @@
 # Future things to add
 
-ability to merge bookmarks from one file to another
-
 undo for move / delete / rename and bulk edits
 
  High-value additions:
 
-  - Import/export beyond Netscape HTML: JSON backup format, Chrome/Firefox direct import, maybe CSV export.
   - Undo/redo: especially for move, delete, rename, and bulk edits.
   - Better move/reorder UX: drop targets between items, keyboard move commands, cut/copy/paste for bookmarks.
   - Duplicate detection: find duplicate URLs, same-title duplicates, and near-duplicates.

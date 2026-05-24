@@ -1,7 +1,12 @@
 import type {
 	BookmarkCreate,
+	BookmarkConflictItem,
 	BookmarkIndexEntry,
+	BookmarkMergeItem,
 	BookmarkPatch,
+	FolderMergeItem,
+	MergeApplyResult,
+	MergePreview,
 	TreeNode,
 } from './types';
 
@@ -30,6 +35,11 @@ export async function CreateBookmarkFile(): Promise<string> {
 export async function OpenFilePicker(): Promise<string> {
 	const app = getAppBindings();
 	return app ? app.OpenFilePicker() : '';
+}
+
+export async function OpenImportFilePicker(): Promise<string> {
+	const app = getAppBindings();
+	return app ? app.OpenImportFilePicker() : '';
 }
 
 export async function LoadBookmarkFile(path: string): Promise<void> {
@@ -182,4 +192,60 @@ export async function OpenURL(url: string): Promise<void> {
 export async function FilePath(): Promise<string> {
 	const handler = getHandlerBindings();
 	return handler ? handler.FilePath() : '';
+}
+
+function normalizeFolderMergeItem(item: FolderMergeItem): FolderMergeItem {
+	return {
+		path: item?.path ?? '',
+		name: item?.name ?? '',
+	};
+}
+
+function normalizeBookmarkMergeItem(item: BookmarkMergeItem): BookmarkMergeItem {
+	return {
+		folderPath: item?.folderPath ?? '',
+		title: item?.title ?? '',
+		url: item?.url ?? '',
+	};
+}
+
+function normalizeConflictItem(item: BookmarkConflictItem): BookmarkConflictItem {
+	return {
+		folderPath: item?.folderPath ?? '',
+		existingTitle: item?.existingTitle ?? '',
+		incomingTitle: item?.incomingTitle ?? '',
+		url: item?.url ?? '',
+		existingMeta: item?.existingMeta ?? '',
+		incomingMeta: item?.incomingMeta ?? '',
+	};
+}
+
+export async function PreviewImportMerge(path: string): Promise<MergePreview> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	const preview = await handler.PreviewImportMerge(path);
+	return {
+		foldersToAdd: (preview?.foldersToAdd ?? []).map(normalizeFolderMergeItem),
+		bookmarksToAdd: (preview?.bookmarksToAdd ?? []).map(normalizeBookmarkMergeItem),
+		duplicateBookmarks: (preview?.duplicateBookmarks ?? []).map(normalizeBookmarkMergeItem),
+		potentialUpdates: (preview?.potentialUpdates ?? []).map(normalizeConflictItem),
+	};
+}
+
+export async function ApplyImportMerge(path: string): Promise<MergeApplyResult> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	const result = await handler.ApplyImportMerge(path);
+	return {
+		foldersAdded: result?.foldersAdded ?? 0,
+		bookmarksAdded: result?.bookmarksAdded ?? 0,
+		duplicatesSkipped: result?.duplicatesSkipped ?? 0,
+		potentialUpdates: result?.potentialUpdates ?? 0,
+	};
 }

@@ -62,6 +62,40 @@ export interface BookmarkIndexEntry {
 	folderPath: string;
 }
 
+export interface FolderMergeItem {
+	path: string;
+	name: string;
+}
+
+export interface BookmarkMergeItem {
+	folderPath: string;
+	title: string;
+	url: string;
+}
+
+export interface BookmarkConflictItem {
+	folderPath: string;
+	existingTitle: string;
+	incomingTitle: string;
+	url: string;
+	existingMeta: string;
+	incomingMeta: string;
+}
+
+export interface MergePreview {
+	foldersToAdd: FolderMergeItem[];
+	bookmarksToAdd: BookmarkMergeItem[];
+	duplicateBookmarks: BookmarkMergeItem[];
+	potentialUpdates: BookmarkConflictItem[];
+}
+
+export interface MergeApplyResult {
+	foldersAdded: number;
+	bookmarksAdded: number;
+	duplicatesSkipped: number;
+	potentialUpdates: number;
+}
+
 export interface Toast {
 	id: number;
 	message: string;

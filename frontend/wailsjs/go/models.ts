@@ -46,6 +46,28 @@ export namespace bookmarks {
 		    return a;
 		}
 	}
+	export class BookmarkConflictItem {
+	    folderPath: string;
+	    existingTitle: string;
+	    incomingTitle: string;
+	    url: string;
+	    existingMeta: string;
+	    incomingMeta: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BookmarkConflictItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.folderPath = source["folderPath"];
+	        this.existingTitle = source["existingTitle"];
+	        this.incomingTitle = source["incomingTitle"];
+	        this.url = source["url"];
+	        this.existingMeta = source["existingMeta"];
+	        this.incomingMeta = source["incomingMeta"];
+	    }
+	}
 	export class BookmarkIndexEntry {
 	    nodeId: string;
 	    title: string;
@@ -62,6 +84,22 @@ export namespace bookmarks {
 	        this.title = source["title"];
 	        this.url = source["url"];
 	        this.folderPath = source["folderPath"];
+	    }
+	}
+	export class BookmarkMergeItem {
+	    folderPath: string;
+	    title: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BookmarkMergeItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.folderPath = source["folderPath"];
+	        this.title = source["title"];
+	        this.url = source["url"];
 	    }
 	}
 	export class BookmarkPatch {
@@ -142,6 +180,74 @@ export namespace bookmarks {
 	        this.lastModified = this.convertValues(source["lastModified"], null);
 	        this.meta = source["meta"];
 	        this.children = this.convertValues(source["children"], Node);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class FolderMergeItem {
+	    path: string;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FolderMergeItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.name = source["name"];
+	    }
+	}
+	export class MergeApplyResult {
+	    foldersAdded: number;
+	    bookmarksAdded: number;
+	    duplicatesSkipped: number;
+	    potentialUpdates: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new MergeApplyResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.foldersAdded = source["foldersAdded"];
+	        this.bookmarksAdded = source["bookmarksAdded"];
+	        this.duplicatesSkipped = source["duplicatesSkipped"];
+	        this.potentialUpdates = source["potentialUpdates"];
+	    }
+	}
+	export class MergePreview {
+	    foldersToAdd: FolderMergeItem[];
+	    bookmarksToAdd: BookmarkMergeItem[];
+	    duplicateBookmarks: BookmarkMergeItem[];
+	    potentialUpdates: BookmarkConflictItem[];
+	
+	    static createFrom(source: any = {}) {
+	        return new MergePreview(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.foldersToAdd = this.convertValues(source["foldersToAdd"], FolderMergeItem);
+	        this.bookmarksToAdd = this.convertValues(source["bookmarksToAdd"], BookmarkMergeItem);
+	        this.duplicateBookmarks = this.convertValues(source["duplicateBookmarks"], BookmarkMergeItem);
+	        this.potentialUpdates = this.convertValues(source["potentialUpdates"], BookmarkConflictItem);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

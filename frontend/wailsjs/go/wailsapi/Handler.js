@@ -10,6 +10,10 @@ export function AddFolder(arg1, arg2) {
   return window['go']['wailsapi']['Handler']['AddFolder'](arg1, arg2);
 }
 
+export function ApplyImportMerge(arg1) {
+  return window['go']['wailsapi']['Handler']['ApplyImportMerge'](arg1);
+}
+
 export function DeleteNode(arg1) {
   return window['go']['wailsapi']['Handler']['DeleteNode'](arg1);
 }
@@ -60,6 +64,10 @@ export function MoveNodes(arg1, arg2) {
 
 export function OpenURL(arg1) {
   return window['go']['wailsapi']['Handler']['OpenURL'](arg1);
+}
+
+export function PreviewImportMerge(arg1) {
+  return window['go']['wailsapi']['Handler']['PreviewImportMerge'](arg1);
 }
 
 export function RefreshTitlesForNodes(arg1) {

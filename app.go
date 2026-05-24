@@ -37,12 +37,21 @@ func (a *App) GetFilePath() string {
 
 // OpenFilePicker shows a native file picker dialog and returns the selected path.
 func (a *App) OpenFilePicker() string {
+	return a.openHTMLFilePicker("Open Bookmark File")
+}
+
+// OpenImportFilePicker shows a native file picker dialog for import/merge.
+func (a *App) OpenImportFilePicker() string {
+	return a.openHTMLFilePicker("Import Bookmark File")
+}
+
+func (a *App) openHTMLFilePicker(title string) string {
 	if a.ctx == nil {
 		return ""
 	}
 
 	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: "Open Bookmark File",
+		Title: title,
 		Filters: []runtime.FileFilter{
 			{DisplayName: "HTML Files", Pattern: "*.html"},
 			{DisplayName: "All Files", Pattern: "*.*"},

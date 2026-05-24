@@ -6,6 +6,8 @@ export function AddBookmark(arg1:string,arg2:bookmarks.Bookmark):Promise<string>
 
 export function AddFolder(arg1:string,arg2:string):Promise<string>;
 
+export function ApplyImportMerge(arg1:string):Promise<bookmarks.MergeApplyResult>;
+
 export function DeleteNode(arg1:string):Promise<void>;
 
 export function DeleteNodes(arg1:Array<string>):Promise<void>;
@@ -31,6 +33,8 @@ export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<void>;
 export function MoveNodes(arg1:Array<string>,arg2:string):Promise<void>;
 
 export function OpenURL(arg1:string):Promise<void>;
+
+export function PreviewImportMerge(arg1:string):Promise<bookmarks.MergePreview>;
 
 export function RefreshTitlesForNodes(arg1:Array<string>):Promise<void>;
 

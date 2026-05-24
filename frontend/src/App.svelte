@@ -1,8 +1,16 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { treeStore } from "./lib/stores/treeStore.svelte.ts";
-    import { CreateBookmarkFile, GetFilePath, OpenFilePicker } from "./lib/api";
+    import {
+        ApplyImportMerge,
+        CreateBookmarkFile,
+        GetFilePath,
+        OpenFilePicker,
+        OpenImportFilePicker,
+        PreviewImportMerge,
+    } from "./lib/api";
     import { getErrorMessage } from "./lib/errors";
+    import type { MergePreview } from "./lib/types";
     import {
         loadPersistedUIState,
         savePersistedUIState,
@@ -18,6 +26,7 @@
     import DetailPanel from "./lib/components/DetailPanel.svelte";
     import ToastContainer from "./lib/components/ToastContainer.svelte";
     import ConfirmModal from "./lib/components/ConfirmModal.svelte";
+    import ImportMergeDialog from "./lib/components/ImportMergeDialog.svelte";
     import {
         Quit,
         WindowGetSize,
@@ -38,6 +47,12 @@
     let persistedState = $state<PersistedUIState>(loadPersistedUIState());
     let persistenceReady = $state(false);
     let saveWindowSizeTimer: ReturnType<typeof setTimeout> | null = null;
+    let importMergeOpen = $state(false);
+    let importMergePath = $state("");
+    let importMergePreview = $state<MergePreview | null>(null);
+    let importMergePreviewLoading = $state(false);
+    let importMergeApplyLoading = $state(false);
+    let importMergeError = $state("");
 
     async function initApp() {
         leftPaneWidth = persistedState.leftPaneWidth;
@@ -162,6 +177,90 @@
                 getErrorMessage(caughtError, "Failed to create bookmark file"),
                 "error",
             );
+        }
+    }
+
+    function closeImportMergeDialog(force = false): void {
+        if (importMergeApplyLoading && !force) return;
+        importMergeOpen = false;
+        importMergePath = "";
+        importMergePreview = null;
+        importMergePreviewLoading = false;
+        importMergeError = "";
+    }
+
+    async function previewImportMergeFromPath(path: string): Promise<void> {
+        importMergeOpen = true;
+        importMergePath = path;
+        importMergePreview = null;
+        importMergeError = "";
+        importMergePreviewLoading = true;
+
+        try {
+            const preview = await PreviewImportMerge(path);
+            const hasAdditions =
+                preview.foldersToAdd.length > 0 ||
+                preview.bookmarksToAdd.length > 0;
+
+            if (!hasAdditions) {
+                importMergeOpen = false;
+                uiStore.showToast("No new changes found", "info");
+                return;
+            }
+
+            importMergePreview = preview;
+        } catch (caughtError: unknown) {
+            importMergeError = getErrorMessage(
+                caughtError,
+                "Failed to preview import merge",
+            );
+        } finally {
+            importMergePreviewLoading = false;
+        }
+    }
+
+    async function openImportMerge(): Promise<void> {
+        const path = await OpenImportFilePicker();
+        if (!path) {
+            return;
+        }
+
+        await previewImportMergeFromPath(path);
+    }
+
+    async function pickAnotherImportFile(): Promise<void> {
+        const path = await OpenImportFilePicker();
+        if (!path) {
+            return;
+        }
+
+        await previewImportMergeFromPath(path);
+    }
+
+    async function applyImportMerge(): Promise<void> {
+        if (!importMergePath) {
+            return;
+        }
+
+        importMergeApplyLoading = true;
+        importMergeError = "";
+
+        try {
+            const result = await ApplyImportMerge(importMergePath);
+            await treeStore.refresh();
+            importMergeApplyLoading = false;
+            closeImportMergeDialog(true);
+            uiStore.showToast(
+                `Merge applied: ${result.foldersAdded} folders, ${result.bookmarksAdded} bookmarks`,
+                "success",
+            );
+        } catch (caughtError: unknown) {
+            importMergeError = getErrorMessage(
+                caughtError,
+                "Failed to apply import merge",
+            );
+        } finally {
+            importMergeApplyLoading = false;
         }
     }
 
@@ -500,6 +599,27 @@
                     </svg>
                     Open File
                 </button>
+                <button
+                    class="btn btn-sm btn-ghost"
+                    onclick={openImportMerge}
+                    title="Import another bookmark file into the current one"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v10m0 0l-4-4m4 4l4-4M4 18h16"
+                        />
+                    </svg>
+                    Import
+                </button>
             {/snippet}
         </SearchBar>
 
@@ -528,4 +648,15 @@
     <!-- Global UI overlays -->
     <ToastContainer />
     <ConfirmModal />
+    <ImportMergeDialog
+        open={importMergeOpen}
+        importPath={importMergePath}
+        preview={importMergePreview}
+        previewLoading={importMergePreviewLoading}
+        applyLoading={importMergeApplyLoading}
+        error={importMergeError}
+        onCancel={closeImportMergeDialog}
+        onApply={applyImportMerge}
+        onPickAnother={pickAnotherImportFile}
+    />
 </div>

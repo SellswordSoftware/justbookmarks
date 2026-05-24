@@ -3,8 +3,12 @@
 
 import type {
 	BookmarkCreate,
+	BookmarkConflictItem,
 	BookmarkIndexEntry,
+	BookmarkMergeItem,
 	BookmarkPatch,
+	FolderMergeItem,
+	MergeApplyResult,
 	TreeNode,
 } from './lib/types';
 
@@ -16,10 +20,19 @@ declare global {
 		GetFilePath(): Promise<string>;
 		LoadBookmarkFile(path: string): Promise<void>;
 		OpenFilePicker(): Promise<string>;
+		OpenImportFilePicker(): Promise<string>;
+	}
+
+	interface WailsMergePreview {
+		foldersToAdd: FolderMergeItem[];
+		bookmarksToAdd: BookmarkMergeItem[];
+		duplicateBookmarks: BookmarkMergeItem[];
+		potentialUpdates: BookmarkConflictItem[];
 	}
 
 	interface WailsHandlerBindings {
 		AddBookmark(parentId: string, bookmark: BookmarkCreate): Promise<string>;
+		ApplyImportMerge(path: string): Promise<MergeApplyResult>;
 		AddFolder(parentId: string, name: string): Promise<string>;
 		DeleteNode(id: string): Promise<void>;
 		DeleteNodes(ids: string[]): Promise<void>;
@@ -34,6 +47,7 @@ declare global {
 		MoveNode(nodeId: string, newParentId: string, newIndex: number): Promise<void>;
 		MoveNodes(nodeIds: string[], targetFolderId: string): Promise<void>;
 		OpenURL(url: string): Promise<void>;
+		PreviewImportMerge(path: string): Promise<WailsMergePreview>;
 		RefreshTitlesForNodes(ids: string[]): Promise<void>;
 		UpdateBookmark(id: string, patch: BookmarkPatch): Promise<void>;
 		UpdateFolderName(id: string, name: string): Promise<void>;

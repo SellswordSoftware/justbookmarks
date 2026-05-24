@@ -8,3 +8,5 @@ export function GetFilePath():Promise<string>;
 export function LoadBookmarkFile(arg1:string):Promise<void>;
 
 export function OpenFilePicker():Promise<string>;
+
+export function OpenImportFilePicker():Promise<string>;

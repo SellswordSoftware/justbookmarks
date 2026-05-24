@@ -17,3 +17,7 @@ export function LoadBookmarkFile(arg1) {
 export function OpenFilePicker() {
   return window['go']['main']['App']['OpenFilePicker']();
 }
+
+export function OpenImportFilePicker() {
+  return window['go']['main']['App']['OpenImportFilePicker']();
+}
