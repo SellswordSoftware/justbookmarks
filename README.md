@@ -6,6 +6,14 @@ It keeps everything in a plain Netscape Bookmarks HTML file, so you can manage y
 
 ![justbookmarks main window](docs/app.png)
 
+## Download
+
+Prebuilt binaries are available on GitHub Releases:
+
+- https://github.com/SellswordSoftware/justbookmarks/releases/latest
+
+If you just want to use the app, that is the easiest place to start.
+
 ## Why I Made This
 
 I end up switching browsers somewhat regularly: Vivaldi, Zen, Helium, Brave, and whatever else I am trying that month.
