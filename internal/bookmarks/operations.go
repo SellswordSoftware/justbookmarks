@@ -9,6 +9,7 @@ var (
 	ErrNotFound      = errors.New("node not found")
 	ErrCircularMove  = errors.New("cannot move folder into its own descendant")
 	ErrInvalidTarget = errors.New("cannot move into a bookmark (only folders)")
+	ErrNoOpMove      = errors.New("move would not change location")
 )
 
 // FindNode locates a node by ID anywhere in the tree.
@@ -46,6 +47,18 @@ func FindParent(nodes []Node, childID string) *Node {
 
 // AddBookmark appends a bookmark to a folder.
 func AddBookmark(nodes []Node, parentID string, bm Bookmark) ([]Node, error) {
+	if parentID == "" {
+		bm.ID = GenerateID()
+		if bm.AddDate.IsZero() {
+			bm.AddDate = time.Now()
+		}
+		bm.LastModified = time.Now()
+		return append(nodes, Node{
+			Type:     TypeBookmark,
+			Bookmark: &bm,
+		}), nil
+	}
+
 	parent := FindNode(nodes, parentID)
 	if parent == nil {
 		return nodes, ErrNotFound
@@ -67,6 +80,20 @@ func AddBookmark(nodes []Node, parentID string, bm Bookmark) ([]Node, error) {
 
 // AddFolder creates a new empty folder inside a parent folder.
 func AddFolder(nodes []Node, parentID string, name string) ([]Node, error) {
+	if parentID == "" {
+		folder := &Folder{
+			ID:           GenerateID(),
+			Name:         name,
+			AddDate:      time.Now(),
+			LastModified: time.Now(),
+			Children:     []Node{},
+		}
+		return append(nodes, Node{
+			Type:   TypeFolder,
+			Folder: folder,
+		}), nil
+	}
+
 	parent := FindNode(nodes, parentID)
 	if parent == nil {
 		return nodes, ErrNotFound
@@ -152,6 +179,46 @@ func DeleteNode(nodes []Node, id string) ([]Node, error) {
 	return nodes, nil
 }
 
+// DeleteNodes removes multiple nodes from the same parent while preserving the order
+// of the remaining siblings.
+func DeleteNodes(nodes []Node, ids []string) ([]Node, error) {
+	if len(ids) == 0 {
+		return nodes, nil
+	}
+
+	idSet := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		if id == "" {
+			return nodes, ErrNotFound
+		}
+		if _, exists := idSet[id]; exists {
+			continue
+		}
+		if FindNode(nodes, id) == nil {
+			return nodes, ErrNotFound
+		}
+		idSet[id] = struct{}{}
+	}
+
+	parent := FindParent(nodes, ids[0])
+	for _, id := range ids[1:] {
+		candidateParent := FindParent(nodes, id)
+		if parent == nil && candidateParent == nil {
+			continue
+		}
+		if parent == nil || candidateParent == nil || parent.ID() != candidateParent.ID() {
+			return nodes, ErrInvalidTarget
+		}
+	}
+
+	if parent == nil {
+		return filterOutNodes(nodes, idSet), nil
+	}
+
+	parent.Folder.Children = filterOutNodes(parent.Folder.Children, idSet)
+	return nodes, nil
+}
+
 // deleteFromSlice removes a node with the given ID from a slice,
 // searching recursively into sub-folders.
 func deleteFromSlice(nodes []Node, id string) []Node {
@@ -164,6 +231,17 @@ func deleteFromSlice(nodes []Node, id string) []Node {
 		}
 	}
 	return nodes
+}
+
+func filterOutNodes(nodes []Node, ids map[string]struct{}) []Node {
+	result := make([]Node, 0, len(nodes))
+	for _, node := range nodes {
+		if _, remove := ids[node.ID()]; remove {
+			continue
+		}
+		result = append(result, node)
+	}
+	return result
 }
 
 // IsDescendant checks whether descendantID is a descendant of ancestorID.
@@ -256,6 +334,84 @@ func MoveNode(nodes []Node, nodeID, newParentID string, newIndex int) ([]Node, e
 	newParent.Folder.Children = children
 
 	return nodes, nil
+}
+
+// MoveNodes moves multiple sibling nodes into a new folder while preserving their order.
+func MoveNodes(nodes []Node, nodeIDs []string, newParentID string) ([]Node, error) {
+	if len(nodeIDs) == 0 {
+		return nodes, nil
+	}
+
+	newParent := FindNode(nodes, newParentID)
+	if newParent == nil {
+		return nodes, ErrNotFound
+	}
+	if newParent.Type != TypeFolder {
+		return nodes, ErrInvalidTarget
+	}
+
+	seen := make(map[string]struct{}, len(nodeIDs))
+	var firstParent *Node
+	var moved []Node
+	for _, nodeID := range nodeIDs {
+		if nodeID == "" {
+			return nodes, ErrNotFound
+		}
+		if _, exists := seen[nodeID]; exists {
+			continue
+		}
+		seen[nodeID] = struct{}{}
+		if nodeID == newParentID {
+			return nodes, ErrCircularMove
+		}
+
+		node := FindNode(nodes, nodeID)
+		if node == nil {
+			return nodes, ErrNotFound
+		}
+		if node.Type == TypeFolder && IsDescendant(nodes, nodeID, newParentID) {
+			return nodes, ErrCircularMove
+		}
+
+		parent := FindParent(nodes, nodeID)
+		if firstParent == nil {
+			firstParent = parent
+		} else if !sameParent(firstParent, parent) {
+			return nodes, ErrInvalidTarget
+		}
+
+		moved = append(moved, *node)
+	}
+
+	if sameParentID(firstParent, newParentID) {
+		return nodes, ErrNoOpMove
+	}
+
+	if firstParent == nil {
+		nodes = filterOutNodes(nodes, seen)
+	} else {
+		firstParent.Folder.Children = filterOutNodes(firstParent.Folder.Children, seen)
+	}
+
+	newParent.Folder.Children = append(newParent.Folder.Children, moved...)
+	return nodes, nil
+}
+
+func sameParent(a, b *Node) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return a.ID() == b.ID()
+}
+
+func sameParentID(parent *Node, newParentID string) bool {
+	if parent == nil {
+		return newParentID == ""
+	}
+	return parent.ID() == newParentID
 }
 
 // BookmarkIndexEntry holds a flattened bookmark for search indexing.

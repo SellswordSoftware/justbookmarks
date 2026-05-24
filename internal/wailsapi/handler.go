@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/SellswordSoftware/justbookmarks/internal/bookmarks"
@@ -123,6 +124,16 @@ func (h *Handler) DeleteNode(id string) error {
 	return h.save()
 }
 
+// DeleteNodes deletes multiple nodes and auto-saves once.
+func (h *Handler) DeleteNodes(ids []string) error {
+	var err error
+	h.tree, err = bookmarks.DeleteNodes(h.tree, ids)
+	if err != nil {
+		return err
+	}
+	return h.save()
+}
+
 // MoveNode moves a node and auto-saves.
 func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) error {
 	var err error
@@ -133,13 +144,27 @@ func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) error {
 	return h.save()
 }
 
+// MoveNodes moves multiple nodes and auto-saves once.
+func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) error {
+	var err error
+	h.tree, err = bookmarks.MoveNodes(h.tree, nodeIDs, targetFolderID)
+	if err != nil {
+		return err
+	}
+	return h.save()
+}
+
 // FetchPageTitle fetches the <title> from a URL.
 func (h *Handler) FetchPageTitle(pageURL string) (string, error) {
 	client := &http.Client{
-		Timeout:       3 * time.Second,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
+		Timeout: 3 * time.Second,
+	}
+	return fetchPageTitleWithClient(client, pageURL)
+}
+
+func fetchPageTitleWithClient(client *http.Client, pageURL string) (string, error) {
+	if client == nil {
+		client = &http.Client{Timeout: 3 * time.Second}
 	}
 
 	resp, err := client.Get(pageURL)
@@ -175,21 +200,150 @@ func extractTitle(n *html.Node) string {
 	return ""
 }
 
-// FetchFavicon fetches a favicon for a URL using Google's favicon service.
+// FetchFavicon fetches a favicon for a URL by preferring the page's declared icon,
+// then falling back to /favicon.ico, then finally to Google's favicon service.
 func (h *Handler) FetchFavicon(pageURL string) (string, error) {
+	client := &http.Client{Timeout: 5 * time.Second}
+	return fetchFaviconWithClient(client, pageURL)
+}
+
+// FetchFaviconsForNodes refreshes bookmark favicons and saves once at the end.
+func (h *Handler) FetchFaviconsForNodes(ids []string) error {
+	client := &http.Client{Timeout: 5 * time.Second}
+	successes := 0
+	nodes, err := h.collectBookmarks(ids)
+	if err != nil {
+		return err
+	}
+
+	for _, node := range nodes {
+		icon, fetchErr := fetchFaviconWithClient(client, node.Bookmark.URL)
+		if fetchErr != nil || icon == "" {
+			continue
+		}
+		node.Bookmark.Icon = icon
+		node.Bookmark.LastModified = time.Now()
+		successes++
+	}
+
+	if successes == 0 {
+		return fmt.Errorf("failed to fetch favicons for selected bookmarks")
+	}
+
+	return h.save()
+}
+
+// RefreshTitlesForNodes refreshes bookmark titles and saves once at the end.
+func (h *Handler) RefreshTitlesForNodes(ids []string) error {
+	client := &http.Client{Timeout: 3 * time.Second}
+	successes := 0
+	nodes, err := h.collectBookmarks(ids)
+	if err != nil {
+		return err
+	}
+
+	for _, node := range nodes {
+		title, fetchErr := fetchPageTitleWithClient(client, node.Bookmark.URL)
+		if fetchErr != nil || title == "" {
+			continue
+		}
+		node.Bookmark.Title = title
+		node.Bookmark.LastModified = time.Now()
+		successes++
+	}
+
+	if successes == 0 {
+		return fmt.Errorf("failed to refresh titles for selected bookmarks")
+	}
+
+	return h.save()
+}
+
+func (h *Handler) collectBookmarks(ids []string) ([]*bookmarks.Node, error) {
+	result := make([]*bookmarks.Node, 0, len(ids))
+	seen := make(map[string]struct{}, len(ids))
+
+	for _, id := range ids {
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+
+		node := bookmarks.FindNode(h.tree, id)
+		if node == nil {
+			return nil, bookmarks.ErrNotFound
+		}
+		if node.Type != bookmarks.TypeBookmark {
+			return nil, fmt.Errorf("node %s is not a bookmark", id)
+		}
+		result = append(result, node)
+	}
+
+	return result, nil
+}
+
+func fetchFaviconWithClient(client *http.Client, pageURL string) (string, error) {
+	if client == nil {
+		client = &http.Client{Timeout: 5 * time.Second}
+	}
+
 	u, err := url.Parse(pageURL)
 	if err != nil {
 		return "", fmt.Errorf("invalid URL: %w", err)
 	}
 
-	faviconURL := fmt.Sprintf("https://www.google.com/s2/favicons?domain=%s&sz=32", u.Host)
+	if iconData, err := fetchDeclaredFavicon(client, u); err == nil && iconData != "" {
+		return iconData, nil
+	}
 
-	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get(faviconURL)
+	if fallbackData, err := fetchIconURL(client, u.ResolveReference(&url.URL{Path: "/favicon.ico"}).String()); err == nil && fallbackData != "" {
+		return fallbackData, nil
+	}
+
+	faviconURL := fmt.Sprintf("https://www.google.com/s2/favicons?domain=%s&sz=32", u.Host)
+	return fetchIconURL(client, faviconURL)
+}
+
+func fetchDeclaredFavicon(client *http.Client, pageURL *url.URL) (string, error) {
+	resp, err := client.Get(pageURL.String())
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch favicon: %w", err)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	doc, err := html.Parse(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse favicon HTML: %w", err)
+	}
+
+	for _, href := range extractIconHrefs(doc) {
+		iconURL, err := pageURL.Parse(href)
+		if err != nil {
+			continue
+		}
+		data, err := fetchIconURL(client, iconURL.String())
+		if err == nil && data != "" {
+			return data, nil
+		}
+	}
+
+	return "", fmt.Errorf("no declared favicon found")
+}
+
+func fetchIconURL(client *http.Client, iconURL string) (string, error) {
+	resp, err := client.Get(iconURL)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch favicon: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -202,6 +356,47 @@ func (h *Handler) FetchFavicon(pageURL string) (string, error) {
 	}
 
 	return fmt.Sprintf("data:%s;base64,%s", contentType, base64.StdEncoding.EncodeToString(data)), nil
+}
+
+func extractIconHrefs(n *html.Node) []string {
+	var hrefs []string
+
+	var walk func(*html.Node)
+	walk = func(node *html.Node) {
+		if node.Type == html.ElementNode && node.Data == "link" {
+			var relValue string
+			var hrefValue string
+
+			for _, attr := range node.Attr {
+				switch strings.ToLower(attr.Key) {
+				case "rel":
+					relValue = strings.ToLower(attr.Val)
+				case "href":
+					hrefValue = attr.Val
+				}
+			}
+
+			if hrefValue != "" && isIconRel(relValue) {
+				hrefs = append(hrefs, hrefValue)
+			}
+		}
+
+		for child := node.FirstChild; child != nil; child = child.NextSibling {
+			walk(child)
+		}
+	}
+
+	walk(n)
+	return hrefs
+}
+
+func isIconRel(rel string) bool {
+	for _, part := range strings.Fields(rel) {
+		if part == "icon" || part == "shortcut" || part == "apple-touch-icon" || part == "apple-touch-icon-precomposed" {
+			return true
+		}
+	}
+	return false
 }
 
 // OpenURL opens a URL in the default browser.

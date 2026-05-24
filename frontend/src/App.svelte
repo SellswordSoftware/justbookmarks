@@ -1,6 +1,18 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { treeStore } from "./lib/stores/treeStore.svelte.ts";
-    import { GetFilePath, OpenFilePicker } from "./lib/api";
+    import { CreateBookmarkFile, GetFilePath, OpenFilePicker } from "./lib/api";
+    import { getErrorMessage } from "./lib/errors";
+    import {
+        loadPersistedUIState,
+        savePersistedUIState,
+        setLastOpenedFile,
+        setLeftPaneWidth,
+        setPerFileTreeState,
+        setWindowState,
+        type PersistedUIState,
+    } from "./lib/persistence";
+    import { uiStore } from "./lib/stores/uiStore.svelte.ts";
     import SearchBar from "./lib/components/SearchBar.svelte";
     import BookmarkTree from "./lib/components/BookmarkTree.svelte";
     import DetailPanel from "./lib/components/DetailPanel.svelte";
@@ -8,34 +20,59 @@
     import ConfirmModal from "./lib/components/ConfirmModal.svelte";
     import {
         Quit,
+        WindowGetSize,
         WindowIsMaximised,
+        WindowIsNormal,
         WindowMinimise,
+        WindowSetSize,
         WindowToggleMaximise,
     } from "../wailsjs/runtime/runtime.js";
 
     let hasTriedLoad = $state(false);
+    let currentFilePath = $state("");
     let isMaximised = $state(false);
     let titlebarRef = $state<HTMLDivElement | undefined>(undefined);
     let mainContentRef = $state<HTMLDivElement | undefined>(undefined);
     let leftPaneWidth = $state(360);
     let isResizingPane = $state(false);
+    let persistedState = $state<PersistedUIState>(loadPersistedUIState());
+    let persistenceReady = $state(false);
+    let saveWindowSizeTimer: ReturnType<typeof setTimeout> | null = null;
 
     async function initApp() {
-        // On mount, check if a file was passed via CLI
-        // Guard: window.go may not exist when running in plain browser (Vite dev)
+        leftPaneWidth = persistedState.leftPaneWidth;
+
+        if (hasWailsRuntime() && persistedState.window) {
+            WindowSetSize(persistedState.window.width, persistedState.window.height);
+        }
+
         if (!window.go) {
+            persistenceReady = true;
             return;
         }
+
         const filePath = await GetFilePath();
+
         if (typeof filePath === "string" && filePath.length > 0) {
-            await treeStore.loadFile(filePath);
-            hasTriedLoad = true;
+            await loadFileIntoSession(filePath);
+        } else if (persistedState.lastOpenedFile) {
+            await loadFileIntoSession(persistedState.lastOpenedFile, true);
         }
+
+        hasTriedLoad = true;
         await syncWindowState();
+        persistenceReady = true;
     }
 
-    $effect(() => {
+    onMount(() => {
         initApp();
+
+        return () => {
+            if (saveWindowSizeTimer) {
+                clearTimeout(saveWindowSizeTimer);
+            }
+            void persistWindowSize();
+        };
     });
 
     $effect(() => {
@@ -53,11 +90,78 @@
         };
     });
 
+    $effect(() => {
+        if (!mainContentRef) return;
+        leftPaneWidth = clampLeftPaneWidth(leftPaneWidth);
+    });
+
+    $effect(() => {
+        if (!persistenceReady || !currentFilePath || treeStore.loading) return;
+        persistedState = setPerFileTreeState(
+            currentFilePath,
+            treeStore.getPersistentState(),
+        );
+    });
+
+    $effect(() => {
+        if (!persistenceReady) return;
+        persistedState = setLeftPaneWidth(leftPaneWidth);
+    });
+
+    async function loadFileIntoSession(
+        path: string,
+        silentFailure = false,
+    ): Promise<boolean> {
+        const loaded = await treeStore.loadFile(path);
+        if (loaded) {
+            const nextState = loadPersistedUIState();
+            treeStore.restoreUIState(nextState.files[path]);
+            persistedState = setLastOpenedFile(path);
+            currentFilePath = path;
+            return true;
+        }
+
+        if (loadPersistedUIState().lastOpenedFile === path) {
+            persistedState = {
+                ...loadPersistedUIState(),
+                lastOpenedFile: "",
+            };
+            savePersistedUIState(persistedState);
+        }
+        currentFilePath = "";
+        if (!silentFailure && treeStore.error) {
+            uiStore.showToast(treeStore.error, "error");
+        }
+        return false;
+    }
+
     async function openFile() {
         const path = await OpenFilePicker();
         if (path) {
-            await treeStore.loadFile(path);
+            const loaded = await loadFileIntoSession(path);
             hasTriedLoad = true;
+            if (!loaded) return;
+        }
+    }
+
+    async function createFile() {
+        try {
+            const path = await CreateBookmarkFile();
+            if (!path) {
+                return;
+            }
+
+            const loaded = await loadFileIntoSession(path);
+            hasTriedLoad = true;
+            if (!loaded) {
+                return;
+            }
+            uiStore.showToast("Bookmark file created", "success");
+        } catch (caughtError: unknown) {
+            uiStore.showToast(
+                getErrorMessage(caughtError, "Failed to create bookmark file"),
+                "error",
+            );
         }
     }
 
@@ -118,12 +222,41 @@
     function stopPaneResize(): void {
         isResizingPane = false;
     }
+
+    async function persistWindowSize(): Promise<void> {
+        if (!persistenceReady || !hasWailsRuntime()) return;
+
+        try {
+            const isNormal = await WindowIsNormal();
+            if (!isNormal) return;
+
+            const size = await WindowGetSize();
+            persistedState = setWindowState({
+                width: size.w,
+                height: size.h,
+            });
+        } catch {
+            // Best-effort persistence only.
+        }
+    }
+
+    function schedulePersistWindowSize(): void {
+        if (saveWindowSizeTimer) {
+            clearTimeout(saveWindowSizeTimer);
+        }
+
+        saveWindowSizeTimer = setTimeout(() => {
+            void persistWindowSize();
+        }, 150);
+    }
 </script>
 
 <svelte:window
+    onbeforeunload={persistWindowSize}
     onfocus={syncWindowState}
     onmousemove={handlePaneResize}
     onmouseup={stopPaneResize}
+    onresize={schedulePersistWindowSize}
 />
 
 <div
@@ -138,7 +271,7 @@
         <div class="flex-1 min-w-0 px-3">
             <div class="flex items-center gap-3">
                 <h1 class="text-sm font-semibold truncate">JustBookmarks</h1>
-                {#if hasTriedLoad && treeStore.tree.length > 0}
+                {#if currentFilePath}
                     {#if treeStore.loading}
                         <span class="loading loading-spinner loading-xs"></span>
                     {:else if treeStore.error}
@@ -250,7 +383,7 @@
     </div>
 
     <!-- Welcome screen (no file loaded) -->
-    {#if !hasTriedLoad || treeStore.tree.length === 0}
+    {#if !currentFilePath}
         <div class="flex-1 flex items-center justify-center">
             <div class="text-center max-w-sm">
                 <svg
@@ -289,6 +422,23 @@
                     </svg>
                     Open Bookmark File
                 </button>
+                <button class="btn btn-outline btn-secondary mt-3" onclick={createFile}>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                    Create Bookmark File
+                </button>
                 {#if treeStore.loading}
                     <div class="mt-4">
                         <span
@@ -308,6 +458,27 @@
         <!-- Main app layout -->
         <SearchBar>
             {#snippet actions()}
+                <button
+                    class="btn btn-sm btn-outline btn-secondary"
+                    onclick={createFile}
+                    title="Create a new bookmark file"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 4v16m8-8H4"
+                        />
+                    </svg>
+                    New File
+                </button>
                 <button
                     class="btn btn-sm btn-ghost"
                     onclick={openFile}

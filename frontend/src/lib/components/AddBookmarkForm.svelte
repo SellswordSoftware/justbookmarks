@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AddBookmark, FetchPageTitle } from '../api';
+	import { AddBookmark, FetchFavicon, FetchPageTitle } from '../api';
 	import { getErrorMessage } from '../errors';
 	import { uiStore } from '../stores/uiStore.svelte.ts';
 	import { treeStore } from '../stores/treeStore.svelte.ts';
@@ -13,9 +13,11 @@
 
 	let url = $state('');
 	let title = $state('');
+	let icon = $state('');
 	let fetchingTitle = $state(false);
 	let error = $state('');
 	let lastAutoTitle = $state('');
+	let lastAutoIcon = $state('');
 	let fetchSequence = 0;
 
 	function canFetchTitle(value: string): boolean {
@@ -39,12 +41,24 @@
 		const timer = setTimeout(async () => {
 			fetchingTitle = true;
 			try {
-				const fetched = await FetchPageTitle(currentURL);
-				if (requestId !== fetchSequence || !fetched) return;
+				const [titleResult, faviconResult] = await Promise.allSettled([
+					FetchPageTitle(currentURL),
+					FetchFavicon(currentURL),
+				]);
+				if (requestId !== fetchSequence) return;
 
-				if (!title.trim() || title === lastAutoTitle) {
-					title = fetched;
-					lastAutoTitle = fetched;
+				if (titleResult.status === 'fulfilled' && titleResult.value) {
+					if (!title.trim() || title === lastAutoTitle) {
+						title = titleResult.value;
+						lastAutoTitle = titleResult.value;
+					}
+				}
+
+				if (faviconResult.status === 'fulfilled' && faviconResult.value) {
+					if (!icon || icon === lastAutoIcon) {
+						icon = faviconResult.value;
+						lastAutoIcon = faviconResult.value;
+					}
 				}
 			} catch {
 				// Auto-fill is best effort only.
@@ -69,11 +83,13 @@
 			return;
 		}
 		try {
-			await AddBookmark(parentFolderId, { title: title.trim(), url: url.trim() });
+			await AddBookmark(parentFolderId, { title: title.trim(), url: url.trim(), icon });
 			uiStore.showToast('Bookmark added', 'success');
 			url = '';
 			title = '';
+			icon = '';
 			lastAutoTitle = '';
+			lastAutoIcon = '';
 			error = '';
 			await treeStore.refresh();
 			if (onAdded) onAdded();

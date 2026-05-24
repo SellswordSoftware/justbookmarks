@@ -14,14 +14,17 @@
 	let editing = $state(false);
 	let title = $state('');
 	let url = $state('');
+	let icon = $state('');
 	let meta = $state('');
 	let fetchingTitle = $state(false);
 	let fetchingFavicon = $state(false);
 	let titleError = $state('');
 	let faviconError = $state('');
 	let lastAutoTitle = $state('');
+	let lastAutoIcon = $state('');
 	let fetchSequence = 0;
 	const notesFieldId = $derived(`bookmark-notes-${bookmark?.id ?? 'current'}`);
+	const displayIcon = $derived(editing ? (icon || bookmark.bookmark.icon) : bookmark.bookmark.icon);
 
 	function hasRealDate(value: string): boolean {
 		return Boolean(value) && !String(value).startsWith('0001-01-01');
@@ -40,8 +43,10 @@
 		if (bookmark) {
 			title = bookmark.bookmark.title;
 			url = bookmark.bookmark.url;
+			icon = bookmark.bookmark.icon;
 			meta = bookmark.bookmark.meta || '';
 			lastAutoTitle = bookmark.bookmark.title || '';
+			lastAutoIcon = bookmark.bookmark.icon || '';
 			editing = false;
 			titleError = '';
 			faviconError = '';
@@ -61,12 +66,24 @@
 			fetchingTitle = true;
 			titleError = '';
 			try {
-				const fetched = await FetchPageTitle(currentURL);
-				if (requestId !== fetchSequence || !fetched) return;
+				const [titleResult, faviconResult] = await Promise.allSettled([
+					FetchPageTitle(currentURL),
+					FetchFavicon(currentURL),
+				]);
+				if (requestId !== fetchSequence) return;
 
-				if (!title.trim() || title === lastAutoTitle) {
-					title = fetched;
-					lastAutoTitle = fetched;
+				if (titleResult.status === 'fulfilled' && titleResult.value) {
+					if (!title.trim() || title === lastAutoTitle) {
+						title = titleResult.value;
+						lastAutoTitle = titleResult.value;
+					}
+				}
+
+				if (faviconResult.status === 'fulfilled' && faviconResult.value) {
+					if (!icon || icon === lastAutoIcon) {
+						icon = faviconResult.value;
+						lastAutoIcon = faviconResult.value;
+					}
 				}
 			} catch {
 				// Auto-fill is best effort only.
@@ -94,6 +111,7 @@
 			await UpdateBookmark(bookmark.id, {
 				title: title.trim(),
 				url: url.trim(),
+				icon,
 				meta: meta.trim(),
 			});
 			editing = false;
@@ -111,6 +129,8 @@
 		try {
 			const dataUri = await FetchFavicon(url.trim());
 			if (dataUri) {
+				icon = dataUri;
+				lastAutoIcon = dataUri;
 				await UpdateBookmark(bookmark.id, { icon: dataUri });
 				await treeStore.refresh();
 				uiStore.showToast('Favicon fetched', 'success');
@@ -150,30 +170,42 @@
 	}
 
 	function showMoveDialog() {
-		moveDialogStore.showMoveDialog(bookmark.id, bookmark.bookmark.title || bookmark.bookmark.url);
+		moveDialogStore.showMoveDialog(bookmark.id, bookmark.bookmark.title || bookmark.bookmark.url, 'bookmark');
 	}
 </script>
 
 <div class="h-full flex flex-col">
 	<div class="bg-base-200 p-4">
-		<div class="flex items-center gap-3 mb-3">
-			{#if bookmark.bookmark.icon}
-				<img src={bookmark.bookmark.icon} alt="" class="h-6 w-6" />
-			{:else}
-				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor">
-					<path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-				</svg>
-			{/if}
-			<div class="flex-1 min-w-0">
-				{#if editing}
-					<input
-						type="text"
-						bind:value={title}
-						class="input input-bordered input-sm w-full"
-						placeholder="Title"
-					/>
+		<div class="flex items-start justify-between gap-4 mb-3">
+			<div class="flex min-w-0 items-center gap-3">
+				{#if displayIcon}
+					<img src={displayIcon} alt="" class="h-6 w-6 rounded-sm ring-1 ring-base-content/10" />
 				{:else}
-					<h2 class="text-lg font-semibold truncate">{bookmark.bookmark.title || '(Untitled)'}</h2>
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" viewBox="0 0 20 20" fill="currentColor">
+						<path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+					</svg>
+				{/if}
+				<div class="flex-1 min-w-0">
+					{#if editing}
+						<input
+							type="text"
+							bind:value={title}
+							class="input input-bordered input-sm w-full"
+							placeholder="Title"
+						/>
+					{:else}
+						<h2 class="text-lg font-semibold truncate text-balance">{bookmark.bookmark.title || '(Untitled)'}</h2>
+					{/if}
+				</div>
+			</div>
+			<div class="flex shrink-0 flex-wrap justify-end gap-2">
+				{#if editing}
+					<button class="btn btn-sm btn-primary" onclick={saveBookmark}>Save</button>
+					<button class="btn btn-sm btn-ghost" onclick={() => editing = false}>Cancel</button>
+				{:else}
+					<button class="btn btn-sm btn-ghost" onclick={() => editing = true}>Edit</button>
+					<button class="btn btn-sm btn-ghost" onclick={showMoveDialog}>Move...</button>
+					<button class="btn btn-sm btn-error btn-outline" onclick={showDeleteConfirm}>Delete</button>
 				{/if}
 			</div>
 		</div>
@@ -207,6 +239,19 @@
 			{/if}
 		</div>
 
+		{#if !editing}
+			<div class="flex flex-wrap items-center gap-2 mb-2">
+				<button class="btn btn-sm btn-outline btn-primary" onclick={openInBrowser}>Open</button>
+				<button class="btn btn-sm btn-ghost" onclick={fetchFavicon} disabled={fetchingFavicon}>
+					{#if fetchingFavicon}
+						<span class="loading loading-spinner loading-xs"></span>
+					{:else}
+						Fetch Favicon
+					{/if}
+				</button>
+			</div>
+		{/if}
+
 		{#if titleError}
 			<p class="text-error text-xs mt-1">{titleError}</p>
 		{/if}
@@ -236,26 +281,6 @@
 			<p class="text-sm whitespace-pre-wrap">{meta}</p>
 		{:else}
 			<p class="text-sm opacity-30">No notes</p>
-		{/if}
-	</div>
-
-	<!-- Actions -->
-	<div class="mt-auto p-4 border-t border-base-300 flex flex-wrap gap-2">
-		{#if editing}
-			<button class="btn btn-sm btn-primary" onclick={saveBookmark}>Save</button>
-			<button class="btn btn-sm btn-ghost" onclick={() => editing = false}>Cancel</button>
-		{:else}
-			<button class="btn btn-sm btn-primary" onclick={() => editing = true}>Edit</button>
-			<button class="btn btn-sm btn-ghost" onclick={openInBrowser}>Open</button>
-			<button class="btn btn-sm btn-ghost" onclick={showMoveDialog}>Move To...</button>
-			<button class="btn btn-sm btn-ghost" onclick={fetchFavicon} disabled={fetchingFavicon}>
-				{#if fetchingFavicon}
-					<span class="loading loading-spinner loading-xs"></span>
-				{:else}
-					Favicon
-				{/if}
-			</button>
-			<button class="btn btn-sm btn-error btn-outline ml-auto" onclick={showDeleteConfirm}>Delete</button>
 		{/if}
 	</div>
 </div>

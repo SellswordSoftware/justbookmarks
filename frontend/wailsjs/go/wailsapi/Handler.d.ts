@@ -8,7 +8,11 @@ export function AddFolder(arg1:string,arg2:string):Promise<string>;
 
 export function DeleteNode(arg1:string):Promise<void>;
 
+export function DeleteNodes(arg1:Array<string>):Promise<void>;
+
 export function FetchFavicon(arg1:string):Promise<string>;
+
+export function FetchFaviconsForNodes(arg1:Array<string>):Promise<void>;
 
 export function FetchPageTitle(arg1:string):Promise<string>;
 
@@ -24,7 +28,11 @@ export function LoadFile(arg1:string):Promise<void>;
 
 export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<void>;
 
+export function MoveNodes(arg1:Array<string>,arg2:string):Promise<void>;
+
 export function OpenURL(arg1:string):Promise<void>;
+
+export function RefreshTitlesForNodes(arg1:Array<string>):Promise<void>;
 
 export function UpdateBookmark(arg1:string,arg2:bookmarks.BookmarkPatch):Promise<void>;
 

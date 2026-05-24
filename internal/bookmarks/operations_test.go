@@ -150,6 +150,36 @@ func TestAddBookmark(t *testing.T) {
 	}
 }
 
+func TestAddRootBookmark(t *testing.T) {
+	nodes := buildTestTree()
+
+	updated, err := AddBookmark(nodes, "", Bookmark{
+		Title: "Top Level Bookmark",
+		URL:   "https://top-level.example.com",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(updated) != len(nodes)+1 {
+		t.Fatalf("expected %d root nodes, got %d", len(nodes)+1, len(updated))
+	}
+
+	last := updated[len(updated)-1]
+	if last.Type != TypeBookmark {
+		t.Fatal("last root node should be a bookmark")
+	}
+	if last.Bookmark.Title != "Top Level Bookmark" {
+		t.Errorf("expected 'Top Level Bookmark', got '%s'", last.Bookmark.Title)
+	}
+	if last.Bookmark.URL != "https://top-level.example.com" {
+		t.Errorf("expected correct URL, got '%s'", last.Bookmark.URL)
+	}
+	if last.Bookmark.ID == "" {
+		t.Error("root bookmark should have a generated ID")
+	}
+}
+
 func TestAddBookmarkNotFound(t *testing.T) {
 	nodes := buildTestTree()
 	_, err := AddBookmark(nodes, "nonexistent", Bookmark{Title: "X", URL: "https://x.com"})
@@ -186,6 +216,30 @@ func TestAddFolder(t *testing.T) {
 	}
 	if len(last.Folder.Children) != 0 {
 		t.Error("new folder should have no children")
+	}
+}
+
+func TestAddRootFolder(t *testing.T) {
+	nodes := buildTestTree()
+
+	updated, err := AddFolder(nodes, "", "Top Level Folder")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(updated) != len(nodes)+1 {
+		t.Fatalf("expected %d root nodes, got %d", len(nodes)+1, len(updated))
+	}
+
+	last := updated[len(updated)-1]
+	if last.Type != TypeFolder {
+		t.Fatal("last root node should be a folder")
+	}
+	if last.Folder.Name != "Top Level Folder" {
+		t.Errorf("expected 'Top Level Folder', got '%s'", last.Folder.Name)
+	}
+	if len(last.Folder.Children) != 0 {
+		t.Error("new root folder should have no children")
 	}
 }
 
@@ -348,6 +402,32 @@ func TestDeleteNotFound(t *testing.T) {
 	}
 }
 
+func TestDeleteNodesRemovesSiblingBookmarks(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := DeleteNodes(nodes, []string{"b-root1", "b-root2"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	root := FindNode(nodes, "f-root")
+	if len(root.Folder.Children) != 1 {
+		t.Fatalf("expected 1 child after bulk delete, got %d", len(root.Folder.Children))
+	}
+	if root.Folder.Children[0].ID() != "f-sub" {
+		t.Fatalf("expected f-sub to remain, got %s", root.Folder.Children[0].ID())
+	}
+}
+
+func TestDeleteNodesRejectsMixedParents(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := DeleteNodes(nodes, []string{"b-root1", "b-nested"})
+	if err != ErrInvalidTarget {
+		t.Fatalf("expected ErrInvalidTarget, got %v", err)
+	}
+}
+
 // --- MoveNode tests ---
 
 func TestMoveBookmarkToFolder(t *testing.T) {
@@ -457,6 +537,41 @@ func TestMoveNotFound(t *testing.T) {
 	_, err := MoveNode(nodes, "nonexistent", "f-root", 0)
 	if err != ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
+	}
+}
+
+func TestMoveNodesPreservesOrder(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := MoveNodes(nodes, []string{"b-root1", "b-root2"}, "f-sub")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	sub := FindNode(nodes, "f-sub")
+	if len(sub.Folder.Children) != 3 {
+		t.Fatalf("expected 3 children in sub, got %d", len(sub.Folder.Children))
+	}
+	if sub.Folder.Children[1].ID() != "b-root1" || sub.Folder.Children[2].ID() != "b-root2" {
+		t.Fatalf("expected moved bookmarks in original order, got %s then %s", sub.Folder.Children[1].ID(), sub.Folder.Children[2].ID())
+	}
+}
+
+func TestMoveNodesRejectsSameParentNoOp(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := MoveNodes(nodes, []string{"b-root1", "b-root2"}, "f-root")
+	if err != ErrNoOpMove {
+		t.Fatalf("expected ErrNoOpMove, got %v", err)
+	}
+}
+
+func TestMoveNodesRejectsDescendantTarget(t *testing.T) {
+	nodes := buildTestTree()
+
+	_, err := MoveNodes(nodes, []string{"f-sub"}, "f-sub")
+	if err != ErrCircularMove {
+		t.Fatalf("expected ErrCircularMove, got %v", err)
 	}
 }
 

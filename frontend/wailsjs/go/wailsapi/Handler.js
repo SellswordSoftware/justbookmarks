@@ -14,8 +14,16 @@ export function DeleteNode(arg1) {
   return window['go']['wailsapi']['Handler']['DeleteNode'](arg1);
 }
 
+export function DeleteNodes(arg1) {
+  return window['go']['wailsapi']['Handler']['DeleteNodes'](arg1);
+}
+
 export function FetchFavicon(arg1) {
   return window['go']['wailsapi']['Handler']['FetchFavicon'](arg1);
+}
+
+export function FetchFaviconsForNodes(arg1) {
+  return window['go']['wailsapi']['Handler']['FetchFaviconsForNodes'](arg1);
 }
 
 export function FetchPageTitle(arg1) {
@@ -46,8 +54,16 @@ export function MoveNode(arg1, arg2, arg3) {
   return window['go']['wailsapi']['Handler']['MoveNode'](arg1, arg2, arg3);
 }
 
+export function MoveNodes(arg1, arg2) {
+  return window['go']['wailsapi']['Handler']['MoveNodes'](arg1, arg2);
+}
+
 export function OpenURL(arg1) {
   return window['go']['wailsapi']['Handler']['OpenURL'](arg1);
+}
+
+export function RefreshTitlesForNodes(arg1) {
+  return window['go']['wailsapi']['Handler']['RefreshTitlesForNodes'](arg1);
 }
 
 export function UpdateBookmark(arg1, arg2) {

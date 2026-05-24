@@ -18,6 +18,15 @@ export async function GetFilePath(): Promise<string> {
 	return app ? app.GetFilePath() : '';
 }
 
+export async function CreateBookmarkFile(): Promise<string> {
+	const app = getAppBindings();
+	if (!app) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	return app.CreateBookmarkFile();
+}
+
 export async function OpenFilePicker(): Promise<string> {
 	const app = getAppBindings();
 	return app ? app.OpenFilePicker() : '';
@@ -98,6 +107,15 @@ export async function DeleteNode(id: string): Promise<void> {
 	await handler.DeleteNode(id);
 }
 
+export async function DeleteNodes(ids: string[]): Promise<void> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	await handler.DeleteNodes(ids);
+}
+
 export async function MoveNode(draggedId: string, targetFolderId: string, index: number): Promise<void> {
 	const handler = getHandlerBindings();
 	if (!handler) {
@@ -105,6 +123,15 @@ export async function MoveNode(draggedId: string, targetFolderId: string, index:
 	}
 
 	await handler.MoveNode(draggedId, targetFolderId, index);
+}
+
+export async function MoveNodes(nodeIds: string[], targetFolderId: string): Promise<void> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	await handler.MoveNodes(nodeIds, targetFolderId);
 }
 
 export async function FetchPageTitle(url: string): Promise<string> {
@@ -123,6 +150,24 @@ export async function FetchFavicon(url: string): Promise<string> {
 	}
 
 	return handler.FetchFavicon(url);
+}
+
+export async function FetchFaviconsForNodes(ids: string[]): Promise<void> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	await handler.FetchFaviconsForNodes(ids);
+}
+
+export async function RefreshTitlesForNodes(ids: string[]): Promise<void> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	await handler.RefreshTitlesForNodes(ids);
 }
 
 export async function OpenURL(url: string): Promise<void> {

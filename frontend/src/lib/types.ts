@@ -83,11 +83,19 @@ export interface ConfirmModalState {
 export interface MoveTarget {
 	id: string;
 	name: string;
+	depth: number;
+	pathLabel: string;
 }
 
 export interface MoveDialogNode {
 	id: string;
 	name: string;
+}
+
+export interface MoveDialogRequest {
+	nodeIds: string[];
+	label: string;
+	type: 'bookmark' | 'folder';
 }
 
 export interface VisibleTreeNodeEntry {

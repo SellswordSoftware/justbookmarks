@@ -3,6 +3,7 @@
 	import { isFolderNode } from '../types';
 	import FolderDetail from './FolderDetail.svelte';
 	import BookmarkDetail from './BookmarkDetail.svelte';
+	import BulkSelectionDetail from './BulkSelectionDetail.svelte';
 	import MoveDialog from './MoveDialog.svelte';
 
 	const selectedNode = $derived(
@@ -11,7 +12,9 @@
 </script>
 
 <div class="h-full overflow-y-auto bg-base-100">
-	{#if selectedNode}
+	{#if treeStore.selectionCount > 1}
+		<BulkSelectionDetail />
+	{:else if selectedNode}
 		{#if isFolderNode(selectedNode)}
 			<FolderDetail folder={selectedNode} />
 		{:else}

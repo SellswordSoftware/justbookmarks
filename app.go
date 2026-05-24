@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/SellswordSoftware/justbookmarks/internal/bookmarks"
 	"github.com/SellswordSoftware/justbookmarks/internal/wailsapi"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -50,10 +54,44 @@ func (a *App) OpenFilePicker() string {
 	return file
 }
 
+// CreateBookmarkFile shows a native save dialog, writes an empty Netscape bookmarks file,
+// and returns the created path.
+func (a *App) CreateBookmarkFile() (string, error) {
+	if a.ctx == nil {
+		return "", fmt.Errorf("app context not initialized")
+	}
+
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "Create Bookmark File",
+		DefaultFilename: "bookmarks.html",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "HTML Files", Pattern: "*.html"},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+	if path == "" {
+		return "", nil
+	}
+
+	if !strings.EqualFold(filepath.Ext(path), ".html") {
+		path += ".html"
+	}
+
+	if err := os.WriteFile(path, []byte(bookmarks.Serialize([]bookmarks.Node{})), 0o644); err != nil {
+		return "", fmt.Errorf("failed to create bookmark file: %w", err)
+	}
+
+	a.filePath = path
+	return path, nil
+}
+
 // LoadBookmarkFile loads the bookmark file into the handler and returns any error.
 func (a *App) LoadBookmarkFile(path string) error {
 	if a.handler == nil {
 		return fmt.Errorf("handler not initialized")
 	}
+	a.filePath = path
 	return a.handler.LoadFile(path)
 }

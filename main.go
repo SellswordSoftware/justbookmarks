@@ -11,10 +11,14 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	linuxoptions "github.com/wailsapp/wails/v2/pkg/options/linux"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
+
+//go:embed build/appicon.png
+var appIcon []byte
 
 func main() {
 	if runtime.GOOS == "linux" && os.Getenv("GDK_BACKEND") == "" {
@@ -41,6 +45,10 @@ func main() {
 		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
+		},
+		Linux: &linuxoptions.Options{
+			Icon:             appIcon,
+			WebviewGpuPolicy: linuxoptions.WebviewGpuPolicyNever,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup: func(ctx context.Context) {
