@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { MoveNode, MoveNodes } from '../api';
 	import { getErrorMessage } from '../errors';
+	import { trapFocusInContainer } from '../focus';
 	import { treeStore } from '../stores/treeStore.svelte.ts';
 	import { moveDialogStore } from '../stores/moveDialogStore.svelte.ts';
 	import { uiStore } from '../stores/uiStore.svelte.ts';
 	import type { MoveTarget } from '../types';
+
+	let cancelButtonRef = $state<HTMLButtonElement | undefined>(undefined);
+	let dialogRef = $state<HTMLDivElement | undefined>(undefined);
 
 	function isSelected(folder: MoveTarget): boolean {
 		return moveDialogStore.selectedTarget === folder.id;
@@ -13,6 +17,18 @@
 	function selectTarget(folderId: string): void {
 		moveDialogStore.setSelectedTarget(folderId);
 	}
+
+	$effect(() => {
+		if (!moveDialogStore.open) return;
+
+		if (!moveDialogStore.selectedTarget && moveDialogStore.folders[0]) {
+			moveDialogStore.setSelectedTarget(moveDialogStore.folders[0].id);
+		}
+
+		queueMicrotask(() => {
+			document.querySelector<HTMLButtonElement>('[data-keyboard-action="move-target"]')?.focus() ?? cancelButtonRef?.focus();
+		});
+	});
 
 	async function move() {
 		const request = moveDialogStore.request;
@@ -30,6 +46,40 @@
 		}
 		moveDialogStore.closeMoveDialog();
 	}
+
+	function handleDialogKeydown(event: KeyboardEvent): void {
+		if (trapFocusInContainer(event, dialogRef)) {
+			return;
+		}
+
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			moveDialogStore.closeMoveDialog();
+			return;
+		}
+
+		if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+			event.preventDefault();
+			if (moveDialogStore.folders.length === 0) return;
+
+			const currentIndex = moveDialogStore.folders.findIndex((folder) => folder.id === moveDialogStore.selectedTarget);
+			const delta = event.key === 'ArrowDown' ? 1 : -1;
+			const nextIndex = Math.min(
+				Math.max((currentIndex >= 0 ? currentIndex : 0) + delta, 0),
+				moveDialogStore.folders.length - 1,
+			);
+			const nextTarget = moveDialogStore.folders[nextIndex];
+			if (nextTarget) {
+				moveDialogStore.setSelectedTarget(nextTarget.id);
+			}
+			return;
+		}
+
+		if (event.key === 'Enter' && moveDialogStore.selectedTarget) {
+			event.preventDefault();
+			void move();
+		}
+	}
 </script>
 
 {#if moveDialogStore.open}
@@ -39,13 +89,15 @@
 		onclick={() => moveDialogStore.closeMoveDialog()}
 			onkeydown={(event: KeyboardEvent) => event.key === 'Escape' && moveDialogStore.closeMoveDialog()}
 	>
-		<div
+	<div
+			bind:this={dialogRef}
 			class="bg-base-100 rounded-lg shadow-xl p-6 w-full max-w-md"
+			data-focus-zone="dialog"
 			role="dialog"
 			aria-modal="true"
 			tabindex="-1"
 			onclick={(event: MouseEvent) => event.stopPropagation()}
-			onkeydown={(event: KeyboardEvent) => event.stopPropagation()}
+			onkeydown={handleDialogKeydown}
 		>
 			<h3 class="text-lg font-bold mb-2">Move "{moveDialogStore.request?.label}"</h3>
 			<p class="text-sm opacity-60 mb-4">Select a target folder:</p>
@@ -58,7 +110,7 @@
 					{#if moveDialogStore.folders.length === 0}
 						<div class="px-3 py-6 text-center text-sm opacity-45">No eligible folders</div>
 					{:else}
-						{#each moveDialogStore.folders as folder (folder.id)}
+						{#each moveDialogStore.folders as folder, index (folder.id)}
 							<button
 								type="button"
 								role="option"
@@ -69,6 +121,7 @@
 										: 'hover:bg-base-200'
 								}`}
 								style={`padding-left: ${folder.depth * 18 + 12}px;`}
+								data-keyboard-action="move-target"
 								onclick={() => selectTarget(folder.id)}
 							>
 								<svg
@@ -93,8 +146,8 @@
 			</div>
 
 			<div class="flex justify-end gap-2">
-				<button class="btn btn-sm btn-ghost" onclick={() => moveDialogStore.closeMoveDialog()}>Cancel</button>
-				<button class="btn btn-sm btn-primary" onclick={move} disabled={!moveDialogStore.selectedTarget}>
+				<button bind:this={cancelButtonRef} class="btn btn-sm btn-ghost" data-keyboard-action="move-cancel" onclick={() => moveDialogStore.closeMoveDialog()}>Cancel</button>
+				<button class="btn btn-sm btn-primary" data-keyboard-action="move-confirm" onclick={move} disabled={!moveDialogStore.selectedTarget}>
 					Move
 				</button>
 			</div>

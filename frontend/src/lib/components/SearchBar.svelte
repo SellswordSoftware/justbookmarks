@@ -4,14 +4,17 @@
 
 	interface Props {
 		actions?: Snippet;
+		onInputReady?: (input: HTMLInputElement | undefined) => void;
+		onInputKeydown?: (event: KeyboardEvent) => void;
 	}
 
-	let { actions }: Props = $props();
+	let { actions, onInputReady, onInputKeydown }: Props = $props();
 
 	let inputRef: HTMLInputElement | undefined;
 	let hasFocused = false;
 
 	$effect(() => {
+		onInputReady?.(inputRef);
 		if (!hasFocused && inputRef) {
 			inputRef.focus();
 			hasFocused = true;
@@ -27,7 +30,10 @@
 			type="text"
 			placeholder="Search bookmarks..."
 			class="input input-bordered input-sm flex-1 max-w-xl"
+			data-focus-zone="search"
+			data-keyboard-action="search-input"
 			oninput={(event) => searchStore.setQuery(event.currentTarget.value)}
+			onkeydown={onInputKeydown}
 		/>
 		{#if searchStore.query}
 			<button class="btn btn-ghost btn-sm" aria-label="Clear search" title="Clear search" onclick={() => searchStore.setQuery('')}>

@@ -46,6 +46,10 @@ export function GetFlatIndex() {
   return window['go']['wailsapi']['Handler']['GetFlatIndex']();
 }
 
+export function GetHistoryState() {
+  return window['go']['wailsapi']['Handler']['GetHistoryState']();
+}
+
 export function GetTree() {
   return window['go']['wailsapi']['Handler']['GetTree']();
 }
@@ -70,8 +74,16 @@ export function PreviewImportMerge(arg1) {
   return window['go']['wailsapi']['Handler']['PreviewImportMerge'](arg1);
 }
 
+export function Redo() {
+  return window['go']['wailsapi']['Handler']['Redo']();
+}
+
 export function RefreshTitlesForNodes(arg1) {
   return window['go']['wailsapi']['Handler']['RefreshTitlesForNodes'](arg1);
+}
+
+export function Undo() {
+  return window['go']['wailsapi']['Handler']['Undo']();
 }
 
 export function UpdateBookmark(arg1, arg2) {

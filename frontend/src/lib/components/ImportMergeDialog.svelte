@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { trapFocusInContainer } from '../focus';
 	import type { MergePreview } from '../types';
 
 	interface Props {
@@ -24,6 +25,18 @@
 		onApply,
 		onPickAnother,
 	}: Props = $props();
+
+	let chooseFileButtonRef = $state<HTMLButtonElement | undefined>(undefined);
+	let cancelButtonRef = $state<HTMLButtonElement | undefined>(undefined);
+	let dialogRef = $state<HTMLDivElement | undefined>(undefined);
+
+	$effect(() => {
+		if (open) {
+			queueMicrotask(() => {
+				chooseFileButtonRef?.focus() ?? cancelButtonRef?.focus();
+			});
+		}
+	});
 
 	const sections = $derived(
 		preview
@@ -63,11 +76,28 @@
 				]
 			: [],
 	);
+
+	function handleDialogKeydown(event: KeyboardEvent): void {
+		if (trapFocusInContainer(event, dialogRef)) {
+			return;
+		}
+
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			onCancel();
+			return;
+		}
+
+		if (event.key === 'Enter' && (event.ctrlKey || event.metaKey) && preview && !previewLoading && !applyLoading) {
+			event.preventDefault();
+			void onApply();
+		}
+	}
 </script>
 
 {#if open}
 	<div class="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" role="presentation" onclick={(event) => event.target === event.currentTarget && onCancel()}>
-		<div class="card w-full max-w-4xl bg-base-100 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="import-merge-title">
+		<div bind:this={dialogRef} class="card w-full max-w-4xl bg-base-100 shadow-2xl" data-focus-zone="dialog" role="dialog" aria-modal="true" aria-labelledby="import-merge-title" tabindex="-1" onkeydown={handleDialogKeydown}>
 			<div class="card-body gap-4">
 				<div class="flex items-start justify-between gap-4">
 					<div>
@@ -86,7 +116,7 @@
 						<div class="text-xs uppercase tracking-wide opacity-60">Import file</div>
 						<div class="truncate text-sm">{importPath || 'No file selected'}</div>
 					</div>
-					<button class="btn btn-sm btn-outline" type="button" onclick={onPickAnother} disabled={previewLoading || applyLoading}>
+					<button bind:this={chooseFileButtonRef} class="btn btn-sm btn-outline" data-keyboard-action="import-choose-file" type="button" onclick={onPickAnother} disabled={previewLoading || applyLoading}>
 						Choose File
 					</button>
 				</div>
@@ -151,11 +181,12 @@
 				{/if}
 
 				<div class="flex justify-end gap-2">
-					<button class="btn btn-ghost" type="button" onclick={onCancel} disabled={applyLoading}>
+					<button bind:this={cancelButtonRef} class="btn btn-ghost" data-keyboard-action="import-cancel" type="button" onclick={onCancel} disabled={applyLoading}>
 						Cancel
 					</button>
 					<button
 						class="btn btn-primary"
+						data-keyboard-action="import-apply"
 						type="button"
 						onclick={onApply}
 						disabled={!preview || previewLoading || applyLoading}

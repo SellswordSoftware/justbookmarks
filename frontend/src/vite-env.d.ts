@@ -8,6 +8,7 @@ import type {
 	BookmarkMergeItem,
 	BookmarkPatch,
 	FolderMergeItem,
+	HistoryState,
 	MergeApplyResult,
 	TreeNode,
 } from './lib/types';
@@ -42,13 +43,16 @@ declare global {
 		FilePath(): Promise<string>;
 		GetAllFolders(): Promise<TreeNode[]>;
 		GetFlatIndex(): Promise<BookmarkIndexEntry[]>;
+		GetHistoryState(): Promise<HistoryState>;
 		GetTree(): Promise<TreeNode[]>;
 		LoadFile(path: string): Promise<void>;
 		MoveNode(nodeId: string, newParentId: string, newIndex: number): Promise<void>;
 		MoveNodes(nodeIds: string[], targetFolderId: string): Promise<void>;
 		OpenURL(url: string): Promise<void>;
 		PreviewImportMerge(path: string): Promise<WailsMergePreview>;
+		Redo(): Promise<HistoryState>;
 		RefreshTitlesForNodes(ids: string[]): Promise<void>;
+		Undo(): Promise<HistoryState>;
 		UpdateBookmark(id: string, patch: BookmarkPatch): Promise<void>;
 		UpdateFolderName(id: string, name: string): Promise<void>;
 	}

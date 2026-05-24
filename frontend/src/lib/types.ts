@@ -96,6 +96,13 @@ export interface MergeApplyResult {
 	potentialUpdates: number;
 }
 
+export interface HistoryState {
+	canUndo: boolean;
+	canRedo: boolean;
+	undoLabel: string;
+	redoLabel: string;
+}
+
 export interface Toast {
 	id: number;
 	message: string;

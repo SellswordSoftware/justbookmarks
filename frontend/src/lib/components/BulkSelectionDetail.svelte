@@ -84,21 +84,21 @@
 			<button class="btn btn-sm btn-ghost" onclick={() => treeStore.clearSelection()}>Clear</button>
 		</div>
 		<div class="flex flex-wrap gap-2">
-			<button class="btn btn-sm btn-primary" onclick={openMoveDialog} disabled={runningAction !== ''}>
+			<button class="btn btn-sm btn-primary" data-keyboard-action="bulk-move" onclick={openMoveDialog} disabled={runningAction !== ''}>
 				Move
 			</button>
-			<button class="btn btn-sm btn-error btn-outline" onclick={confirmDelete} disabled={runningAction !== ''}>
+			<button class="btn btn-sm btn-error btn-outline" data-keyboard-action="bulk-delete" onclick={confirmDelete} disabled={runningAction !== ''}>
 				Delete
 			</button>
 			{#if !isFolderSelection}
-				<button class="btn btn-sm btn-ghost" onclick={fetchFavicons} disabled={runningAction !== ''}>
+				<button class="btn btn-sm btn-ghost" data-keyboard-action="bulk-fetch-favicons" onclick={fetchFavicons} disabled={runningAction !== ''}>
 					{#if runningAction === 'favicons'}
 						<span class="loading loading-spinner loading-xs"></span>
 					{:else}
 						Fetch Favicons
 					{/if}
 				</button>
-				<button class="btn btn-sm btn-ghost" onclick={refreshTitles} disabled={runningAction !== ''}>
+				<button class="btn btn-sm btn-ghost" data-keyboard-action="bulk-refresh-titles" onclick={refreshTitles} disabled={runningAction !== ''}>
 					{#if runningAction === 'titles'}
 						<span class="loading loading-spinner loading-xs"></span>
 					{:else}

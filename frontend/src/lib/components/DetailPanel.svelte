@@ -11,7 +11,7 @@
 	);
 </script>
 
-<div class="h-full overflow-y-auto bg-base-100">
+<div class="h-full overflow-y-auto bg-base-100" data-focus-zone="detail" tabindex="-1">
 	{#if treeStore.selectionCount > 1}
 		<BulkSelectionDetail />
 	{:else if selectedNode}

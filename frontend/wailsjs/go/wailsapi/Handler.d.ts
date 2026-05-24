@@ -24,6 +24,8 @@ export function GetAllFolders():Promise<Array<bookmarks.Node>>;
 
 export function GetFlatIndex():Promise<Array<bookmarks.BookmarkIndexEntry>>;
 
+export function GetHistoryState():Promise<bookmarks.HistoryState>;
+
 export function GetTree():Promise<Array<bookmarks.Node>>;
 
 export function LoadFile(arg1:string):Promise<void>;
@@ -36,7 +38,11 @@ export function OpenURL(arg1:string):Promise<void>;
 
 export function PreviewImportMerge(arg1:string):Promise<bookmarks.MergePreview>;
 
+export function Redo():Promise<bookmarks.HistoryState>;
+
 export function RefreshTitlesForNodes(arg1:Array<string>):Promise<void>;
+
+export function Undo():Promise<bookmarks.HistoryState>;
 
 export function UpdateBookmark(arg1:string,arg2:bookmarks.BookmarkPatch):Promise<void>;
 

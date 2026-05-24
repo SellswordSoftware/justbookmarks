@@ -17,6 +17,7 @@
 	let editName = $state('');
 	let showAddBookmark = $state(false);
 	let showAddFolder = $state(false);
+	let nameInputRef = $state<HTMLInputElement | undefined>(undefined);
 
 	function hasRealDate(value: string): boolean {
 		return Boolean(value) && !String(value).startsWith('0001-01-01');
@@ -31,6 +32,15 @@
 		}
 	});
 
+	$effect(() => {
+		if (!editing) return;
+
+		queueMicrotask(() => {
+			nameInputRef?.focus();
+			nameInputRef?.select();
+		});
+	});
+
 	async function saveName() {
 		if (editName.trim() && editName !== folder.folder.name) {
 			try {
@@ -42,6 +52,19 @@
 			}
 		}
 		editing = false;
+	}
+
+	function handleRenameKeydown(event: KeyboardEvent): void {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			editing = false;
+			return;
+		}
+
+		if (event.key === 'Enter' || ((event.ctrlKey || event.metaKey) && event.key === 'Enter')) {
+			event.preventDefault();
+			void saveName();
+		}
 	}
 
 	function toggleAddBookmark() {
@@ -85,14 +108,16 @@
 	<div class="bg-base-200 p-4">
 		{#if editing}
 			<input
+				bind:this={nameInputRef}
 				type="text"
 				bind:value={editName}
+				data-keyboard-action="folder-name"
 				class="input input-bordered input-sm w-full mb-2"
-				onkeydown={(event: KeyboardEvent) => { if (event.key === 'Enter') saveName(); if (event.key === 'Escape') editing = false; }}
+				onkeydown={handleRenameKeydown}
 			/>
 			<div class="flex gap-2">
-				<button class="btn btn-sm btn-primary" onclick={saveName}>Save</button>
-				<button class="btn btn-sm btn-ghost" onclick={() => editing = false}>Cancel</button>
+				<button class="btn btn-sm btn-primary" data-keyboard-action="folder-save" onclick={saveName}>Save</button>
+				<button class="btn btn-sm btn-ghost" data-keyboard-action="folder-cancel" onclick={() => editing = false}>Cancel</button>
 			</div>
 		{:else}
 			<div class="flex items-start justify-between gap-4">
@@ -109,9 +134,9 @@
 					{/if}
 				</div>
 				<div class="flex flex-wrap justify-end gap-2">
-					<button class="btn btn-sm btn-ghost" onclick={() => { editing = true; }}>Edit</button>
-					<button class="btn btn-sm btn-ghost" onclick={showMoveDialog}>Move...</button>
-					<button class="btn btn-sm btn-error btn-outline" onclick={showDeleteConfirm} aria-label="Delete folder" title="Delete folder">Delete</button>
+					<button class="btn btn-sm btn-ghost" data-keyboard-action="folder-edit" onclick={() => { editing = true; }}>Edit</button>
+					<button class="btn btn-sm btn-ghost" data-keyboard-action="folder-move" onclick={showMoveDialog}>Move...</button>
+					<button class="btn btn-sm btn-error btn-outline" data-keyboard-action="folder-delete" onclick={showDeleteConfirm} aria-label="Delete folder" title="Delete folder">Delete</button>
 				</div>
 			</div>
 		{/if}
@@ -126,12 +151,14 @@
 			<div class="flex gap-2">
 				<button
 					class={`btn btn-sm ${showAddBookmark ? 'btn-primary' : 'btn-outline btn-primary'}`}
+					data-keyboard-action="folder-add-bookmark"
 					onclick={toggleAddBookmark}
 				>
 					Add Bookmark
 				</button>
 				<button
 					class={`btn btn-sm ${showAddFolder ? 'btn-secondary' : 'btn-outline btn-secondary'}`}
+					data-keyboard-action="folder-add-folder"
 					onclick={toggleAddFolder}
 				>
 					Add Folder

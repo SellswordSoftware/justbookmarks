@@ -41,6 +41,12 @@ let expandedNodeIds = $state<string[]>([]);
 let loading = $state(false);
 let error = $state('');
 
+export interface SelectionSnapshot {
+	selectedNodeIds: string[];
+	primaryNodeId: string;
+	ancestorIds: string[];
+}
+
 function normalizeTree(nodes: RawTreeNode[] | undefined): TreeNode[] {
 	if (!Array.isArray(nodes)) {
 		return [];
@@ -176,6 +182,20 @@ function clearSelection(): void {
 	selectionAnchorNodeId = '';
 }
 
+function getAncestorIds(id: string): string[] {
+	const ancestors: string[] = [];
+	let currentId = id;
+
+	while (currentId) {
+		const parentId = getParentId(currentId);
+		if (!parentId) break;
+		ancestors.push(parentId);
+		currentId = parentId;
+	}
+
+	return ancestors;
+}
+
 function selectSingle(id: string): void {
 	if (!getNode(id)) {
 		clearSelection();
@@ -247,6 +267,70 @@ function selectRange(targetId: string, visibleIds: string[]): boolean {
 	selectedNodeIds = rangeIds;
 	primarySelectedNodeId = targetId;
 	return true;
+}
+
+function getSiblingIds(id: string): string[] {
+	if (!id) return [];
+
+	const parent = getParentNode(id);
+	if (!parent) {
+		return tree.map((node) => node.id);
+	}
+
+	return parent.folder.children.map((child) => child.id);
+}
+
+function selectSiblingRange(targetId: string): boolean {
+	if (!targetId) return false;
+	return selectRange(targetId, getSiblingIds(targetId));
+}
+
+function extendSelectionByOffset(offset: number): boolean {
+	if (offset === 0) return false;
+
+	const anchorId = selectionAnchorNodeId || primarySelectedNodeId || selectedNodeIds[0] || '';
+	const pivotId = primarySelectedNodeId || selectedNodeIds[selectedNodeIds.length - 1] || anchorId;
+	if (!anchorId || !pivotId) return false;
+
+	const siblingIds = getSiblingIds(anchorId);
+	const pivotIndex = siblingIds.indexOf(pivotId);
+	if (pivotIndex < 0) return false;
+
+	const nextIndex = Math.min(Math.max(pivotIndex + offset, 0), siblingIds.length - 1);
+	if (nextIndex === pivotIndex) return false;
+
+	return selectRange(siblingIds[nextIndex], siblingIds);
+}
+
+function selectAllSiblings(): boolean {
+	const primaryId = primarySelectedNodeId || selectedNodeIds[0] || '';
+	if (!primaryId) return false;
+
+	const siblingIds = getSiblingIds(primaryId).filter((id) => canJoinSelection(id));
+	if (siblingIds.length === 0) return false;
+
+	selectedNodeIds = siblingIds;
+	primarySelectedNodeId = siblingIds.includes(primaryId) ? primaryId : siblingIds[0];
+	selectionAnchorNodeId = siblingIds[0];
+	return true;
+}
+
+function collapseSelectionToPrimary(): void {
+	if (!primarySelectedNodeId) {
+		clearSelection();
+		return;
+	}
+
+	selectedNodeIds = [primarySelectedNodeId];
+	selectionAnchorNodeId = primarySelectedNodeId;
+}
+
+function expandAncestors(id: string): void {
+	for (const ancestorId of getAncestorIds(id)) {
+		if (!expandedNodeIds.includes(ancestorId)) {
+			expandedNodeIds.push(ancestorId);
+		}
+	}
 }
 
 function toggleExpand(id: string): void {
@@ -352,6 +436,62 @@ function getPersistentState(): PerFileTreeState {
 	};
 }
 
+function captureSelectionSnapshot(): SelectionSnapshot {
+	const primaryNodeId = primarySelectedNodeId || selectedNodeIds[0] || '';
+	return {
+		selectedNodeIds: [...selectedNodeIds],
+		primaryNodeId,
+		ancestorIds: primaryNodeId ? getAncestorIds(primaryNodeId) : [],
+	};
+}
+
+function restoreSelectionSnapshot(snapshot: SelectionSnapshot | null | undefined): void {
+	if (!snapshot) {
+		clearSelection();
+		return;
+	}
+
+	const validSelected = snapshot.selectedNodeIds.filter((id) => Boolean(getNode(id)));
+	if (validSelected.length > 1) {
+		const firstNode = getNode(validSelected[0]);
+		const sameTypeAndParent = firstNode
+			? validSelected.every((id) => {
+					const candidate = getNode(id);
+					if (!candidate) {
+						return false;
+					}
+					return candidate.type === firstNode.type && getParentId(id) === getParentId(validSelected[0]);
+				})
+			: false;
+
+		if (sameTypeAndParent) {
+			selectedNodeIds = validSelected;
+			primarySelectedNodeId = validSelected.includes(snapshot.primaryNodeId) ? snapshot.primaryNodeId : validSelected[0];
+			selectionAnchorNodeId = validSelected[0];
+			return;
+		}
+	}
+
+	if (snapshot.primaryNodeId && getNode(snapshot.primaryNodeId)) {
+		selectSingle(snapshot.primaryNodeId);
+		return;
+	}
+
+	for (const ancestorId of snapshot.ancestorIds) {
+		if (getNode(ancestorId)) {
+			selectSingle(ancestorId);
+			return;
+		}
+	}
+
+	if (validSelected[0]) {
+		selectSingle(validSelected[0]);
+		return;
+	}
+
+	clearSelection();
+}
+
 async function refresh(): Promise<void> {
 	await syncTreeState();
 }
@@ -406,8 +546,16 @@ export const treeStore = {
 	getSelectedNodes,
 	getPrimarySelectedNode,
 	canJoinSelection,
+	getSiblingIds,
+	selectSiblingRange,
+	extendSelectionByOffset,
+	selectAllSiblings,
+	collapseSelectionToPrimary,
+	expandAncestors,
 	getVisibleNodeEntries,
 	getVisibleNodeIds,
 	restoreUIState,
+	captureSelectionSnapshot,
+	restoreSelectionSnapshot,
 	getPersistentState,
 };

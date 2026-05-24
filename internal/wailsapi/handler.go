@@ -2,6 +2,7 @@ package wailsapi
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,9 +19,16 @@ import (
 
 // Handler exposes bookmark operations to the Wails frontend.
 type Handler struct {
-	filePath string
-	tree     []bookmarks.Node
+	filePath  string
+	tree      []bookmarks.Node
+	undoStack []bookmarks.Command
+	redoStack []bookmarks.Command
 }
+
+var (
+	ErrNothingToUndo = errors.New("nothing to undo")
+	ErrNothingToRedo = errors.New("nothing to redo")
+)
 
 // NewHandler creates a new API handler.
 func NewHandler() *Handler {
@@ -36,6 +44,7 @@ func (h *Handler) LoadFile(path string) error {
 
 	h.filePath = path
 	h.tree = tree
+	h.clearHistory()
 	return nil
 }
 
@@ -67,86 +76,122 @@ func collectFolders(nodes []bookmarks.Node) []bookmarks.Node {
 
 // AddBookmark adds a bookmark to a folder and auto-saves.
 func (h *Handler) AddBookmark(parentID string, bm bookmarks.Bookmark) (string, error) {
-	var err error
-	h.tree, err = bookmarks.AddBookmark(h.tree, parentID, bm)
+	beforeIDs := collectNodeIDs(h.tree)
+	var createdID string
+	err := h.executeSnapshotCommand("Add Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		nextTree, err := bookmarks.AddBookmark(nodes, parentID, bm)
+		if err != nil {
+			return nil, err
+		}
+		if created := findNewNodeID(nextTree, beforeIDs); created != "" {
+			createdID = created
+		}
+		return nextTree, nil
+	})
 	if err != nil {
 		return "", err
 	}
-	if err := h.save(); err != nil {
-		return "", err
-	}
-	return bm.ID, nil
+	return createdID, nil
 }
 
 // AddFolder adds a folder and auto-saves.
 func (h *Handler) AddFolder(parentID string, name string) (string, error) {
-	var err error
-	h.tree, err = bookmarks.AddFolder(h.tree, parentID, name)
+	beforeIDs := collectNodeIDs(h.tree)
+	var createdID string
+	err := h.executeSnapshotCommand("Add Folder", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		nextTree, err := bookmarks.AddFolder(nodes, parentID, name)
+		if err != nil {
+			return nil, err
+		}
+		if created := findNewNodeID(nextTree, beforeIDs); created != "" {
+			createdID = created
+		}
+		return nextTree, nil
+	})
 	if err != nil {
 		return "", err
 	}
-	if err := h.save(); err != nil {
-		return "", err
-	}
-	return "", nil
+	return createdID, nil
 }
 
 // UpdateBookmark updates a bookmark and auto-saves.
 func (h *Handler) UpdateBookmark(id string, patch bookmarks.BookmarkPatch) error {
-	err := bookmarks.UpdateBookmark(h.tree, id, patch)
-	if err != nil {
-		return err
-	}
-	return h.save()
+	return h.executeSnapshotCommand("Edit Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		if err := bookmarks.UpdateBookmark(nodes, id, patch); err != nil {
+			return nil, err
+		}
+		return nodes, nil
+	})
 }
 
 // UpdateFolderName renames a folder and auto-saves.
 func (h *Handler) UpdateFolderName(id string, name string) error {
-	err := bookmarks.UpdateFolderName(h.tree, id, name)
-	if err != nil {
-		return err
-	}
-	return h.save()
+	return h.executeSnapshotCommand("Rename Folder", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		if err := bookmarks.UpdateFolderName(nodes, id, name); err != nil {
+			return nil, err
+		}
+		return nodes, nil
+	})
 }
 
 // DeleteNode deletes a node and auto-saves.
 func (h *Handler) DeleteNode(id string) error {
-	var err error
-	h.tree, err = bookmarks.DeleteNode(h.tree, id)
-	if err != nil {
-		return err
+	label := "Delete Bookmark"
+	if node := bookmarks.FindNode(h.tree, id); node != nil && node.Type == bookmarks.TypeFolder {
+		label = "Delete Folder"
 	}
-	return h.save()
+
+	return h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		return bookmarks.DeleteNode(nodes, id)
+	})
 }
 
 // DeleteNodes deletes multiple nodes and auto-saves once.
 func (h *Handler) DeleteNodes(ids []string) error {
-	var err error
-	h.tree, err = bookmarks.DeleteNodes(h.tree, ids)
-	if err != nil {
-		return err
+	label := fmt.Sprintf("Delete %d Items", len(ids))
+	if len(ids) > 0 {
+		if node := bookmarks.FindNode(h.tree, ids[0]); node != nil {
+			if node.Type == bookmarks.TypeFolder {
+				label = fmt.Sprintf("Delete %d Folders", len(ids))
+			} else {
+				label = fmt.Sprintf("Delete %d Bookmarks", len(ids))
+			}
+		}
 	}
-	return h.save()
+
+	return h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		return bookmarks.DeleteNodes(nodes, ids)
+	})
 }
 
 // MoveNode moves a node and auto-saves.
 func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) error {
-	var err error
-	h.tree, err = bookmarks.MoveNode(h.tree, nodeID, newParentID, newIndex)
-	if err != nil {
-		return err
+	label := "Move Bookmark"
+	if node := bookmarks.FindNode(h.tree, nodeID); node != nil && node.Type == bookmarks.TypeFolder {
+		label = "Move Folder"
 	}
-	return h.save()
+
+	return h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		return bookmarks.MoveNode(nodes, nodeID, newParentID, newIndex)
+	})
 }
 
 // MoveNodes moves multiple nodes and auto-saves once.
 func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) error {
-	var err error
-	h.tree, err = bookmarks.MoveNodes(h.tree, nodeIDs, targetFolderID)
-	if err != nil {
-		return err
+	label := fmt.Sprintf("Move %d Items", len(nodeIDs))
+	if len(nodeIDs) > 0 {
+		if node := bookmarks.FindNode(h.tree, nodeIDs[0]); node != nil {
+			if node.Type == bookmarks.TypeFolder {
+				label = fmt.Sprintf("Move %d Folders", len(nodeIDs))
+			} else {
+				label = fmt.Sprintf("Move %d Bookmarks", len(nodeIDs))
+			}
+		}
 	}
-	return h.save()
+
+	return h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		return bookmarks.MoveNodes(nodes, nodeIDs, targetFolderID)
+	})
 }
 
 // PreviewImportMerge loads another bookmark file and reports what would be merged.
@@ -174,13 +219,13 @@ func (h *Handler) ApplyImportMerge(path string) (bookmarks.MergeApplyResult, err
 		return bookmarks.MergeApplyResult{}, err
 	}
 
-	merged, result, err := bookmarks.ApplyMerge(h.tree, incoming)
+	working := bookmarks.CloneTree(h.tree)
+	merged, result, err := bookmarks.ApplyMerge(working, incoming)
 	if err != nil {
 		return bookmarks.MergeApplyResult{}, err
 	}
 
-	h.tree = merged
-	if err := h.save(); err != nil {
+	if err := h.commitSnapshotCommand("Import Merge", bookmarks.CloneTree(h.tree), merged); err != nil {
 		return bookmarks.MergeApplyResult{}, err
 	}
 
@@ -243,56 +288,64 @@ func (h *Handler) FetchFavicon(pageURL string) (string, error) {
 // FetchFaviconsForNodes refreshes bookmark favicons and saves once at the end.
 func (h *Handler) FetchFaviconsForNodes(ids []string) error {
 	client := &http.Client{Timeout: 5 * time.Second}
-	successes := 0
-	nodes, err := h.collectBookmarks(ids)
-	if err != nil {
-		return err
-	}
-
-	for _, node := range nodes {
-		icon, fetchErr := fetchFaviconWithClient(client, node.Bookmark.URL)
-		if fetchErr != nil || icon == "" {
-			continue
+	return h.executeSnapshotCommand("Refresh Favicons", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		successes := 0
+		bookmarksToUpdate, err := collectBookmarksFromTree(nodes, ids)
+		if err != nil {
+			return nil, err
 		}
-		node.Bookmark.Icon = icon
-		node.Bookmark.LastModified = time.Now()
-		successes++
-	}
 
-	if successes == 0 {
-		return fmt.Errorf("failed to fetch favicons for selected bookmarks")
-	}
+		for _, node := range bookmarksToUpdate {
+			icon, fetchErr := fetchFaviconWithClient(client, node.Bookmark.URL)
+			if fetchErr != nil || icon == "" || icon == node.Bookmark.Icon {
+				continue
+			}
+			node.Bookmark.Icon = icon
+			node.Bookmark.LastModified = time.Now()
+			successes++
+		}
 
-	return h.save()
+		if successes == 0 {
+			return nil, fmt.Errorf("failed to fetch favicons for selected bookmarks")
+		}
+
+		return nodes, nil
+	})
 }
 
 // RefreshTitlesForNodes refreshes bookmark titles and saves once at the end.
 func (h *Handler) RefreshTitlesForNodes(ids []string) error {
 	client := &http.Client{Timeout: 3 * time.Second}
-	successes := 0
-	nodes, err := h.collectBookmarks(ids)
-	if err != nil {
-		return err
-	}
-
-	for _, node := range nodes {
-		title, fetchErr := fetchPageTitleWithClient(client, node.Bookmark.URL)
-		if fetchErr != nil || title == "" {
-			continue
+	return h.executeSnapshotCommand("Refresh Titles", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+		successes := 0
+		bookmarksToUpdate, err := collectBookmarksFromTree(nodes, ids)
+		if err != nil {
+			return nil, err
 		}
-		node.Bookmark.Title = title
-		node.Bookmark.LastModified = time.Now()
-		successes++
-	}
 
-	if successes == 0 {
-		return fmt.Errorf("failed to refresh titles for selected bookmarks")
-	}
+		for _, node := range bookmarksToUpdate {
+			title, fetchErr := fetchPageTitleWithClient(client, node.Bookmark.URL)
+			if fetchErr != nil || title == "" || title == node.Bookmark.Title {
+				continue
+			}
+			node.Bookmark.Title = title
+			node.Bookmark.LastModified = time.Now()
+			successes++
+		}
 
-	return h.save()
+		if successes == 0 {
+			return nil, fmt.Errorf("failed to refresh titles for selected bookmarks")
+		}
+
+		return nodes, nil
+	})
 }
 
 func (h *Handler) collectBookmarks(ids []string) ([]*bookmarks.Node, error) {
+	return collectBookmarksFromTree(h.tree, ids)
+}
+
+func collectBookmarksFromTree(tree []bookmarks.Node, ids []string) ([]*bookmarks.Node, error) {
 	result := make([]*bookmarks.Node, 0, len(ids))
 	seen := make(map[string]struct{}, len(ids))
 
@@ -302,7 +355,7 @@ func (h *Handler) collectBookmarks(ids []string) ([]*bookmarks.Node, error) {
 		}
 		seen[id] = struct{}{}
 
-		node := bookmarks.FindNode(h.tree, id)
+		node := bookmarks.FindNode(tree, id)
 		if node == nil {
 			return nil, bookmarks.ErrNotFound
 		}
@@ -456,11 +509,15 @@ func (h *Handler) OpenURL(pageURL string) error {
 
 // save writes the current tree back to the HTML file.
 func (h *Handler) save() error {
+	return h.saveTree(h.tree)
+}
+
+func (h *Handler) saveTree(tree []bookmarks.Node) error {
 	if h.filePath == "" {
 		return nil
 	}
-	output := bookmarks.Serialize(h.tree)
-	if err := os.WriteFile(h.filePath, []byte(output), 0644); err != nil {
+	output := bookmarks.Serialize(tree)
+	if err := os.WriteFile(h.filePath, []byte(output), 0o644); err != nil {
 		return fmt.Errorf("failed to save bookmarks: %w", err)
 	}
 	return nil
@@ -469,6 +526,65 @@ func (h *Handler) save() error {
 // FilePath returns the currently loaded file path.
 func (h *Handler) FilePath() string {
 	return h.filePath
+}
+
+// GetHistoryState returns whether undo/redo is currently available.
+func (h *Handler) GetHistoryState() bookmarks.HistoryState {
+	state := bookmarks.HistoryState{
+		CanUndo: len(h.undoStack) > 0,
+		CanRedo: len(h.redoStack) > 0,
+	}
+	if state.CanUndo {
+		state.UndoLabel = h.undoStack[len(h.undoStack)-1].Label()
+	}
+	if state.CanRedo {
+		state.RedoLabel = h.redoStack[len(h.redoStack)-1].Label()
+	}
+	return state
+}
+
+// Undo reverts the last undoable command.
+func (h *Handler) Undo() (bookmarks.HistoryState, error) {
+	if len(h.undoStack) == 0 {
+		return h.GetHistoryState(), ErrNothingToUndo
+	}
+
+	command := h.undoStack[len(h.undoStack)-1]
+	nextTree, err := command.Undo(h.tree)
+	if err != nil {
+		return h.GetHistoryState(), err
+	}
+	if err := h.saveTree(nextTree); err != nil {
+		return h.GetHistoryState(), err
+	}
+
+	h.undoStack = h.undoStack[:len(h.undoStack)-1]
+	h.redoStack = append(h.redoStack, command)
+	h.tree = nextTree
+
+	return h.GetHistoryState(), nil
+}
+
+// Redo reapplies the most recently undone command.
+func (h *Handler) Redo() (bookmarks.HistoryState, error) {
+	if len(h.redoStack) == 0 {
+		return h.GetHistoryState(), ErrNothingToRedo
+	}
+
+	command := h.redoStack[len(h.redoStack)-1]
+	nextTree, err := command.Apply(h.tree)
+	if err != nil {
+		return h.GetHistoryState(), err
+	}
+	if err := h.saveTree(nextTree); err != nil {
+		return h.GetHistoryState(), err
+	}
+
+	h.redoStack = h.redoStack[:len(h.redoStack)-1]
+	h.undoStack = append(h.undoStack, command)
+	h.tree = nextTree
+
+	return h.GetHistoryState(), nil
 }
 
 func loadNodesFromPath(path string) ([]bookmarks.Node, error) {
@@ -483,4 +599,68 @@ func loadNodesFromPath(path string) ([]bookmarks.Node, error) {
 	}
 
 	return tree, nil
+}
+
+func (h *Handler) executeSnapshotCommand(label string, mutate func([]bookmarks.Node) ([]bookmarks.Node, error)) error {
+	before := bookmarks.CloneTree(h.tree)
+	working := bookmarks.CloneTree(h.tree)
+	nextTree, err := mutate(working)
+	if err != nil {
+		return err
+	}
+	if nextTree == nil {
+		nextTree = working
+	}
+
+	return h.commitSnapshotCommand(label, before, nextTree)
+}
+
+func (h *Handler) commitSnapshotCommand(label string, before []bookmarks.Node, after []bookmarks.Node) error {
+	if err := h.saveTree(after); err != nil {
+		return err
+	}
+
+	h.tree = bookmarks.CloneTree(after)
+	h.undoStack = append(h.undoStack, bookmarks.NewSnapshotCommand(label, before, after))
+	h.redoStack = nil
+	return nil
+}
+
+func (h *Handler) clearHistory() {
+	h.undoStack = nil
+	h.redoStack = nil
+}
+
+func collectNodeIDs(nodes []bookmarks.Node) map[string]struct{} {
+	ids := make(map[string]struct{})
+	var visit func([]bookmarks.Node)
+	visit = func(tree []bookmarks.Node) {
+		for _, node := range tree {
+			ids[node.ID()] = struct{}{}
+			if node.Type == bookmarks.TypeFolder && node.Folder != nil {
+				visit(node.Folder.Children)
+			}
+		}
+	}
+	visit(nodes)
+	return ids
+}
+
+func findNewNodeID(nodes []bookmarks.Node, existingIDs map[string]struct{}) string {
+	var visit func([]bookmarks.Node) string
+	visit = func(tree []bookmarks.Node) string {
+		for _, node := range tree {
+			if _, exists := existingIDs[node.ID()]; !exists {
+				return node.ID()
+			}
+			if node.Type == bookmarks.TypeFolder && node.Folder != nil {
+				if childID := visit(node.Folder.Children); childID != "" {
+					return childID
+				}
+			}
+		}
+		return ""
+	}
+
+	return visit(nodes)
 }

@@ -14,9 +14,60 @@
 	const visibleNodes = $derived(treeStore.getVisibleNodeEntries(rootNodes));
 	let showAddRootFolder = $state(false);
 	let showAddRootBookmark = $state(false);
+	let treeRef = $state<HTMLDivElement | undefined>(undefined);
+
+	export function focusTree(): void {
+		treeRef?.focus();
+	}
+
+	export function openRootBookmarkForm(): void {
+		showAddRootBookmark = true;
+		showAddRootFolder = false;
+	}
+
+	export function openRootFolderForm(): void {
+		showAddRootFolder = true;
+		showAddRootBookmark = false;
+	}
 
 	function handleTreeKeydown(event: KeyboardEvent) {
-		if (isSearching) return;
+		if ((event.ctrlKey || event.metaKey) && event.key === ' ') {
+			return;
+		}
+
+		if (isSearching) {
+			if (searchResults.length === 0) return;
+
+			const currentResultIndex = searchResults.findIndex((entry) => entry.nodeId === treeStore.selectedNodeId);
+			if (event.key === 'ArrowDown') {
+				event.preventDefault();
+				const nextResult = currentResultIndex >= 0 ? searchResults[currentResultIndex + 1] : searchResults[0];
+				if (nextResult) treeStore.selectSingle(nextResult.nodeId);
+				return;
+			}
+
+			if (event.key === 'ArrowUp') {
+				event.preventDefault();
+				const prevResult = currentResultIndex > 0 ? searchResults[currentResultIndex - 1] : searchResults[0];
+				if (prevResult) treeStore.selectSingle(prevResult.nodeId);
+				return;
+			}
+
+			if (event.key === 'Home') {
+				event.preventDefault();
+				if (searchResults[0]) treeStore.selectSingle(searchResults[0].nodeId);
+				return;
+			}
+
+			if (event.key === 'End') {
+				event.preventDefault();
+				const lastResult = searchResults[searchResults.length - 1];
+				if (lastResult) treeStore.selectSingle(lastResult.nodeId);
+				return;
+			}
+
+			return;
+		}
 
 		if (visibleNodes.length === 0) return;
 
@@ -24,6 +75,11 @@
 		const selectedEntry = currentIndex >= 0 ? visibleNodes[currentIndex] : null;
 
 		if (event.key === 'ArrowDown') {
+			if (event.shiftKey) {
+				event.preventDefault();
+				treeStore.extendSelectionByOffset(1);
+				return;
+			}
 			event.preventDefault();
 			const nextEntry = currentIndex >= 0 ? visibleNodes[currentIndex + 1] : visibleNodes[0];
 			if (nextEntry) treeStore.selectSingle(nextEntry.id);
@@ -31,8 +87,50 @@
 		}
 
 		if (event.key === 'ArrowUp') {
+			if (event.shiftKey) {
+				event.preventDefault();
+				treeStore.extendSelectionByOffset(-1);
+				return;
+			}
 			event.preventDefault();
 			const prevEntry = currentIndex > 0 ? visibleNodes[currentIndex - 1] : visibleNodes[0];
+			if (prevEntry) treeStore.selectSingle(prevEntry.id);
+			return;
+		}
+
+		if (event.key === 'Home') {
+			event.preventDefault();
+			if (event.shiftKey && treeStore.selectedNodeId) {
+				const siblingIds = treeStore.getSiblingIds(treeStore.selectedNodeId);
+				treeStore.selectSiblingRange(siblingIds[0] ?? treeStore.selectedNodeId);
+			} else if (visibleNodes[0]) {
+				treeStore.selectSingle(visibleNodes[0].id);
+			}
+			return;
+		}
+
+		if (event.key === 'End') {
+			event.preventDefault();
+			if (event.shiftKey && treeStore.selectedNodeId) {
+				const siblingIds = treeStore.getSiblingIds(treeStore.selectedNodeId);
+				treeStore.selectSiblingRange(siblingIds[siblingIds.length - 1] ?? treeStore.selectedNodeId);
+			} else {
+				const lastVisible = visibleNodes[visibleNodes.length - 1];
+				if (lastVisible) treeStore.selectSingle(lastVisible.id);
+			}
+			return;
+		}
+
+		if (event.key === 'PageDown') {
+			event.preventDefault();
+			const nextEntry = visibleNodes[Math.min(currentIndex >= 0 ? currentIndex + 10 : 10, visibleNodes.length - 1)];
+			if (nextEntry) treeStore.selectSingle(nextEntry.id);
+			return;
+		}
+
+		if (event.key === 'PageUp') {
+			event.preventDefault();
+			const prevEntry = visibleNodes[Math.max((currentIndex >= 0 ? currentIndex : 0) - 10, 0)];
 			if (prevEntry) treeStore.selectSingle(prevEntry.id);
 			return;
 		}
@@ -71,6 +169,7 @@
 			<button
 				class={`btn btn-sm btn-square ${showAddRootBookmark ? 'btn-primary' : 'btn-ghost'}`}
 				type="button"
+				data-keyboard-action="root-add-bookmark"
 				aria-label="New bookmark"
 				title="New bookmark"
 				onclick={() => {
@@ -94,6 +193,7 @@
 			<button
 				class={`btn btn-sm btn-square ${showAddRootFolder ? 'btn-secondary' : 'btn-ghost'}`}
 				type="button"
+				data-keyboard-action="root-add-folder"
 				aria-label="New folder"
 				title="New folder"
 				onclick={() => {
@@ -117,10 +217,6 @@
 		</div>
 	</div>
 
-	<div class="border-b border-base-300 bg-base-200/30 px-3 py-1.5 text-[11px] uppercase tracking-[0.12em] opacity-45">
-		Ctrl/Cmd-click to add. Shift-click for range.
-	</div>
-
 	{#if showAddRootBookmark}
 		<div class="border-b border-base-300 bg-base-200/40 p-3">
 			<AddBookmarkForm parentFolderId="" onAdded={() => showAddRootBookmark = false} />
@@ -133,7 +229,7 @@
 		</div>
 	{/if}
 
-<div class="flex-1 overflow-y-auto bg-base-100" role="tree" tabindex="0" onkeydown={handleTreeKeydown}>
+<div bind:this={treeRef} class="flex-1 overflow-y-auto bg-base-100" data-focus-zone="tree" role="tree" tabindex="0" onkeydown={handleTreeKeydown}>
 	{#if isSearching}
 		<!-- Search results view -->
 		<div class="p-2">

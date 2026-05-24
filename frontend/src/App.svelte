@@ -1,13 +1,20 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { treeStore } from "./lib/stores/treeStore.svelte.ts";
     import {
         ApplyImportMerge,
         CreateBookmarkFile,
+        DeleteNode,
+        DeleteNodes,
+        FetchFaviconsForNodes,
+        RefreshTitlesForNodes,
+        GetHistoryState,
         GetFilePath,
         OpenFilePicker,
         OpenImportFilePicker,
         PreviewImportMerge,
+        Redo,
+        Undo,
     } from "./lib/api";
     import { getErrorMessage } from "./lib/errors";
     import type { MergePreview } from "./lib/types";
@@ -21,12 +28,16 @@
         type PersistedUIState,
     } from "./lib/persistence";
     import { uiStore } from "./lib/stores/uiStore.svelte.ts";
+    import { searchStore } from "./lib/stores/searchStore.svelte.ts";
+    import { isFolderNode } from "./lib/types";
+    import { moveDialogStore } from "./lib/stores/moveDialogStore.svelte.ts";
     import SearchBar from "./lib/components/SearchBar.svelte";
     import BookmarkTree from "./lib/components/BookmarkTree.svelte";
     import DetailPanel from "./lib/components/DetailPanel.svelte";
     import ToastContainer from "./lib/components/ToastContainer.svelte";
     import ConfirmModal from "./lib/components/ConfirmModal.svelte";
     import ImportMergeDialog from "./lib/components/ImportMergeDialog.svelte";
+    import KeyboardShortcutsDialog from "./lib/components/KeyboardShortcutsDialog.svelte";
     import {
         Quit,
         WindowGetSize,
@@ -53,6 +64,16 @@
     let importMergePreviewLoading = $state(false);
     let importMergeApplyLoading = $state(false);
     let importMergeError = $state("");
+    let shortcutsDialogOpen = $state(false);
+    let searchInputRef = $state<HTMLInputElement | undefined>(undefined);
+    let bookmarkTreeRef = $state<
+        | {
+              focusTree?: () => void;
+              openRootBookmarkForm?: () => void;
+              openRootFolderForm?: () => void;
+          }
+        | undefined
+    >(undefined);
 
     async function initApp() {
         leftPaneWidth = persistedState.leftPaneWidth;
@@ -264,6 +285,20 @@
         }
     }
 
+    function registerSearchInput(
+        input: HTMLInputElement | undefined,
+    ): void {
+        searchInputRef = input;
+    }
+
+    function openShortcutsDialog(): void {
+        shortcutsDialogOpen = true;
+    }
+
+    function closeShortcutsDialog(): void {
+        shortcutsDialogOpen = false;
+    }
+
     function hasWailsRuntime(): boolean {
         return (
             typeof window !== "undefined" &&
@@ -348,11 +383,545 @@
             void persistWindowSize();
         }, 150);
     }
+
+    function isEditableTarget(target: EventTarget | null): boolean {
+        if (!(target instanceof HTMLElement)) {
+            return false;
+        }
+
+        const tagName = target.tagName.toLowerCase();
+        return (
+            target.isContentEditable ||
+            tagName === "input" ||
+            tagName === "textarea" ||
+            tagName === "select"
+        );
+    }
+
+    function getCurrentFocusZone(): "search" | "tree" | "detail" | "dialog" {
+        const activeElement = document.activeElement;
+        const zoneElement = activeElement instanceof HTMLElement
+            ? activeElement.closest<HTMLElement>("[data-focus-zone]")
+            : null;
+        const zone = zoneElement?.dataset.focusZone;
+        if (zone === "search" || zone === "tree" || zone === "detail" || zone === "dialog") {
+            return zone;
+        }
+        return "tree";
+    }
+
+    function focusSearch(): void {
+        searchInputRef?.focus();
+        searchInputRef?.select();
+    }
+
+    function focusTree(): void {
+        bookmarkTreeRef?.focusTree?.();
+    }
+
+    function focusDetail(): void {
+        const detail = document.querySelector<HTMLElement>('[data-focus-zone="detail"]');
+        detail?.focus();
+    }
+
+    function cycleFocusZone(): void {
+        const zoneOrder: Array<"search" | "tree" | "detail"> = ["search", "tree", "detail"];
+        const currentZone = getCurrentFocusZone();
+        const currentIndex = zoneOrder.indexOf(currentZone === "dialog" ? "detail" : currentZone);
+        const nextZone = zoneOrder[(currentIndex + 1 + zoneOrder.length) % zoneOrder.length];
+        if (nextZone === "search") focusSearch();
+        if (nextZone === "tree") focusTree();
+        if (nextZone === "detail") focusDetail();
+    }
+
+    async function focusDetailForSelection(): Promise<void> {
+        await tick();
+        focusDetail();
+    }
+
+    function clickKeyboardAction(action: string): boolean {
+        const target = document.querySelector<HTMLElement>(`[data-keyboard-action="${action}"]`);
+        if (!target || target.hasAttribute("disabled")) {
+            return false;
+        }
+        target.click();
+        return true;
+    }
+
+    function getPrimarySelectionParentFolderId(): string {
+        const primaryId = treeStore.primarySelectedNodeId;
+        if (!primaryId) return "";
+        return treeStore.getParentId(primaryId);
+    }
+
+    async function openAddBookmarkShortcut(): Promise<void> {
+        const selectedNode = treeStore.getPrimarySelectedNode();
+        if (selectedNode && isFolderNode(selectedNode)) {
+            if (!clickKeyboardAction("folder-add-bookmark")) {
+                return;
+            }
+            await tick();
+            document.querySelector<HTMLElement>('[data-keyboard-action="add-bookmark-url"]')?.focus();
+            return;
+        }
+
+        const parentId = getPrimarySelectionParentFolderId();
+        if (parentId) {
+            treeStore.selectSingle(parentId);
+            await focusDetailForSelection();
+            if (clickKeyboardAction("folder-add-bookmark")) {
+                await tick();
+                document.querySelector<HTMLElement>('[data-keyboard-action="add-bookmark-url"]')?.focus();
+            }
+            return;
+        }
+
+        bookmarkTreeRef?.openRootBookmarkForm?.();
+        await tick();
+        document.querySelector<HTMLElement>('[data-keyboard-action="add-bookmark-url"]')?.focus();
+    }
+
+    async function openAddFolderShortcut(): Promise<void> {
+        const selectedNode = treeStore.getPrimarySelectedNode();
+        if (selectedNode && isFolderNode(selectedNode)) {
+            if (!clickKeyboardAction("folder-add-folder")) {
+                return;
+            }
+            await tick();
+            document.querySelector<HTMLElement>('[data-keyboard-action="add-folder-name"]')?.focus();
+            return;
+        }
+
+        const parentId = getPrimarySelectionParentFolderId();
+        if (parentId) {
+            treeStore.selectSingle(parentId);
+            await focusDetailForSelection();
+            if (clickKeyboardAction("folder-add-folder")) {
+                await tick();
+                document.querySelector<HTMLElement>('[data-keyboard-action="add-folder-name"]')?.focus();
+            }
+            return;
+        }
+
+        bookmarkTreeRef?.openRootFolderForm?.();
+        await tick();
+        document.querySelector<HTMLElement>('[data-keyboard-action="add-folder-name"]')?.focus();
+    }
+
+    async function triggerEditShortcut(renameOnly = false): Promise<void> {
+        const selectedNode = treeStore.getPrimarySelectedNode();
+        if (!selectedNode) return;
+
+        if (isFolderNode(selectedNode)) {
+            if (clickKeyboardAction("folder-edit")) {
+                await tick();
+                document.querySelector<HTMLElement>('[data-keyboard-action="folder-name"]')?.focus();
+            }
+            return;
+        }
+
+        if (renameOnly) {
+            if (clickKeyboardAction("bookmark-edit")) {
+                await tick();
+                document.querySelector<HTMLElement>('[data-keyboard-action="bookmark-title"]')?.focus();
+            }
+            return;
+        }
+
+        if (clickKeyboardAction("bookmark-edit")) {
+            await tick();
+            document.querySelector<HTMLElement>('[data-keyboard-action="bookmark-title"]')?.focus();
+        }
+    }
+
+    function triggerOpenShortcut(): void {
+        clickKeyboardAction("bookmark-open");
+    }
+
+    function triggerMoveShortcut(): void {
+        if (treeStore.selectionCount > 1) {
+            const selectedNodes = treeStore.getSelectedNodes();
+            if (selectedNodes.length === 0) return;
+            moveDialogStore.showBulkMoveDialog(
+                treeStore.selectedNodeIds,
+                isFolderNode(selectedNodes[0]) ? "folder" : "bookmark",
+            );
+            return;
+        }
+
+        const selectedNode = treeStore.getPrimarySelectedNode();
+        if (!selectedNode) return;
+        moveDialogStore.showMoveDialog(
+            selectedNode.id,
+            isFolderNode(selectedNode)
+                ? selectedNode.folder.name
+                : selectedNode.bookmark.title || selectedNode.bookmark.url,
+            isFolderNode(selectedNode) ? "folder" : "bookmark",
+        );
+    }
+
+    function triggerDeleteShortcut(): void {
+        const selectedNodes = treeStore.getSelectedNodes();
+        if (selectedNodes.length === 0) return;
+
+        if (selectedNodes.length > 1) {
+            const label = isFolderNode(selectedNodes[0]) ? "Folders" : "Bookmarks";
+            uiStore.showConfirm(
+                `Delete ${label}`,
+                `Delete ${selectedNodes.length} selected ${label.toLowerCase()}?`,
+                "Delete",
+                async () => {
+                    try {
+                        await DeleteNodes(treeStore.selectedNodeIds);
+                        treeStore.clearSelection();
+                        await treeStore.refresh();
+                        uiStore.showToast(`${selectedNodes.length} ${label.toLowerCase()} deleted`, "success");
+                    } catch (caughtError: unknown) {
+                        uiStore.showToast(getErrorMessage(caughtError, "Bulk delete failed"), "error");
+                    }
+                },
+            );
+            return;
+        }
+
+        const selectedNode = selectedNodes[0];
+        const title = isFolderNode(selectedNode)
+            ? selectedNode.folder.name
+            : selectedNode.bookmark.title || selectedNode.bookmark.url;
+        const noun = isFolderNode(selectedNode) ? "Folder" : "Bookmark";
+        const message = isFolderNode(selectedNode)
+            ? `Delete "${title}" and all of its contents?`
+            : `Delete "${title}"?`;
+        uiStore.showConfirm(
+            `Delete ${noun}`,
+            message,
+            "Delete",
+            async () => {
+                try {
+                    await DeleteNode(selectedNode.id);
+                    treeStore.clearSelection();
+                    await treeStore.refresh();
+                    uiStore.showToast(`${noun} deleted`, "success");
+                } catch (caughtError: unknown) {
+                    uiStore.showToast(getErrorMessage(caughtError, `Failed to delete ${noun.toLowerCase()}`), "error");
+                }
+            },
+        );
+    }
+
+    async function triggerBulkRefreshShortcut(
+        kind: "favicons" | "titles",
+    ): Promise<void> {
+        const selectedNodes = treeStore.getSelectedNodes();
+        if (selectedNodes.length === 0 || isFolderNode(selectedNodes[0])) {
+            return;
+        }
+
+        try {
+            if (kind === "favicons") {
+                await FetchFaviconsForNodes(treeStore.selectedNodeIds);
+                uiStore.showToast("Favicons refreshed", "success");
+            } else {
+                await RefreshTitlesForNodes(treeStore.selectedNodeIds);
+                uiStore.showToast("Titles refreshed", "success");
+            }
+            await treeStore.refresh();
+        } catch (caughtError: unknown) {
+            uiStore.showToast(
+                getErrorMessage(
+                    caughtError,
+                    kind === "favicons"
+                        ? "Bulk favicon refresh failed"
+                        : "Bulk title refresh failed",
+                ),
+                "error",
+            );
+        }
+    }
+
+    function getSelectedSearchResultId(): string {
+        if (!searchStore.query) {
+            return "";
+        }
+
+        const selectedId = treeStore.selectedNodeId;
+        if (selectedId && searchStore.getResults().some((result) => result.nodeId === selectedId)) {
+            return selectedId;
+        }
+
+        return searchStore.getResults()[0]?.nodeId ?? "";
+    }
+
+    async function activateSearchResult(
+        mode: "detail" | "open",
+    ): Promise<void> {
+        const nodeId = getSelectedSearchResultId();
+        if (!nodeId) return;
+
+        treeStore.expandAncestors(nodeId);
+        treeStore.selectSingle(nodeId);
+
+        if (mode === "open") {
+            const node = treeStore.getNode(nodeId);
+            if (node && !isFolderNode(node)) {
+                await tick();
+                triggerOpenShortcut();
+            }
+            return;
+        }
+
+        await focusDetailForSelection();
+    }
+
+    function handleSearchInputKeydown(event: KeyboardEvent): void {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            if (searchStore.query) {
+                searchStore.setQuery("");
+            } else {
+                focusTree();
+            }
+            return;
+        }
+
+        if (event.key === "ArrowDown") {
+            event.preventDefault();
+            if (searchStore.query) {
+                const results = searchStore.getResults();
+                if (results[0]) {
+                    treeStore.expandAncestors(results[0].nodeId);
+                    treeStore.selectSingle(results[0].nodeId);
+                }
+            }
+            focusTree();
+            return;
+        }
+
+        if (event.key === "Enter" && searchStore.query) {
+            event.preventDefault();
+            void activateSearchResult(
+                event.ctrlKey || event.metaKey ? "open" : "detail",
+            );
+        }
+    }
+
+    async function runHistoryAction(direction: "undo" | "redo"): Promise<void> {
+        if (!currentFilePath) {
+            return;
+        }
+
+        const historyState = await GetHistoryState();
+        const canRun = direction === "undo" ? historyState.canUndo : historyState.canRedo;
+        const actionLabel = direction === "undo" ? historyState.undoLabel : historyState.redoLabel;
+        if (!canRun) {
+            return;
+        }
+
+        const selectionSnapshot = treeStore.captureSelectionSnapshot();
+
+        try {
+            if (direction === "undo") {
+                await Undo();
+            } else {
+                await Redo();
+            }
+            await treeStore.refresh();
+            treeStore.restoreSelectionSnapshot(selectionSnapshot);
+            uiStore.showToast(
+                `${direction === "undo" ? "Undid" : "Redid"} ${actionLabel || "action"}`,
+                "success",
+            );
+        } catch (caughtError: unknown) {
+            uiStore.showToast(
+                getErrorMessage(
+                    caughtError,
+                    `Failed to ${direction}`,
+                ),
+                "error",
+            );
+        }
+    }
+
+    function handleGlobalKeydown(event: KeyboardEvent): void {
+        const modifierPressed = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+        const editableTarget = isEditableTarget(event.target);
+
+        if (!editableTarget && !modifierPressed && !event.altKey) {
+            if (key === "f1" || (key === "?" && event.shiftKey)) {
+                event.preventDefault();
+                openShortcutsDialog();
+                return;
+            }
+
+            if (key === "/") {
+                event.preventDefault();
+                focusSearch();
+                return;
+            }
+
+            if (key === "f6") {
+                event.preventDefault();
+                cycleFocusZone();
+                return;
+            }
+
+            if (key === "escape") {
+                if (shortcutsDialogOpen) {
+                    event.preventDefault();
+                    closeShortcutsDialog();
+                    return;
+                }
+                if (uiStore.modal.open) return;
+                if (moveDialogStore.open) {
+                    event.preventDefault();
+                    moveDialogStore.closeMoveDialog();
+                    return;
+                }
+                if (treeStore.selectionCount > 1) {
+                    event.preventDefault();
+                    treeStore.collapseSelectionToPrimary();
+                    return;
+                }
+            }
+        }
+
+        if (editableTarget) {
+            return;
+        }
+
+        if (!modifierPressed && !event.altKey && currentFilePath) {
+            if (key === "a" && !event.shiftKey) {
+                event.preventDefault();
+                void openAddBookmarkShortcut();
+                return;
+            }
+            if (key === "a" && event.shiftKey) {
+                event.preventDefault();
+                void openAddFolderShortcut();
+                return;
+            }
+            if (key === "e") {
+                event.preventDefault();
+                void triggerEditShortcut(false);
+                return;
+            }
+            if (key === "f2") {
+                event.preventDefault();
+                void triggerEditShortcut(true);
+                return;
+            }
+            if (key === "o") {
+                event.preventDefault();
+                triggerOpenShortcut();
+                return;
+            }
+            if (key === "m") {
+                event.preventDefault();
+                triggerMoveShortcut();
+                return;
+            }
+            if (key === "delete" || key === "backspace") {
+                event.preventDefault();
+                triggerDeleteShortcut();
+                return;
+            }
+            if (key === "enter" && getCurrentFocusZone() === "tree") {
+                event.preventDefault();
+                if (searchStore.query) {
+                    void activateSearchResult(
+                        modifierPressed ? "open" : "detail",
+                    );
+                } else {
+                    void focusDetailForSelection();
+                }
+                return;
+            }
+        }
+
+        if (!modifierPressed || event.altKey) {
+            return;
+        }
+
+        const isUndo = key === "z" && !event.shiftKey;
+        const isRedo = key === "y" || (key === "z" && event.shiftKey);
+
+        if (isUndo || isRedo) {
+            event.preventDefault();
+            void runHistoryAction(isUndo ? "undo" : "redo");
+            return;
+        }
+
+        if (key === "enter" && getCurrentFocusZone() === "tree" && searchStore.query) {
+            event.preventDefault();
+            void activateSearchResult("open");
+            return;
+        }
+
+        if (key === "i" && event.shiftKey) {
+            event.preventDefault();
+            void openImportMerge();
+            return;
+        }
+
+        if (key === "a" && event.shiftKey) {
+            event.preventDefault();
+            treeStore.collapseSelectionToPrimary();
+            return;
+        }
+
+        if (key === "f" && event.shiftKey && currentFilePath) {
+            event.preventDefault();
+            void triggerBulkRefreshShortcut("favicons");
+            return;
+        }
+
+        if (key === "t" && event.shiftKey && currentFilePath) {
+            event.preventDefault();
+            void triggerBulkRefreshShortcut("titles");
+            return;
+        }
+
+        if (key === "f") {
+            event.preventDefault();
+            focusSearch();
+            return;
+        }
+
+        if (key === "o") {
+            event.preventDefault();
+            void openFile();
+            return;
+        }
+
+        if (key === "n") {
+            event.preventDefault();
+            void createFile();
+            return;
+        }
+
+        if (key === "a" && currentFilePath) {
+            event.preventDefault();
+            treeStore.selectAllSiblings();
+            return;
+        }
+
+        if (key === " " && getCurrentFocusZone() === "tree" && currentFilePath) {
+            event.preventDefault();
+            const changed = treeStore.toggleSelected(treeStore.selectedNodeId);
+            if (!changed) {
+                uiStore.showToast("Multi-select only supports matching sibling bookmarks or folders", "warning");
+            }
+            return;
+        }
+
+    }
 </script>
 
 <svelte:window
     onbeforeunload={persistWindowSize}
     onfocus={syncWindowState}
+    onkeydown={handleGlobalKeydown}
     onmousemove={handlePaneResize}
     onmouseup={stopPaneResize}
     onresize={schedulePersistWindowSize}
@@ -555,7 +1124,10 @@
         </div>
     {:else}
         <!-- Main app layout -->
-        <SearchBar>
+        <SearchBar
+            onInputReady={registerSearchInput}
+            onInputKeydown={handleSearchInputKeydown}
+        >
             {#snippet actions()}
                 <button
                     class="btn btn-sm btn-outline btn-secondary"
@@ -628,7 +1200,7 @@
                 class="min-w-0 overflow-y-auto bg-base-100"
                 style={`width: ${leftPaneWidth}px;`}
             >
-                <BookmarkTree />
+                <BookmarkTree bind:this={bookmarkTreeRef} />
             </div>
 
             <button
@@ -648,6 +1220,10 @@
     <!-- Global UI overlays -->
     <ToastContainer />
     <ConfirmModal />
+    <KeyboardShortcutsDialog
+        open={shortcutsDialogOpen}
+        onClose={closeShortcutsDialog}
+    />
     <ImportMergeDialog
         open={importMergeOpen}
         importPath={importMergePath}

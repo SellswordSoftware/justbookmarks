@@ -214,6 +214,24 @@ export namespace bookmarks {
 	        this.name = source["name"];
 	    }
 	}
+	export class HistoryState {
+	    canUndo: boolean;
+	    canRedo: boolean;
+	    undoLabel: string;
+	    redoLabel: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new HistoryState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.canUndo = source["canUndo"];
+	        this.canRedo = source["canRedo"];
+	        this.undoLabel = source["undoLabel"];
+	        this.redoLabel = source["redoLabel"];
+	    }
+	}
 	export class MergeApplyResult {
 	    foldersAdded: number;
 	    bookmarksAdded: number;

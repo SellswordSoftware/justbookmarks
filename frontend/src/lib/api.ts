@@ -5,6 +5,7 @@ import type {
 	BookmarkMergeItem,
 	BookmarkPatch,
 	FolderMergeItem,
+	HistoryState,
 	MergeApplyResult,
 	MergePreview,
 	TreeNode,
@@ -247,5 +248,50 @@ export async function ApplyImportMerge(path: string): Promise<MergeApplyResult> 
 		bookmarksAdded: result?.bookmarksAdded ?? 0,
 		duplicatesSkipped: result?.duplicatesSkipped ?? 0,
 		potentialUpdates: result?.potentialUpdates ?? 0,
+	};
+}
+
+export async function GetHistoryState(): Promise<HistoryState> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		return { canUndo: false, canRedo: false, undoLabel: '', redoLabel: '' };
+	}
+
+	const state = await handler.GetHistoryState();
+	return {
+		canUndo: state?.canUndo ?? false,
+		canRedo: state?.canRedo ?? false,
+		undoLabel: state?.undoLabel ?? '',
+		redoLabel: state?.redoLabel ?? '',
+	};
+}
+
+export async function Undo(): Promise<HistoryState> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	const state = await handler.Undo();
+	return {
+		canUndo: state?.canUndo ?? false,
+		canRedo: state?.canRedo ?? false,
+		undoLabel: state?.undoLabel ?? '',
+		redoLabel: state?.redoLabel ?? '',
+	};
+}
+
+export async function Redo(): Promise<HistoryState> {
+	const handler = getHandlerBindings();
+	if (!handler) {
+		throw new Error('Wails bridge not ready');
+	}
+
+	const state = await handler.Redo();
+	return {
+		canUndo: state?.canUndo ?? false,
+		canRedo: state?.canRedo ?? false,
+		undoLabel: state?.undoLabel ?? '',
+		redoLabel: state?.redoLabel ?? '',
 	};
 }

@@ -19,6 +19,8 @@
 	let lastAutoTitle = $state('');
 	let lastAutoIcon = $state('');
 	let fetchSequence = 0;
+	let urlInputRef = $state<HTMLInputElement | undefined>(undefined);
+	let hasAutofocused = $state(false);
 
 	function canFetchTitle(value: string): boolean {
 		try {
@@ -77,6 +79,15 @@
 		};
 	});
 
+	$effect(() => {
+		if (hasAutofocused || !urlInputRef) return;
+
+		hasAutofocused = true;
+		queueMicrotask(() => {
+			urlInputRef?.focus();
+		});
+	});
+
 	async function submit() {
 		if (!url.trim()) {
 			error = 'URL is required';
@@ -99,6 +110,19 @@
 		}
 	}
 
+	function handleFormKeydown(event: KeyboardEvent): void {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			onAdded?.();
+			return;
+		}
+
+		if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+			event.preventDefault();
+			void submit();
+		}
+	}
+
 </script>
 
 <div class="bg-base-200 rounded-lg p-3">
@@ -113,10 +137,13 @@
 	<div class="flex items-center gap-2 mb-2">
 		<div class="flex-1 relative">
 			<input
+				bind:this={urlInputRef}
 				type="url"
 				bind:value={url}
+				data-keyboard-action="add-bookmark-url"
 				class="input input-bordered input-sm w-full"
 				placeholder="https://example.com"
+				onkeydown={handleFormKeydown}
 			/>
 			{#if fetchingTitle}
 				<span class="loading loading-spinner loading-xs absolute right-2 top-1/2 -translate-y-1/2"></span>
@@ -126,11 +153,13 @@
 	<input
 		type="text"
 		bind:value={title}
+		data-keyboard-action="add-bookmark-title"
 		class="input input-bordered input-sm w-full mb-2"
 		placeholder="Title (auto-filled)"
+		onkeydown={handleFormKeydown}
 	/>
 	{#if error}
 		<p class="text-error text-xs mb-2">{error}</p>
 	{/if}
-	<button class="btn btn-sm btn-primary w-full" onclick={submit}>Add Bookmark</button>
+	<button class="btn btn-sm btn-primary w-full" data-keyboard-action="add-bookmark-submit" onclick={submit}>Add Bookmark</button>
 </div>

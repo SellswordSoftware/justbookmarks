@@ -23,6 +23,9 @@
 	let lastAutoTitle = $state('');
 	let lastAutoIcon = $state('');
 	let fetchSequence = 0;
+	let titleInputRef = $state<HTMLInputElement | undefined>(undefined);
+	let urlInputRef = $state<HTMLInputElement | undefined>(undefined);
+	let notesInputRef = $state<HTMLTextAreaElement | undefined>(undefined);
 	const notesFieldId = $derived(`bookmark-notes-${bookmark?.id ?? 'current'}`);
 	const displayIcon = $derived(editing ? (icon || bookmark.bookmark.icon) : bookmark.bookmark.icon);
 
@@ -102,6 +105,15 @@
 		};
 	});
 
+	$effect(() => {
+		if (!editing) return;
+
+		queueMicrotask(() => {
+			titleInputRef?.focus();
+			titleInputRef?.select();
+		});
+	});
+
 	async function saveBookmark() {
 		if (!url.trim()) {
 			titleError = 'URL is required';
@@ -119,6 +131,19 @@
 			uiStore.showToast('Bookmark updated', 'success');
 		} catch (caughtError: unknown) {
 			titleError = getErrorMessage(caughtError, 'Failed to update bookmark');
+		}
+	}
+
+	function handleEditKeydown(event: KeyboardEvent): void {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			editing = false;
+			return;
+		}
+
+		if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+			event.preventDefault();
+			void saveBookmark();
 		}
 	}
 
@@ -188,10 +213,13 @@
 				<div class="flex-1 min-w-0">
 					{#if editing}
 						<input
+							bind:this={titleInputRef}
 							type="text"
 							bind:value={title}
+							data-keyboard-action="bookmark-title"
 							class="input input-bordered input-sm w-full"
 							placeholder="Title"
+							onkeydown={handleEditKeydown}
 						/>
 					{:else}
 						<h2 class="text-lg font-semibold truncate text-balance">{bookmark.bookmark.title || '(Untitled)'}</h2>
@@ -200,12 +228,12 @@
 			</div>
 			<div class="flex shrink-0 flex-wrap justify-end gap-2">
 				{#if editing}
-					<button class="btn btn-sm btn-primary" onclick={saveBookmark}>Save</button>
-					<button class="btn btn-sm btn-ghost" onclick={() => editing = false}>Cancel</button>
+					<button class="btn btn-sm btn-primary" data-keyboard-action="bookmark-save" onclick={saveBookmark}>Save</button>
+					<button class="btn btn-sm btn-ghost" data-keyboard-action="bookmark-cancel" onclick={() => editing = false}>Cancel</button>
 				{:else}
-					<button class="btn btn-sm btn-ghost" onclick={() => editing = true}>Edit</button>
-					<button class="btn btn-sm btn-ghost" onclick={showMoveDialog}>Move...</button>
-					<button class="btn btn-sm btn-error btn-outline" onclick={showDeleteConfirm}>Delete</button>
+					<button class="btn btn-sm btn-ghost" data-keyboard-action="bookmark-edit" onclick={() => editing = true}>Edit</button>
+					<button class="btn btn-sm btn-ghost" data-keyboard-action="bookmark-move" onclick={showMoveDialog}>Move...</button>
+					<button class="btn btn-sm btn-error btn-outline" data-keyboard-action="bookmark-delete" onclick={showDeleteConfirm}>Delete</button>
 				{/if}
 			</div>
 		</div>
@@ -215,10 +243,13 @@
 			{#if editing}
 				<div class="flex-1 relative">
 					<input
+						bind:this={urlInputRef}
 						type="url"
 						bind:value={url}
+						data-keyboard-action="bookmark-url"
 						class="input input-bordered input-sm w-full"
 						placeholder="https://example.com"
+						onkeydown={handleEditKeydown}
 					/>
 					{#if fetchingTitle}
 						<span class="loading loading-spinner loading-xs absolute right-2 top-1/2 -translate-y-1/2"></span>
@@ -241,8 +272,8 @@
 
 		{#if !editing}
 			<div class="flex flex-wrap items-center gap-2 mb-2">
-				<button class="btn btn-sm btn-outline btn-primary" onclick={openInBrowser}>Open</button>
-				<button class="btn btn-sm btn-ghost" onclick={fetchFavicon} disabled={fetchingFavicon}>
+				<button class="btn btn-sm btn-outline btn-primary" data-keyboard-action="bookmark-open" onclick={openInBrowser}>Open</button>
+				<button class="btn btn-sm btn-ghost" data-keyboard-action="bookmark-fetch-favicon" onclick={fetchFavicon} disabled={fetchingFavicon}>
 					{#if fetchingFavicon}
 						<span class="loading loading-spinner loading-xs"></span>
 					{:else}
@@ -272,10 +303,13 @@
 		<label class="label-text text-xs opacity-50 mb-1 block" for={notesFieldId}>Notes</label>
 		{#if editing}
 			<textarea
+				bind:this={notesInputRef}
 				id={notesFieldId}
 				bind:value={meta}
+				data-keyboard-action="bookmark-meta"
 				class="textarea textarea-bordered w-full h-20"
 				placeholder="Add notes..."
+				onkeydown={handleEditKeydown}
 			></textarea>
 		{:else if meta}
 			<p class="text-sm whitespace-pre-wrap">{meta}</p>

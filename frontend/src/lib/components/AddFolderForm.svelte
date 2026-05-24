@@ -13,6 +13,8 @@
 
 	let name = $state('');
 	let error = $state('');
+	let nameInputRef = $state<HTMLInputElement | undefined>(undefined);
+	let hasAutofocused = $state(false);
 
 	async function submit() {
 		if (!name.trim()) {
@@ -31,6 +33,29 @@
 			uiStore.showToast(error, 'error');
 		}
 	}
+
+	function handleFormKeydown(event: KeyboardEvent): void {
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			onAdded?.();
+			return;
+		}
+
+		if (event.key === 'Enter' || ((event.ctrlKey || event.metaKey) && event.key === 'Enter')) {
+			event.preventDefault();
+			void submit();
+		}
+	}
+
+	$effect(() => {
+		if (hasAutofocused || !nameInputRef) return;
+
+		hasAutofocused = true;
+		queueMicrotask(() => {
+			nameInputRef?.focus();
+			nameInputRef?.select();
+		});
+	});
 </script>
 
 <div class="bg-base-200 rounded-lg p-3">
@@ -43,14 +68,16 @@
 		</button>
 	</div>
 	<input
+		bind:this={nameInputRef}
 		type="text"
 		bind:value={name}
+		data-keyboard-action="add-folder-name"
 		class="input input-bordered input-sm w-full mb-2"
 		placeholder="Folder name"
-		onkeydown={(event: KeyboardEvent) => { if (event.key === 'Enter') submit(); }}
+		onkeydown={handleFormKeydown}
 	/>
 	{#if error}
 		<p class="text-error text-xs mb-2">{error}</p>
 	{/if}
-	<button class="btn btn-sm btn-secondary w-full" onclick={submit}>Add Folder</button>
+	<button class="btn btn-sm btn-secondary w-full" data-keyboard-action="add-folder-submit" onclick={submit}>Add Folder</button>
 </div>
