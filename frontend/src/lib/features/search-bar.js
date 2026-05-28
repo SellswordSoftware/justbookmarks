@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, model } from "../naf-html.js";
+import { cleanupCollector, effect, model } from "../../shared/runtime/naf-html.js";
 import { searchState } from "../state/search-state.js";
 
 /**

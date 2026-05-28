@@ -1,10 +1,10 @@
 // @ts-check
 
-import { DeleteNode, UpdateFolderName } from "../api.js";
+import { DeleteNode, UpdateFolderName } from "../../shared/api/api.js";
 import { createAddBookmarkForm } from "./add-bookmark-form.js";
 import { createAddFolderForm } from "./add-folder-form.js";
-import { getErrorMessage } from "../errors.js";
-import { cleanupCollector, fx, model, signal } from "../naf-html.js";
+import { getErrorMessage } from "../../shared/infra/errors.js";
+import { cleanupCollector, fx, model, signal } from "../../shared/runtime/naf-html.js";
 import { moveDialogState } from "../state/move-dialog-state.js";
 import { treeState } from "../state/tree/tree-state.js";
 import { uiState } from "../state/ui-state.js";

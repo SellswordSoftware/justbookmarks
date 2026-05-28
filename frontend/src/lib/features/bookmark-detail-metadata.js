@@ -1,6 +1,6 @@
 // @ts-check
 
-import { FetchFavicon, FetchPageTitle } from "../api.js";
+import { FetchFavicon, FetchPageTitle } from "../../shared/api/api.js";
 
 /**
  * @param {string} value

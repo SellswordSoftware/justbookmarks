@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../naf-html.js";
+import { effect } from "../../shared/runtime/naf-html.js";
 import { appState } from "../state/app-state.js";
 import {
   Quit,

@@ -1,8 +1,8 @@
 // @ts-check
 
-import { ApplyImportMerge, OpenImportFilePicker, PreviewImportMerge } from "../api.js";
-import { getErrorMessage } from "../errors.js";
-import { signal } from "../naf-html.js";
+import { ApplyImportMerge, OpenImportFilePicker, PreviewImportMerge } from "../../shared/api/api.js";
+import { getErrorMessage } from "../../shared/infra/errors.js";
+import { signal } from "../../shared/runtime/naf-html.js";
 import { treeState } from "./tree/tree-state.js";
 import { uiState } from "./ui-state.js";
 

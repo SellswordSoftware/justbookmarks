@@ -4,13 +4,13 @@ import {
   CreateBookmarkFile,
   GetFilePath,
   OpenFilePicker,
-} from "../api.js";
+} from "../../shared/api/api.js";
 import {
   loadPersistedUIState,
   setLastOpenedFile,
   setWindowState,
-} from "../persistence.js";
-import { signal } from "../naf-html.js";
+} from "../../shared/infra/persistence.js";
+import { signal } from "../../shared/runtime/naf-html.js";
 import { importMergeState } from "./import-merge-state.js";
 import {
   WindowGetSize,

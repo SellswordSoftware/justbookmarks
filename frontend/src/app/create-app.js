@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../lib/naf-html.js";
+import { effect } from "../shared/runtime/naf-html.js";
 import { mountAppLifecycle } from "./lifecycle.js";
 import { bootstrapSession, createFile, openFile } from "./session.js";
 import { mountRootTreeActions, renderShellPlaceholder } from "./shell-actions.js";

@@ -1,7 +1,7 @@
 // @ts-check
 
-import { effect } from "../naf-html.js";
-import { setLeftPaneWidth } from "../persistence.js";
+import { effect } from "../../shared/runtime/naf-html.js";
+import { setLeftPaneWidth } from "../../shared/infra/persistence.js";
 import { appState } from "../state/app-state.js";
 
 const MIN_LEFT_PANE_WIDTH = 260;

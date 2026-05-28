@@ -1,7 +1,7 @@
 // @ts-check
 
-import { trapFocusInContainer } from "../focus.js";
-import { effect } from "../naf-html.js";
+import { trapFocusInContainer } from "../../shared/infra/focus.js";
+import { effect } from "../../shared/runtime/naf-html.js";
 import { uiState } from "../state/ui-state.js";
 
 /**

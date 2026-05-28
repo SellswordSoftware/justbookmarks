@@ -1,8 +1,8 @@
 // @ts-check
 
-import { GetFlatIndex, GetTree, LoadFile } from "../../api.js";
-import { getErrorMessage } from "../../errors.js";
-import { computed, signal } from "../../naf-html.js";
+import { GetFlatIndex, GetTree, LoadFile } from "../../../shared/api/api.js";
+import { getErrorMessage } from "../../../shared/infra/errors.js";
+import { computed, signal } from "../../../shared/runtime/naf-html.js";
 import { searchState } from "../search-state.js";
 import {
   expandAncestorIds,

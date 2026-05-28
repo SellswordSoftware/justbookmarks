@@ -1,6 +1,6 @@
 // @ts-check
 
-import { signal } from "../naf-html.js";
+import { signal } from "../../shared/runtime/naf-html.js";
 
 /**
  * UI state owner.

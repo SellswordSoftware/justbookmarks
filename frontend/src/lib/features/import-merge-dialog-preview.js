@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, list } from "../naf-html.js";
+import { cleanupCollector, effect, list } from "../../shared/runtime/naf-html.js";
 
 /**
  * @typedef {{ title: string, subtitle: string }} ImportMergePreviewRow

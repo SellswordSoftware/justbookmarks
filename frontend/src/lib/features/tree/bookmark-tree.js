@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, list } from "../../naf-html.js";
+import { effect, list } from "../../../shared/runtime/naf-html.js";
 import { searchState } from "../../state/search-state.js";
 import { treeState } from "../../state/tree/tree-state.js";
 import { createBookmarkTreeDndController } from "./bookmark-tree-dnd.js";

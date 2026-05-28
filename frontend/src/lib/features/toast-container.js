@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, list } from "../naf-html.js";
+import { effect, list } from "../../shared/runtime/naf-html.js";
 import { uiState } from "../state/ui-state.js";
 
 /** @typedef {import("../../types.js").ToastType} ToastType */

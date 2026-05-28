@@ -1,8 +1,12 @@
 // @ts-check
 
-import { DeleteNodes, FetchFaviconsForNodes, RefreshTitlesForNodes } from "../api.js";
-import { getErrorMessage } from "../errors.js";
-import { cleanupCollector, fx, signal } from "../naf-html.js";
+import {
+  DeleteNodes,
+  FetchFaviconsForNodes,
+  RefreshTitlesForNodes,
+} from "../../shared/api/api.js";
+import { getErrorMessage } from "../../shared/infra/errors.js";
+import { cleanupCollector, fx, signal } from "../../shared/runtime/naf-html.js";
 import { moveDialogState } from "../state/move-dialog-state.js";
 import { treeState } from "../state/tree/tree-state.js";
 import { uiState } from "../state/ui-state.js";
