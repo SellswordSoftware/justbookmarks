@@ -1,8 +1,8 @@
 // @ts-check
 
-import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { effect } from "../../shared/runtime/naf-html.js";
-import { uiState } from "../../shared/state/ui-state.js";
+import { trapFocusInContainer } from "../../../shared/infra/focus.js";
+import { effect } from "../../../shared/runtime/naf-html.js";
+import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
  * @param {ParentNode} root

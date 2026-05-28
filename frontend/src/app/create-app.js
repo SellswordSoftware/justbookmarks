@@ -8,23 +8,23 @@ import {
   collectBookmarkTreeShell,
   mountBookmarkTree,
 } from "../domains/tree/view/bookmark-tree.js";
-import { collectConfirmModalShell, mountConfirmModal } from "../lib/features/confirm-modal.js";
+import { collectConfirmModalShell, mountConfirmModal } from "../domains/dialogs/confirm/confirm-modal.js";
 import {
   collectDetailPanelShell,
   mountDetailPanel,
 } from "../domains/detail/view/detail-panel.js";
 import { mountGlobalShortcuts } from "../lib/features/global-shortcuts.js";
 import { collectLayoutShell, mountLayout } from "../lib/features/layout.js";
-import { collectMoveDialogShell, mountMoveDialog } from "../lib/features/move-dialog.js";
+import { collectMoveDialogShell, mountMoveDialog } from "../domains/dialogs/move/move-dialog.js";
 import { collectSearchBarShell, mountSearchBar } from "../domains/search/view/search-bar.js";
 import {
   collectKeyboardShortcutsDialogShell,
   mountKeyboardShortcutsDialog,
-} from "../lib/features/keyboard-shortcuts-dialog.js";
+} from "../domains/dialogs/keyboard-shortcuts/keyboard-shortcuts-dialog.js";
 import {
   collectImportMergeDialogShell,
   mountImportMergeDialog,
-} from "../lib/features/import-merge-dialog.js";
+} from "../domains/dialogs/import-merge/import-merge-dialog.js";
 import { collectToastContainerShell, mountToastContainer } from "../lib/features/toast-container.js";
 import { collectTitlebarShell, mountTitlebar } from "../lib/features/titlebar.js";
 import { treeState } from "../domains/tree/state/tree-state.js";

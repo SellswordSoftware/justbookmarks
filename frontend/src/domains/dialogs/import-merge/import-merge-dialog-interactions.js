@@ -1,8 +1,8 @@
 // @ts-check
 
-import { cleanupCollector } from "../../shared/runtime/naf-html.js";
-import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { importMergeState } from "../state/import-merge-state.js";
+import { cleanupCollector } from "../../../shared/runtime/naf-html.js";
+import { trapFocusInContainer } from "../../../shared/infra/focus.js";
+import { importMergeState } from "./import-merge-state.js";
 
 /**
  * @param {{
@@ -13,7 +13,7 @@ import { importMergeState } from "../state/import-merge-state.js";
  *   cancelButton: HTMLButtonElement,
  *   applyButton: HTMLButtonElement,
  * }} elements
- * @param {{ preview: import("../../types.js").MergePreview | null, previewLoading: boolean, applyLoading: boolean }} view
+ * @param {{ preview: import("../../../types.js").MergePreview | null, previewLoading: boolean, applyLoading: boolean }} view
  * @returns {() => void}
  */
 export function bindImportMergeDialogInteractions(elements, view) {

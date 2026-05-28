@@ -7,7 +7,7 @@ import {
 } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { cleanupCollector, fx, signal } from "../../../shared/runtime/naf-html.js";
-import { moveDialogState } from "../../../lib/state/move-dialog-state.js";
+import { moveDialogState } from "../../dialogs/move/move-dialog-state.js";
 import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 

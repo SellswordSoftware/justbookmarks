@@ -1,11 +1,11 @@
 // @ts-check
 
-import { moveDialogState } from "../state/move-dialog-state.js";
+import { moveDialogState } from "../../domains/dialogs/move/move-dialog-state.js";
 import { searchState } from "../../domains/search/state/search-state.js";
 import { treeState } from "../../domains/tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
 import { appState } from "../../shared/state/app-state.js";
-import { importMergeState } from "../state/import-merge-state.js";
+import { importMergeState } from "../../domains/dialogs/import-merge/import-merge-state.js";
 import {
   focusDetail,
   focusDetailForSelection,

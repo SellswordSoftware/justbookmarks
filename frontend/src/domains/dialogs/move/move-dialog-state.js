@@ -1,6 +1,6 @@
 // @ts-check
 
-import { computed, signal } from "../../shared/runtime/naf-html.js";
+import { computed, signal } from "../../../shared/runtime/naf-html.js";
 
 /**
  * Move dialog state owner.
@@ -12,9 +12,9 @@ import { computed, signal } from "../../shared/runtime/naf-html.js";
  * - excluded-descendant logic for folder moves
  */
 
-/** @typedef {import("../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../types.js").MoveDialogRequest} MoveDialogRequest */
-/** @typedef {import("../../types.js").MoveTarget} MoveTarget */
+/** @typedef {import("../../../types.js").TreeNode} TreeNode */
+/** @typedef {import("../../../types.js").MoveDialogRequest} MoveDialogRequest */
+/** @typedef {import("../../../types.js").MoveTarget} MoveTarget */
 
 const open = signal(false);
 const request = signal(/** @type {MoveDialogRequest | null} */ (null));

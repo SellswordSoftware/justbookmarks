@@ -1,8 +1,8 @@
 // @ts-check
 
-import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { effect } from "../../shared/runtime/naf-html.js";
-import { appState } from "../../shared/state/app-state.js";
+import { trapFocusInContainer } from "../../../shared/infra/focus.js";
+import { effect } from "../../../shared/runtime/naf-html.js";
+import { appState } from "../../../shared/state/app-state.js";
 
 const groups = [
   {

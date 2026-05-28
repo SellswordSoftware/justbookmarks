@@ -5,7 +5,7 @@ import { createAddBookmarkForm } from "../../../lib/features/add-bookmark-form.j
 import { createAddFolderForm } from "../../../lib/features/add-folder-form.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { cleanupCollector, fx, model, signal } from "../../../shared/runtime/naf-html.js";
-import { moveDialogState } from "../../../lib/state/move-dialog-state.js";
+import { moveDialogState } from "../../dialogs/move/move-dialog-state.js";
 import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 

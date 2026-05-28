@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, list } from "../../shared/runtime/naf-html.js";
+import { cleanupCollector, effect, list } from "../../../shared/runtime/naf-html.js";
 
 /**
  * @typedef {{ title: string, subtitle: string }} ImportMergePreviewRow
@@ -8,7 +8,7 @@ import { cleanupCollector, effect, list } from "../../shared/runtime/naf-html.js
  */
 
 /**
- * @param {import("../../types.js").MergePreview} preview
+ * @param {import("../../../types.js").MergePreview} preview
  * @returns {ImportMergePreviewSection[]}
  */
 export function buildImportMergePreviewSections(preview) {
@@ -50,7 +50,7 @@ export function buildImportMergePreviewSections(preview) {
 
 /**
  * @param {HTMLElement} body
- * @param {import("../../types.js").MergePreview | null} preview
+ * @param {import("../../../types.js").MergePreview | null} preview
  * @param {boolean} previewLoading
  * @returns {() => void}
  */

@@ -1,15 +1,15 @@
 // @ts-check
 
-import { MoveNode, MoveNodes } from "../../shared/api/api.js";
-import { getErrorMessage } from "../../shared/infra/errors.js";
-import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, list } from "../../shared/runtime/naf-html.js";
-import { moveDialogState } from "../state/move-dialog-state.js";
-import { treeState } from "../../domains/tree/state/tree-state.js";
-import { uiState } from "../../shared/state/ui-state.js";
+import { MoveNode, MoveNodes } from "../../../shared/api/api.js";
+import { getErrorMessage } from "../../../shared/infra/errors.js";
+import { trapFocusInContainer } from "../../../shared/infra/focus.js";
+import { cleanupCollector, effect, list } from "../../../shared/runtime/naf-html.js";
+import { moveDialogState } from "./move-dialog-state.js";
+import { treeState } from "../../tree/state/tree-state.js";
+import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
- * @typedef {import("../../types.js").MoveTarget} MoveTarget
+ * @typedef {import("../../../types.js").MoveTarget} MoveTarget
  */
 
 /**

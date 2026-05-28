@@ -1,7 +1,7 @@
 // @ts-check
 
-import { effect } from "../../shared/runtime/naf-html.js";
-import { importMergeState } from "../state/import-merge-state.js";
+import { effect } from "../../../shared/runtime/naf-html.js";
+import { importMergeState } from "./import-merge-state.js";
 import { bindImportMergeDialogInteractions } from "./import-merge-dialog-interactions.js";
 import { mountImportMergePreview } from "./import-merge-dialog-preview.js";
 import { createImportMergeDialogShell } from "./import-merge-dialog-shell.js";

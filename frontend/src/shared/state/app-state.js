@@ -11,7 +11,7 @@ import {
   setWindowState,
 } from "../../shared/infra/persistence.js";
 import { signal } from "../../shared/runtime/naf-html.js";
-import { importMergeState } from "../../lib/state/import-merge-state.js";
+import { importMergeState } from "../../domains/dialogs/import-merge/import-merge-state.js";
 import {
   WindowGetSize,
   WindowIsMaximised,
