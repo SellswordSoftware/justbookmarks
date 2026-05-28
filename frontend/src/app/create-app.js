@@ -3,7 +3,7 @@
 import { effect } from "../shared/runtime/naf-html.js";
 import { mountAppLifecycle } from "./lifecycle.js";
 import { bootstrapSession, createFile, openFile } from "./session.js";
-import { mountRootTreeActions, renderShellPlaceholder } from "./shell-actions.js";
+import { mountRootTreeActions, mountToolbarActions } from "./shell-actions.js";
 import {
   collectBookmarkTreeShell,
   mountBookmarkTree,
@@ -147,9 +147,10 @@ function mountShellStatus(shell) {
  */
 export function createApp(root) {
   const shell = collectShell(root);
-  renderShellPlaceholder(shell, {
+  const toolbarActions = mountToolbarActions(shell, {
     openFile: () => openFile(shell),
     createFile: () => createFile(shell),
+    importFile: () => appState.actions.openImportMerge(),
   });
   const status = mountShellStatus(shell);
   const rootTreeActions = mountRootTreeActions(shell);
@@ -186,6 +187,7 @@ export function createApp(root) {
       bookmarkTree,
       detailPanel,
       rootTreeActions,
+      toolbarActions,
       status,
     ],
   });

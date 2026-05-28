@@ -248,7 +248,7 @@ func TestUndoRedoTracksHistoryForRename(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID()
+	folderID := handler.GetTree()[0].ID
 
 	if err := handler.UpdateFolderName(folderID, "Projects"); err != nil {
 		t.Fatalf("UpdateFolderName returned error: %v", err)
@@ -300,7 +300,7 @@ func TestNewCommandClearsRedoStack(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID()
+	folderID := handler.GetTree()[0].ID
 
 	if err := handler.UpdateFolderName(folderID, "Projects"); err != nil {
 		t.Fatalf("UpdateFolderName returned error: %v", err)
@@ -328,7 +328,7 @@ func TestLoadFileClearsHistory(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID()
+	folderID := handler.GetTree()[0].ID
 
 	if err := handler.UpdateFolderName(folderID, "Projects"); err != nil {
 		t.Fatalf("UpdateFolderName returned error: %v", err)
@@ -372,7 +372,7 @@ func TestFailedSaveDoesNotMutateTreeOrHistory(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID()
+	folderID := handler.GetTree()[0].ID
 
 	handler.filePath = t.TempDir()
 

@@ -49,8 +49,8 @@ func (h *Handler) LoadFile(path string) error {
 }
 
 // GetTree returns the current bookmark tree.
-func (h *Handler) GetTree() []bookmarks.Node {
-	return h.tree
+func (h *Handler) GetTree() []NodeDTO {
+	return toNodeDTOs(h.tree)
 }
 
 // GetFlatIndex returns a flat index of all bookmarks for search.
@@ -59,8 +59,8 @@ func (h *Handler) GetFlatIndex() []bookmarks.BookmarkIndexEntry {
 }
 
 // GetAllFolders returns all folder nodes in the tree (for move target selection).
-func (h *Handler) GetAllFolders() []bookmarks.Node {
-	return collectFolders(h.tree)
+func (h *Handler) GetAllFolders() []NodeDTO {
+	return toNodeDTOs(collectFolders(h.tree))
 }
 
 func collectFolders(nodes []bookmarks.Node) []bookmarks.Node {
@@ -75,11 +75,11 @@ func collectFolders(nodes []bookmarks.Node) []bookmarks.Node {
 }
 
 // AddBookmark adds a bookmark to a folder and auto-saves.
-func (h *Handler) AddBookmark(parentID string, bm bookmarks.Bookmark) (string, error) {
+func (h *Handler) AddBookmark(parentID string, bm BookmarkCreateDTO) (string, error) {
 	beforeIDs := collectNodeIDs(h.tree)
 	var createdID string
 	err := h.executeSnapshotCommand("Add Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		nextTree, err := bookmarks.AddBookmark(nodes, parentID, bm)
+		nextTree, err := bookmarks.AddBookmark(nodes, parentID, toBookmarkCreate(bm))
 		if err != nil {
 			return nil, err
 		}
@@ -115,9 +115,9 @@ func (h *Handler) AddFolder(parentID string, name string) (string, error) {
 }
 
 // UpdateBookmark updates a bookmark and auto-saves.
-func (h *Handler) UpdateBookmark(id string, patch bookmarks.BookmarkPatch) error {
+func (h *Handler) UpdateBookmark(id string, patch BookmarkPatchDTO) error {
 	return h.executeSnapshotCommand("Edit Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		if err := bookmarks.UpdateBookmark(nodes, id, patch); err != nil {
+		if err := bookmarks.UpdateBookmark(nodes, id, toBookmarkPatch(patch)); err != nil {
 			return nil, err
 		}
 		return nodes, nil

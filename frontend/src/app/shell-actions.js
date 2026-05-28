@@ -1,7 +1,9 @@
 // @ts-check
 
-import { createAddBookmarkForm } from "../lib/features/add-bookmark-form.js";
-import { createAddFolderForm } from "../lib/features/add-folder-form.js";
+import { effect } from "../shared/runtime/naf-html.js";
+import { appState } from "../shared/state/app-state.js";
+import { createAddBookmarkForm } from "../domains/editing/add-bookmark-form.js";
+import { createAddFolderForm } from "../domains/editing/add-folder-form.js";
 
 /**
  * @typedef {object} AppShellActionsShell
@@ -51,14 +53,29 @@ function initializeTreeHeaderAction(wrapper, label, iconClassName) {
 
 /**
  * @param {AppShellActionsShell} shell
- * @param {{ openFile: () => Promise<void>, createFile: () => Promise<void> }} actions
- * @returns {void}
+ * @param {{
+ *   openFile: () => Promise<void>,
+ *   createFile: () => Promise<void>,
+ *   importFile: () => Promise<void>
+ * }} actions
+ * @returns {{ cleanup: () => void }}
  */
-export function renderShellPlaceholder(shell, actions) {
+export function mountToolbarActions(shell, actions) {
   shell.toolbarActions.replaceChildren();
 
   createToolbarButton(shell, "Open File", actions.openFile);
   createToolbarButton(shell, "Create File", actions.createFile);
+  const importButton = createToolbarButton(shell, "Import File", actions.importFile);
+
+  const stop = effect(() => {
+    importButton.disabled = !appState.selectors.getCurrentFilePath();
+  });
+
+  return {
+    cleanup() {
+      stop();
+    },
+  };
 }
 
 /**

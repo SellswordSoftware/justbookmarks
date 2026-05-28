@@ -1,8 +1,8 @@
 // @ts-check
 
 import { DeleteNode, UpdateFolderName } from "../../../shared/api/api.js";
-import { createAddBookmarkForm } from "../../../lib/features/add-bookmark-form.js";
-import { createAddFolderForm } from "../../../lib/features/add-folder-form.js";
+import { createAddBookmarkForm } from "../../editing/add-bookmark-form.js";
+import { createAddFolderForm } from "../../editing/add-folder-form.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { cleanupCollector, fx, model, signal } from "../../../shared/runtime/naf-html.js";
 import { moveDialogState } from "../../dialogs/move/move-dialog-state.js";
