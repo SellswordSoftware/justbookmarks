@@ -4,7 +4,7 @@ import { ApplyImportMerge, OpenImportFilePicker, PreviewImportMerge } from "../.
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { signal } from "../../shared/runtime/naf-html.js";
 import { treeState } from "./tree/tree-state.js";
-import { uiState } from "./ui-state.js";
+import { uiState } from "../../shared/state/ui-state.js";
 
 /** @typedef {import("../../types.js").MergePreview} MergePreview */
 

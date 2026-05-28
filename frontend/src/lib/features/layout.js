@@ -2,7 +2,7 @@
 
 import { effect } from "../../shared/runtime/naf-html.js";
 import { setLeftPaneWidth } from "../../shared/infra/persistence.js";
-import { appState } from "../state/app-state.js";
+import { appState } from "../../shared/state/app-state.js";
 
 const MIN_LEFT_PANE_WIDTH = 260;
 const RIGHT_PANE_MIN_WIDTH = 320;

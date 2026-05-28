@@ -9,7 +9,7 @@ import {
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { moveDialogState } from "../state/move-dialog-state.js";
 import { treeState } from "../state/tree/tree-state.js";
-import { uiState } from "../state/ui-state.js";
+import { uiState } from "../../shared/state/ui-state.js";
 import {
   clickKeyboardAction,
   focusDetailForSelection,

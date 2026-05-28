@@ -3,8 +3,8 @@
 import { moveDialogState } from "../state/move-dialog-state.js";
 import { searchState } from "../state/search-state.js";
 import { treeState } from "../state/tree/tree-state.js";
-import { uiState } from "../state/ui-state.js";
-import { appState } from "../state/app-state.js";
+import { uiState } from "../../shared/state/ui-state.js";
+import { appState } from "../../shared/state/app-state.js";
 import { importMergeState } from "../state/import-merge-state.js";
 import {
   focusDetail,

@@ -1,7 +1,7 @@
 // @ts-check
 
 import { effect } from "../../shared/runtime/naf-html.js";
-import { appState } from "../state/app-state.js";
+import { appState } from "../../shared/state/app-state.js";
 import {
   Quit,
   WindowMinimise,

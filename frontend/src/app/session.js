@@ -2,9 +2,9 @@
 
 import { getErrorMessage } from "../shared/infra/errors.js";
 import { clearLastOpenedFile } from "../shared/infra/persistence.js";
-import { appState } from "../lib/state/app-state.js";
+import { appState } from "../shared/state/app-state.js";
 import { treeState } from "../lib/state/tree/tree-state.js";
-import { uiState } from "../lib/state/ui-state.js";
+import { uiState } from "../shared/state/ui-state.js";
 
 /**
  * @typedef {object} AppSessionShell

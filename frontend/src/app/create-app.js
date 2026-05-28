@@ -28,7 +28,7 @@ import {
 import { collectToastContainerShell, mountToastContainer } from "../lib/features/toast-container.js";
 import { collectTitlebarShell, mountTitlebar } from "../lib/features/titlebar.js";
 import { treeState } from "../lib/state/tree/tree-state.js";
-import { appState } from "../lib/state/app-state.js";
+import { appState } from "../shared/state/app-state.js";
 
 /** @typedef {import("../types.js").TreeNode} TreeNode */
 

@@ -2,9 +2,9 @@
 
 import { GetHistoryState, Redo, Undo } from "../../shared/api/api.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
-import { appState } from "../state/app-state.js";
+import { appState } from "../../shared/state/app-state.js";
 import { treeState } from "../state/tree/tree-state.js";
-import { uiState } from "../state/ui-state.js";
+import { uiState } from "../../shared/state/ui-state.js";
 
 /**
  * @param {"undo" | "redo"} direction
