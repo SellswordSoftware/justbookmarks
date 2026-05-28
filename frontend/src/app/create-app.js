@@ -13,7 +13,7 @@ import {
   collectDetailPanelShell,
   mountDetailPanel,
 } from "../domains/detail/view/detail-panel.js";
-import { mountGlobalShortcuts } from "../lib/features/global-shortcuts.js";
+import { mountGlobalShortcuts } from "../domains/shortcuts/global-shortcuts.js";
 import { collectLayoutShell, mountLayout } from "../lib/features/layout.js";
 import { collectMoveDialogShell, mountMoveDialog } from "../domains/dialogs/move/move-dialog.js";
 import { collectSearchBarShell, mountSearchBar } from "../domains/search/view/search-bar.js";
