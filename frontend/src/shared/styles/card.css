@@ -1,0 +1,14 @@
+.card {
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: var(--radius-box);
+  background: var(--color-surface-1);
+}
+
+.card-body {
+  padding: 0.75rem 0.875rem;
+}
+
+.card-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+}

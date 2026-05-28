@@ -1,0 +1,362 @@
+.move-dialog {
+  width: min(32rem, 100%);
+}
+
+.move-dialog__header {
+  align-items: flex-start;
+}
+
+.move-dialog__list-shell {
+  overflow: hidden;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.375rem;
+  background: var(--color-base-100);
+}
+
+.move-dialog__list-header {
+  padding: 0.75rem 0.875rem;
+  border-bottom: var(--border) solid var(--color-border-faint);
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.move-dialog__listbox {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 18rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.move-dialog__empty {
+  padding: 1.5rem 0.75rem;
+  color: var(--color-muted);
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.move-dialog__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 0.625rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.625rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-dialog__option:hover,
+.move-dialog__option:focus-visible {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.move-dialog__option.is-selected {
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.move-dialog__option-icon {
+  flex: 0 0 auto;
+  margin-top: 0.125rem;
+}
+
+.move-dialog__option-content {
+  display: grid;
+  min-width: 0;
+}
+
+.move-dialog__option-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.move-dialog__option-path {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.move-dialog__option.is-selected .move-dialog__option-path {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.confirm-modal {
+  width: min(24rem, 100%);
+}
+
+.confirm-modal__body {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.confirm-modal__message {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.shortcuts-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(48rem, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+}
+
+.shortcuts-dialog__header {
+  align-items: flex-start;
+}
+
+.shortcuts-dialog__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.shortcuts-dialog__subtitle {
+  margin-top: 0.25rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.shortcuts-dialog__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.shortcuts-dialog__section {
+  overflow: hidden;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.875rem;
+  background: rgba(23, 32, 51, 0.5);
+}
+
+.shortcuts-dialog__section-header {
+  padding: 0.875rem 1rem;
+  border-bottom: var(--border) solid var(--color-border-faint);
+}
+
+.shortcuts-dialog__section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.shortcuts-dialog__rows {
+  display: grid;
+}
+
+.shortcuts-dialog__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-top: var(--border) solid var(--color-border-faint);
+}
+
+.shortcuts-dialog__row:first-child {
+  border-top: 0;
+}
+
+.shortcuts-dialog__kbd {
+  padding: 0.35rem 0.625rem;
+  border: var(--border) solid var(--color-border-soft);
+  border-radius: var(--radius-selector);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.shortcuts-dialog__action {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.import-merge-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(64rem, 100%);
+  max-height: calc(100vh - 2rem);
+}
+
+.import-merge-dialog__body {
+  display: grid;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.import-merge-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.import-merge-dialog__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.import-merge-dialog__subtitle,
+.import-merge-dialog__loading-text,
+.import-merge-dialog__empty,
+.import-merge-dialog__stat-desc,
+.import-merge-dialog__row-subtitle {
+  color: var(--color-muted);
+}
+
+.import-merge-dialog__subtitle {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.import-merge-dialog__file-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.import-merge-dialog__file-meta {
+  min-width: 0;
+}
+
+.import-merge-dialog__file-label {
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.import-merge-dialog__file-value {
+  margin-top: 0.25rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-merge-dialog__loading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.875rem;
+}
+
+.import-merge-dialog__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.import-merge-dialog__stat {
+  padding: 0.875rem 1rem;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.import-merge-dialog__stat-label {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.import-merge-dialog__stat-value {
+  margin-top: 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.import-merge-dialog__stat-desc {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+}
+
+.import-merge-dialog__sections {
+  display: grid;
+  gap: 0.75rem;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding-right: 0.125rem;
+}
+
+.import-merge-dialog__section {
+  overflow: hidden;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.875rem;
+}
+
+.import-merge-dialog__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-bottom: var(--border) solid var(--color-border-faint);
+}
+
+.import-merge-dialog__section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.import-merge-dialog__rows {
+  display: grid;
+}
+
+.import-merge-dialog__row {
+  padding: 0.875rem 1rem;
+  border-top: var(--border) solid var(--color-border-faint);
+}
+
+.import-merge-dialog__row:first-child {
+  border-top: 0;
+}
+
+.import-merge-dialog__row-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.import-merge-dialog__row-subtitle {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.import-merge-dialog__empty {
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 900px) {
+  .shortcuts-dialog__body {
+    grid-template-columns: 1fr;
+  }
+
+  .import-merge-dialog__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
