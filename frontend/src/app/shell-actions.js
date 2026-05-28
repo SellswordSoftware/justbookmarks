@@ -1,7 +1,7 @@
 // @ts-check
 
-import { createAddBookmarkForm } from "./features/add-bookmark-form.js";
-import { createAddFolderForm } from "./features/add-folder-form.js";
+import { createAddBookmarkForm } from "../lib/features/add-bookmark-form.js";
+import { createAddFolderForm } from "../lib/features/add-folder-form.js";
 
 /**
  * @typedef {object} AppShellActionsShell

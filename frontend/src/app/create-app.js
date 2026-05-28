@@ -1,36 +1,36 @@
 // @ts-check
 
-import { effect } from "./lib/naf-html.js";
-import { mountAppLifecycle } from "./lib/app-lifecycle.js";
-import { bootstrapSession, createFile, openFile } from "./lib/app-session.js";
-import { mountRootTreeActions, renderShellPlaceholder } from "./lib/app-shell-actions.js";
+import { effect } from "../lib/naf-html.js";
+import { mountAppLifecycle } from "./lifecycle.js";
+import { bootstrapSession, createFile, openFile } from "./session.js";
+import { mountRootTreeActions, renderShellPlaceholder } from "./shell-actions.js";
 import {
   collectBookmarkTreeShell,
   mountBookmarkTree,
-} from "./lib/features/tree/bookmark-tree.js";
-import { collectConfirmModalShell, mountConfirmModal } from "./lib/features/confirm-modal.js";
+} from "../lib/features/tree/bookmark-tree.js";
+import { collectConfirmModalShell, mountConfirmModal } from "../lib/features/confirm-modal.js";
 import {
   collectDetailPanelShell,
   mountDetailPanel,
-} from "./lib/features/detail-panel.js";
-import { mountGlobalShortcuts } from "./lib/features/global-shortcuts.js";
-import { collectLayoutShell, mountLayout } from "./lib/features/layout.js";
-import { collectMoveDialogShell, mountMoveDialog } from "./lib/features/move-dialog.js";
-import { collectSearchBarShell, mountSearchBar } from "./lib/features/search-bar.js";
+} from "../lib/features/detail-panel.js";
+import { mountGlobalShortcuts } from "../lib/features/global-shortcuts.js";
+import { collectLayoutShell, mountLayout } from "../lib/features/layout.js";
+import { collectMoveDialogShell, mountMoveDialog } from "../lib/features/move-dialog.js";
+import { collectSearchBarShell, mountSearchBar } from "../lib/features/search-bar.js";
 import {
   collectKeyboardShortcutsDialogShell,
   mountKeyboardShortcutsDialog,
-} from "./lib/features/keyboard-shortcuts-dialog.js";
+} from "../lib/features/keyboard-shortcuts-dialog.js";
 import {
   collectImportMergeDialogShell,
   mountImportMergeDialog,
-} from "./lib/features/import-merge-dialog.js";
-import { collectToastContainerShell, mountToastContainer } from "./lib/features/toast-container.js";
-import { collectTitlebarShell, mountTitlebar } from "./lib/features/titlebar.js";
-import { treeState } from "./lib/state/tree/tree-state.js";
-import { appState } from "./lib/state/app-state.js";
+} from "../lib/features/import-merge-dialog.js";
+import { collectToastContainerShell, mountToastContainer } from "../lib/features/toast-container.js";
+import { collectTitlebarShell, mountTitlebar } from "../lib/features/titlebar.js";
+import { treeState } from "../lib/state/tree/tree-state.js";
+import { appState } from "../lib/state/app-state.js";
 
-/** @typedef {import("./types.js").TreeNode} TreeNode */
+/** @typedef {import("../types.js").TreeNode} TreeNode */
 
 /**
  * @typedef {object} AppShell

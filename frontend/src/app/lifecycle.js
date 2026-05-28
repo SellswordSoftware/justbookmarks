@@ -1,9 +1,9 @@
 // @ts-check
 
-import { effect } from "./naf-html.js";
-import { setPerFileTreeState } from "./persistence.js";
-import { appState } from "./state/app-state.js";
-import { treeState } from "./state/tree/tree-state.js";
+import { effect } from "../lib/naf-html.js";
+import { setPerFileTreeState } from "../lib/persistence.js";
+import { appState } from "../lib/state/app-state.js";
+import { treeState } from "../lib/state/tree/tree-state.js";
 
 /**
  * @param {{ cleanup: () => void }[]} cleanups

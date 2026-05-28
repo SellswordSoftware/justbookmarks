@@ -1,7 +1,7 @@
 // @ts-check
 
 import "./styles/app.css";
-import { createApp } from "./app.js";
+import { createApp } from "./app/create-app.js";
 
 const root = document.getElementById("app");
 
