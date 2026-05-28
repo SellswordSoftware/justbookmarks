@@ -1,9 +1,9 @@
 // @ts-check
 
-import { GetFlatIndex, GetTree, LoadFile } from "../api.js";
-import { getErrorMessage } from "../errors.js";
-import { computed, signal } from "../naf-html.js";
-import { searchState } from "./search-state.js";
+import { GetFlatIndex, GetTree, LoadFile } from "../../api.js";
+import { getErrorMessage } from "../../errors.js";
+import { computed, signal } from "../../naf-html.js";
+import { searchState } from "../search-state.js";
 import {
   expandAncestorIds,
   getDefaultExpandedFolderIds,
@@ -12,13 +12,13 @@ import {
   getVisibleNodeIds as getVisibleNodeIdsFromState,
   isExpandedId,
   toggleExpandedId,
-} from "./tree-expansion-state.js";
-import { normalizeTree } from "./tree-normalize.js";
+} from "./expansion.js";
+import { normalizeTree } from "./normalize.js";
 import {
   getPersistentTreeState,
   pruneSelectionState,
   restorePersistentTreeState,
-} from "./tree-persistence-state.js";
+} from "./persistence.js";
 import {
   canJoinSelection as canJoinSelectionState,
   captureSelectionSnapshot as captureSelectionSnapshotState,
@@ -29,7 +29,7 @@ import {
   selectAllSiblings as selectAllSiblingsState,
   selectRange as selectRangeState,
   toggleSelected as toggleSelectedState,
-} from "./tree-selection.js";
+} from "./selection.js";
 import {
   getAncestorIds as getAncestorIdsFromTree,
   getChildIndexById,
@@ -38,7 +38,7 @@ import {
   getParentIdById,
   getParentNodeById,
   getSiblingIds as getSiblingIdsFromTree,
-} from "./tree-structure.js";
+} from "./structure.js";
 
 /** Tree state owner for normalized tree data, selection, expansion, and load/restore workflows. */
 
@@ -46,7 +46,7 @@ import {
 /** @typedef {import("../../types.js").FolderNode} FolderNode */
 /** @typedef {import("../../types.js").PerFileTreeState} PerFileTreeState */
 
-/** @typedef {import("./tree-selection.js").SelectionSnapshot} SelectionSnapshot */
+/** @typedef {import("./selection.js").SelectionSnapshot} SelectionSnapshot */
 const tree = signal(/** @type {TreeNode[]} */ ([]));
 const primarySelectedNodeId = signal("");
 const selectedNodeIds = signal(/** @type {string[]} */ ([]));

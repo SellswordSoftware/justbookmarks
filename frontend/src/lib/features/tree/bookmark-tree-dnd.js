@@ -1,10 +1,10 @@
 // @ts-check
 
-import { MoveNode } from "../api.js";
-import { getErrorMessage } from "../errors.js";
-import { searchState } from "../state/search-state.js";
-import { treeState } from "../state/tree-state.js";
-import { uiState } from "../state/ui-state.js";
+import { MoveNode } from "../../api.js";
+import { getErrorMessage } from "../../errors.js";
+import { searchState } from "../../state/search-state.js";
+import { treeState } from "../../state/tree/tree-state.js";
+import { uiState } from "../../state/ui-state.js";
 
 /**
  * @typedef {"before" | "after" | "inside"} DropPosition

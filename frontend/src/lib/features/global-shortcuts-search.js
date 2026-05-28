@@ -1,7 +1,7 @@
 // @ts-check
 
 import { searchState } from "../state/search-state.js";
-import { treeState } from "../state/tree-state.js";
+import { treeState } from "../state/tree/tree-state.js";
 import {
   focusDetailForSelection,
 } from "./global-shortcuts-focus.js";

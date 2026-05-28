@@ -5,7 +5,7 @@ import {
   getNodeById,
   getParentIdById,
   getSiblingIds,
-} from "./tree-structure.js";
+} from "./structure.js";
 
 /** @typedef {import("../../types.js").TreeNode} TreeNode */
 

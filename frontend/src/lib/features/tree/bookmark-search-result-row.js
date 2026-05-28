@@ -1,14 +1,14 @@
 // @ts-check
 
-import { $, effect } from "../naf-html.js";
-import { treeState } from "../state/tree-state.js";
+import { $, effect } from "../../naf-html.js";
+import { treeState } from "../../state/tree/tree-state.js";
 
 /**
  * @param {HTMLElement} el
  * @param {() => import("../../types.js").BookmarkIndexEntry} item
  * @returns {() => void}
  */
-export function mountSearchResultRow(el, item) {
+export function mountBookmarkSearchResultRow(el, item) {
   const row = el instanceof HTMLElement && el.matches(".search-result")
     ? el
     : $(".search-result", el);

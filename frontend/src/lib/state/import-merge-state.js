@@ -3,7 +3,7 @@
 import { ApplyImportMerge, OpenImportFilePicker, PreviewImportMerge } from "../api.js";
 import { getErrorMessage } from "../errors.js";
 import { signal } from "../naf-html.js";
-import { treeState } from "./tree-state.js";
+import { treeState } from "./tree/tree-state.js";
 import { uiState } from "./ui-state.js";
 
 /** @typedef {import("../../types.js").MergePreview} MergePreview */

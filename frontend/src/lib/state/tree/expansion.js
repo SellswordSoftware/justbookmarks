@@ -4,7 +4,7 @@ import {
   getFolderNodeIds,
   getVisibleNodeEntries as getVisibleNodeEntriesFromTree,
   isFolderNode,
-} from "./tree-structure.js";
+} from "./structure.js";
 
 /** @typedef {import("../../types.js").TreeNode} TreeNode */
 /** @typedef {import("../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry */

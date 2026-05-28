@@ -1,12 +1,12 @@
 // @ts-check
 
-import { effect, list } from "../naf-html.js";
-import { searchState } from "../state/search-state.js";
-import { treeState } from "../state/tree-state.js";
+import { effect, list } from "../../naf-html.js";
+import { searchState } from "../../state/search-state.js";
+import { treeState } from "../../state/tree/tree-state.js";
 import { createBookmarkTreeDndController } from "./bookmark-tree-dnd.js";
 import { createBookmarkTreeKeydownHandler } from "./bookmark-tree-keyboard.js";
-import { mountSearchResultRow } from "./search-result-row.js";
-import { mountTreeNode } from "./tree-node.js";
+import { mountBookmarkSearchResultRow } from "./bookmark-search-result-row.js";
+import { mountBookmarkTreeRow } from "./bookmark-tree-row.js";
 
 /**
  * @typedef {import("../../types.js").BookmarkIndexEntry} BookmarkIndexEntry
@@ -102,7 +102,7 @@ export function mountBookmarkTree(shell) {
         shell.searchResultTemplate,
         () => searchState.selectors.getResults(),
         (item) => item.nodeId,
-        (el, item) => mountSearchResultRow(el, item),
+        (el, item) => mountBookmarkSearchResultRow(el, item),
       );
       return;
     }
@@ -118,11 +118,11 @@ export function mountBookmarkTree(shell) {
       shell.treeNodeTemplate,
       () => treeState.selectors.getVisibleNodeEntries(),
       (item) => item.id,
-      (el, item) =>
-        mountTreeNode(el, item, {
-          onPointerDown: dnd.handleNodePointerDown,
-          shouldIgnoreClick: dnd.shouldIgnoreClick,
-        }),
+        (el, item) =>
+          mountBookmarkTreeRow(el, item, {
+            onPointerDown: dnd.handleNodePointerDown,
+            shouldIgnoreClick: dnd.shouldIgnoreClick,
+          }),
     );
   }
 

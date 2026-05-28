@@ -3,7 +3,7 @@
 import { getErrorMessage } from "./errors.js";
 import { clearLastOpenedFile } from "./persistence.js";
 import { appState } from "./state/app-state.js";
-import { treeState } from "./state/tree-state.js";
+import { treeState } from "./state/tree/tree-state.js";
 import { uiState } from "./state/ui-state.js";
 
 /**

@@ -3,7 +3,7 @@
 import { effect } from "./naf-html.js";
 import { setPerFileTreeState } from "./persistence.js";
 import { appState } from "./state/app-state.js";
-import { treeState } from "./state/tree-state.js";
+import { treeState } from "./state/tree/tree-state.js";
 
 /**
  * @param {{ cleanup: () => void }[]} cleanups

@@ -1,8 +1,8 @@
 // @ts-check
 
-import { $, fx } from "../naf-html.js";
-import { treeState } from "../state/tree-state.js";
-import { uiState } from "../state/ui-state.js";
+import { $, fx } from "../../naf-html.js";
+import { treeState } from "../../state/tree/tree-state.js";
+import { uiState } from "../../state/ui-state.js";
 
 /**
  * @typedef {import("../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry
@@ -39,12 +39,14 @@ function getNodeLabel(node) {
  * @param {TreeNodeMountOptions} options
  * @returns {() => void}
  */
-export function mountTreeNode(el, entry, options) {
+export function mountBookmarkTreeRow(el, entry, options) {
   const row = $(".tree-row", el);
   const toggle = $(".tree-row__toggle", el);
   const folderIcon = $(".tree-row__folder-icon", el);
   const bookmarkIcon = $(".tree-row__bookmark-icon", el);
-  const favicon = /** @type {HTMLImageElement | null} */ ($(".tree-row__favicon", el));
+  const favicon = /** @type {HTMLImageElement | null} */ (
+    $(".tree-row__favicon", el)
+  );
   const label = $(".tree-row__label", el);
   const count = $(".tree-row__count", el);
 
@@ -113,17 +115,22 @@ export function mountTreeNode(el, entry, options) {
     const current = entry();
     const node = current.node;
     const folder = isFolderNode(node);
-    const expanded = folder ? treeState.selectors.isExpanded(current.id) : false;
+    const expanded = folder
+      ? treeState.selectors.isExpanded(current.id)
+      : false;
     const selected = treeState.selectors.isSelected(current.id);
     const primary = treeState.selectors.getSelectedNodeId() === current.id;
 
     currentRow.dataset.nodeId = current.id;
     currentRow.dataset.nodeType = folder ? "folder" : "bookmark";
-    currentRow.style.paddingLeft = `${current.depth * 16 + (folder ? 8 : 24)}px`;
+    currentRow.style.paddingLeft = `${current.depth * 16 + (folder ? 8 : 28)}px`;
     currentRow.classList.toggle("is-selected", selected);
     currentRow.classList.toggle("is-primary", primary);
     currentRow.setAttribute("aria-selected", selected ? "true" : "false");
-    currentRow.setAttribute("aria-expanded", folder ? String(expanded) : "false");
+    currentRow.setAttribute(
+      "aria-expanded",
+      folder ? String(expanded) : "false",
+    );
 
     if (label) {
       label.textContent = getNodeLabel(node);

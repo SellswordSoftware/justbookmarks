@@ -4,7 +4,7 @@ import { DeleteNodes, FetchFaviconsForNodes, RefreshTitlesForNodes } from "../ap
 import { getErrorMessage } from "../errors.js";
 import { cleanupCollector, fx, signal } from "../naf-html.js";
 import { moveDialogState } from "../state/move-dialog-state.js";
-import { treeState } from "../state/tree-state.js";
+import { treeState } from "../state/tree/tree-state.js";
 import { uiState } from "../state/ui-state.js";
 
 /**
