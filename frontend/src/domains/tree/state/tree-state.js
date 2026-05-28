@@ -3,7 +3,7 @@
 import { GetFlatIndex, GetTree, LoadFile } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { computed, signal } from "../../../shared/runtime/naf-html.js";
-import { searchState } from "../search-state.js";
+import { searchState } from "../../../lib/state/search-state.js";
 import {
   expandAncestorIds,
   getDefaultExpandedFolderIds,
@@ -42,9 +42,9 @@ import {
 
 /** Tree state owner for normalized tree data, selection, expansion, and load/restore workflows. */
 
-/** @typedef {import("../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../types.js").FolderNode} FolderNode */
-/** @typedef {import("../../types.js").PerFileTreeState} PerFileTreeState */
+/** @typedef {import("../../../types.js").TreeNode} TreeNode */
+/** @typedef {import("../../../types.js").FolderNode} FolderNode */
+/** @typedef {import("../../../types.js").PerFileTreeState} PerFileTreeState */
 
 /** @typedef {import("./selection.js").SelectionSnapshot} SelectionSnapshot */
 const tree = signal(/** @type {TreeNode[]} */ ([]));

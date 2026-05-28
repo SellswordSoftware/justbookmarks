@@ -1,15 +1,15 @@
 // @ts-check
 
 import { effect, list } from "../../../shared/runtime/naf-html.js";
-import { searchState } from "../../state/search-state.js";
-import { treeState } from "../../state/tree/tree-state.js";
-import { createBookmarkTreeDndController } from "./bookmark-tree-dnd.js";
-import { createBookmarkTreeKeydownHandler } from "./bookmark-tree-keyboard.js";
+import { searchState } from "../../../lib/state/search-state.js";
+import { treeState } from "../state/tree-state.js";
+import { createBookmarkTreeDndController } from "../interactions/bookmark-tree-dnd.js";
+import { createBookmarkTreeKeydownHandler } from "../interactions/bookmark-tree-keyboard.js";
 import { mountBookmarkSearchResultRow } from "./bookmark-search-result-row.js";
 import { mountBookmarkTreeRow } from "./bookmark-tree-row.js";
 
 /**
- * @typedef {import("../../types.js").BookmarkIndexEntry} BookmarkIndexEntry
+ * @typedef {import("../../../types.js").BookmarkIndexEntry} BookmarkIndexEntry
  */
 
 /**

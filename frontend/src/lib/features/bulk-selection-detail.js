@@ -8,7 +8,7 @@ import {
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { cleanupCollector, fx, signal } from "../../shared/runtime/naf-html.js";
 import { moveDialogState } from "../state/move-dialog-state.js";
-import { treeState } from "../state/tree/tree-state.js";
+import { treeState } from "../../domains/tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /**

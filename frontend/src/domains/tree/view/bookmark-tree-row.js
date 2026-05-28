@@ -1,11 +1,11 @@
 // @ts-check
 
 import { $, fx } from "../../../shared/runtime/naf-html.js";
-import { treeState } from "../../state/tree/tree-state.js";
+import { treeState } from "../state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
- * @typedef {import("../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry
+ * @typedef {import("../../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry
  */
 
 /**

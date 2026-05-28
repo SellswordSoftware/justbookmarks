@@ -7,7 +7,7 @@ import { mountRootTreeActions, renderShellPlaceholder } from "./shell-actions.js
 import {
   collectBookmarkTreeShell,
   mountBookmarkTree,
-} from "../lib/features/tree/bookmark-tree.js";
+} from "../domains/tree/view/bookmark-tree.js";
 import { collectConfirmModalShell, mountConfirmModal } from "../lib/features/confirm-modal.js";
 import {
   collectDetailPanelShell,
@@ -27,7 +27,7 @@ import {
 } from "../lib/features/import-merge-dialog.js";
 import { collectToastContainerShell, mountToastContainer } from "../lib/features/toast-container.js";
 import { collectTitlebarShell, mountTitlebar } from "../lib/features/titlebar.js";
-import { treeState } from "../lib/state/tree/tree-state.js";
+import { treeState } from "../domains/tree/state/tree-state.js";
 import { appState } from "../shared/state/app-state.js";
 
 /** @typedef {import("../types.js").TreeNode} TreeNode */

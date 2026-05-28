@@ -6,8 +6,8 @@ import {
   isFolderNode,
 } from "./structure.js";
 
-/** @typedef {import("../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry */
+/** @typedef {import("../../../types.js").TreeNode} TreeNode */
+/** @typedef {import("../../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry */
 
 /**
  * @param {string[]} expandedNodeIds

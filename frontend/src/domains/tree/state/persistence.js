@@ -3,8 +3,8 @@
 import { createEmptySelectionState, createSingleSelectionState } from "./selection.js";
 import { getFolderNodeIds, getNodeById } from "./structure.js";
 
-/** @typedef {import("../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../types.js").PerFileTreeState} PerFileTreeState */
+/** @typedef {import("../../../types.js").TreeNode} TreeNode */
+/** @typedef {import("../../../types.js").PerFileTreeState} PerFileTreeState */
 /** @typedef {import("./selection.js").TreeSelectionState} TreeSelectionState */
 
 /**

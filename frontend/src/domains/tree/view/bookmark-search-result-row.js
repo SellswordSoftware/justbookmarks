@@ -1,11 +1,11 @@
 // @ts-check
 
 import { $, effect } from "../../../shared/runtime/naf-html.js";
-import { treeState } from "../../state/tree/tree-state.js";
+import { treeState } from "../state/tree-state.js";
 
 /**
  * @param {HTMLElement} el
- * @param {() => import("../../types.js").BookmarkIndexEntry} item
+ * @param {() => import("../../../types.js").BookmarkIndexEntry} item
  * @returns {() => void}
  */
 export function mountBookmarkSearchResultRow(el, item) {

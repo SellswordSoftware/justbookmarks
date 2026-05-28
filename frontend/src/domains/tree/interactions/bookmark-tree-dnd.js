@@ -2,8 +2,8 @@
 
 import { MoveNode } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
-import { searchState } from "../../state/search-state.js";
-import { treeState } from "../../state/tree/tree-state.js";
+import { searchState } from "../../../lib/state/search-state.js";
+import { treeState } from "../state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
@@ -27,7 +27,7 @@ import { uiState } from "../../../shared/state/ui-state.js";
  *   shouldIgnoreClick: () => boolean,
  *   syncDropTargetClasses: () => void,
  *   clearDragState: () => void,
- *   handleNodePointerDown: (entry: import("../../types.js").VisibleTreeNodeEntry, event: MouseEvent) => void,
+ *   handleNodePointerDown: (entry: import("../../../types.js").VisibleTreeNodeEntry, event: MouseEvent) => void,
  *   handleDocumentMouseMove: (event: MouseEvent) => void,
  *   handleDocumentMouseUp: (event: MouseEvent) => void,
  *   handleDocumentMouseLeave: () => void

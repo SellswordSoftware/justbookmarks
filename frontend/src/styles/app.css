@@ -13,10 +13,10 @@
 @import "./components/toast.css";
 @import "./components/toolbar.css";
 @import "./components/menu.css";
-@import "./components/tree-list.css";
+@import "../domains/tree/styles/tree-list.css";
 @import "./components/spinner.css";
 @import "./components/titlebar.css";
 @import "./components/shell-panel.css";
-@import "./components/tree-pane.css";
+@import "../domains/tree/styles/tree-pane.css";
 @import "./components/detail-surface.css";
 @import "./components/dialogs-extra.css";
