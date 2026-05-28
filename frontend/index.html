@@ -2,11 +2,238 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>JustBookmarks</title>
     </head>
     <body>
-        <div id="app"></div>
-        <script src="./src/main.ts" type="module"></script>
+        <div id="app" class="app-shell" data-theme="dark">
+            <header
+                id="titlebar"
+                class="titlebar"
+                data-shell-region="titlebar"
+                data-wails-drag
+                style="--wails-draggable: drag"
+            >
+                <div class="titlebar__brand">
+                    <h1 class="titlebar__title">JustBookmarks</h1>
+                    <p id="titlebar-meta" class="titlebar__meta">
+                        Vanilla frontend shell active
+                    </p>
+                </div>
+                <div class="titlebar__window-controls" data-wails-no-drag>
+                    <button
+                        id="window-minimize"
+                        class="btn btn-ghost btn-sm btn-square titlebar__window-button"
+                        type="button"
+                        aria-label="Minimize window"
+                    >
+                        &#9472;
+                    </button>
+                    <button
+                        id="window-maximize"
+                        class="btn btn-ghost btn-sm btn-square titlebar__window-button"
+                        type="button"
+                        aria-label="Toggle maximize"
+                    >
+                        &#9633;
+                    </button>
+                    <button
+                        id="window-close"
+                        class="btn btn-ghost btn-sm btn-square titlebar__window-button titlebar__window-button--close"
+                        type="button"
+                        aria-label="Close window"
+                    >
+                        &#10005;
+                    </button>
+                </div>
+            </header>
+
+            <div class="app-toolbar">
+                <section
+                    id="search-area"
+                    class="search-shell"
+                    aria-label="Search"
+                >
+                    <input
+                        id="search-input"
+                        class="input search-shell__input"
+                        type="search"
+                        placeholder="Search bookmarks..."
+                        autocomplete="off"
+                        data-focus-zone="search"
+                        data-keyboard-action="search-input"
+                    />
+                    <button
+                        id="search-clear"
+                        class="btn btn-ghost btn-sm btn-square"
+                        type="button"
+                        aria-label="Clear search"
+                        title="Clear search"
+                        hidden
+                    >
+                        x
+                    </button>
+                </section>
+                <div id="toolbar-actions"></div>
+            </div>
+
+            <main id="main-content" class="shell-layout">
+                <section
+                    id="tree-pane"
+                    class="shell-panel tree-pane"
+                    aria-labelledby="tree-pane-title"
+                >
+                    <div class="shell-panel__header">
+                        <div class="tree-pane__heading">
+                            <span class="shell-panel__eyebrow">Library</span>
+                            <span
+                                id="tree-pane-meta"
+                                class="shell-panel__subtitle"
+                                >Waiting for state modules</span
+                            >
+                            <h2
+                                id="tree-pane-title"
+                                class="shell-panel__title visually-hidden"
+                            >
+                                Bookmark Tree
+                            </h2>
+                        </div>
+                        <div class="tree-pane__header-right">
+                            <div
+                                id="tree-pane-actions"
+                                class="tree-pane__actions"
+                            ></div>
+                        </div>
+                    </div>
+                    <div
+                        id="tree-pane-content"
+                        class="shell-panel__body tree-pane__list"
+                        data-focus-zone="tree"
+                        tabindex="0"
+                    >
+                        <div id="tree-list"></div>
+                    </div>
+                </section>
+
+                <button
+                    id="pane-resizer"
+                    class="resizer"
+                    type="button"
+                    aria-label="Resize panes"
+                ></button>
+
+                <section
+                    id="detail-pane"
+                    class="shell-panel detail-pane"
+                    aria-labelledby="detail-pane-title"
+                >
+                    <div class="shell-panel__header">
+                        <div>
+                            <span class="shell-panel__eyebrow">Detail</span>
+                            <h2
+                                id="detail-pane-title"
+                                class="shell-panel__title"
+                            >
+                                Selection Detail
+                            </h2>
+                        </div>
+                        <span
+                            id="detail-pane-meta"
+                            class="shell-panel__subtitle"
+                            >No selection yet</span
+                        >
+                    </div>
+                    <div
+                        id="detail-pane-content"
+                        class="shell-panel__body detail-pane__content"
+                        data-focus-zone="detail"
+                        tabindex="-1"
+                    >
+                        <div class="placeholder-stack">
+                            <div class="placeholder-card">
+                                <strong>HTML-first shell</strong>
+                                <span
+                                    >The new frontend binds behavior into these
+                                    stable containers instead of mounting a
+                                    Svelte root.</span
+                                >
+                            </div>
+                            <div class="placeholder-card">
+                                <strong>Next up</strong>
+                                <span
+                                    >State ownership, tree rendering, and dialog
+                                    modules will progressively replace these
+                                    placeholders.</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <div
+                id="toast-container"
+                class="overlay-root"
+                aria-live="polite"
+                aria-atomic="true"
+            ></div>
+            <div id="confirm-modal-container" class="overlay-root"></div>
+            <div id="move-dialog-container" class="overlay-root"></div>
+            <div id="import-merge-dialog-container" class="overlay-root"></div>
+            <div
+                id="keyboard-shortcuts-dialog-container"
+                class="overlay-root"
+            ></div>
+
+            <template id="tree-node-template">
+                <article class="tree-node">
+                    <div
+                        class="tree-row menu-item"
+                        role="treeitem"
+                        tabindex="-1"
+                        aria-selected="false"
+                    >
+                        <button
+                            class="tree-row__toggle btn btn-ghost btn-sm btn-square"
+                            type="button"
+                            aria-label="Toggle folder"
+                        ></button>
+                        <span
+                            class="tree-row__folder-icon"
+                            aria-hidden="true"
+                        ></span>
+                        <img class="tree-row__favicon" alt="" hidden />
+                        <span
+                            class="tree-row__bookmark-icon"
+                            aria-hidden="true"
+                        ></span>
+                        <span class="tree-row__label"></span>
+                        <span class="tree-row__count"></span>
+                    </div>
+                </article>
+            </template>
+
+            <template id="search-result-template">
+                <article
+                    class="search-result menu-item"
+                    role="button"
+                    tabindex="0"
+                    aria-selected="false"
+                >
+                    <span class="search-result__icon" aria-hidden="true"></span>
+                    <span class="search-result__label"></span>
+                    <span class="search-result__meta"></span>
+                </article>
+            </template>
+
+            <template id="toast-template">
+                <article class="placeholder-card" data-template="toast">
+                    <strong data-part="label">Toast</strong>
+                    <span data-part="meta">Toast binding target.</span>
+                </article>
+            </template>
+        </div>
+
+        <script type="module" src="./src/main.js"></script>
     </body>
 </html>

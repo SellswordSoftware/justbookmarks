@@ -53,6 +53,18 @@ func buildTestTree() []Node {
 	}
 }
 
+func buildMultiRootTestTree() []Node {
+	nodes := buildTestTree()
+	return append(nodes, Node{
+		Type: TypeBookmark,
+		Bookmark: &Bookmark{
+			ID:    "b-top",
+			Title: "Top Level Bookmark",
+			URL:   "https://top.example.com",
+		},
+	})
+}
+
 // --- FindNode tests ---
 
 func TestFindNode(t *testing.T) {
@@ -504,6 +516,59 @@ func TestMoveBookmarkWithinSameFolderLaterPosition(t *testing.T) {
 	}
 	if got := root.Folder.Children[2].Bookmark.ID; got != "b-root2" {
 		t.Fatalf("expected b-root2 to remain last, got %s", got)
+	}
+}
+
+func TestMoveRootNodeWithinRootEarlierPosition(t *testing.T) {
+	nodes := buildMultiRootTestTree()
+
+	updated, err := MoveNode(nodes, "b-top", "", 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got := updated[0].Bookmark.ID; got != "b-top" {
+		t.Fatalf("expected b-top to move to first root position, got %s", got)
+	}
+	if got := updated[1].Folder.ID; got != "f-root" {
+		t.Fatalf("expected f-root to shift to second root position, got %s", got)
+	}
+}
+
+func TestMoveRootNodeWithinRootLaterPosition(t *testing.T) {
+	nodes := buildMultiRootTestTree()
+
+	updated, err := MoveNode(nodes, "f-root", "", 2)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got := updated[0].Bookmark.ID; got != "b-top" {
+		t.Fatalf("expected b-top to become first root item, got %s", got)
+	}
+	if got := updated[1].Folder.ID; got != "f-root" {
+		t.Fatalf("expected f-root to move after b-top, got %s", got)
+	}
+}
+
+func TestMoveNestedNodeToRootPosition(t *testing.T) {
+	nodes := buildTestTree()
+
+	updated, err := MoveNode(nodes, "b-nested", "", 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if got := updated[0].Bookmark.ID; got != "b-nested" {
+		t.Fatalf("expected b-nested at first root position, got %s", got)
+	}
+
+	sub := FindNode(updated, "f-sub")
+	if sub == nil {
+		t.Fatal("expected f-sub to remain present")
+	}
+	if len(sub.Folder.Children) != 0 {
+		t.Fatalf("expected f-sub to be empty after moving nested child, got %d children", len(sub.Folder.Children))
 	}
 }
 

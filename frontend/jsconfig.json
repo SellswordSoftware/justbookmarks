@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
-    "checkJs": false
+    "allowJs": true,
+    "checkJs": true,
+    "maxNodeModuleJsDepth": 0,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "target": "es2022"
   },
   "exclude": []
 }

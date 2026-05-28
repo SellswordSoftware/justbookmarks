@@ -2,10 +2,10 @@
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "justbookmarks",
   "outputfilename": "justbookmarks",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "info": {
     "productName": "justbookmarks",
-    "productVersion": "0.1.0",
+    "productVersion": "0.2.0",
     "companyName": "Sellsword Software",
     "comments": "Desktop bookmark manager for Netscape Bookmarks HTML files.",
     "copyright": "Copyright (c) 2026 SellswordSoftware"

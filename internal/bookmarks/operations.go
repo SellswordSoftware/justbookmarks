@@ -289,13 +289,21 @@ func MoveNode(nodes []Node, nodeID, newParentID string, newIndex int) ([]Node, e
 
 	oldParent := FindParent(nodes, nodeID)
 	oldIndex := -1
+	movingFromRoot := oldParent == nil
+	requestedIndex := newIndex
 
 	// Remove from current location
 	var removed Node
 	if oldParent == nil {
 		// Root-level node
-		removed = *FindNode(nodes, nodeID)
-		nodes = deleteFromSlice(nodes, nodeID)
+		for i := range nodes {
+			if nodes[i].ID() == nodeID {
+				oldIndex = i
+				removed = nodes[i]
+				nodes = append(nodes[:i], nodes[i+1:]...)
+				break
+			}
+		}
 	} else {
 		children := &oldParent.Folder.Children
 		for i := range *children {
@@ -306,6 +314,21 @@ func MoveNode(nodes []Node, nodeID, newParentID string, newIndex int) ([]Node, e
 				break
 			}
 		}
+	}
+
+	if newParentID == "" {
+		if movingFromRoot && oldIndex >= 0 && requestedIndex > oldIndex {
+			newIndex--
+		}
+
+		if newIndex < 0 || newIndex > len(nodes) {
+			newIndex = len(nodes)
+		}
+
+		nodes = append(nodes, Node{})
+		copy(nodes[newIndex+1:], nodes[newIndex:])
+		nodes[newIndex] = removed
+		return nodes, nil
 	}
 
 	// Insert into new parent at index

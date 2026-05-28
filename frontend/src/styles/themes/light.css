@@ -1,0 +1,32 @@
+[data-theme="light"] {
+  color-scheme: light;
+  --color-base-100: #f3f7fb;
+  --color-base-200: #ffffff;
+  --color-base-300: #d5deea;
+  --color-base-content: #172033;
+  --color-primary: #0f766e;
+  --color-primary-content: #ecfeff;
+  --color-secondary: #7c3aed;
+  --color-secondary-content: #f5f3ff;
+  --color-accent: #0284c7;
+  --color-accent-content: #eff6ff;
+  --color-neutral: #172033;
+  --color-neutral-content: #f8fbff;
+  --color-info: #2563eb;
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-muted: #5a6a82;
+  --color-surface-1: rgba(255, 255, 255, 0.92);
+  --color-surface-2: rgba(241, 246, 252, 0.96);
+  --color-surface-3: rgba(23, 32, 51, 0.03);
+  --color-overlay: rgba(243, 247, 251, 0.82);
+  --color-border-soft: rgba(90, 106, 130, 0.22);
+  --color-border-faint: rgba(90, 106, 130, 0.14);
+  --color-border-quiet: rgba(90, 106, 130, 0.16);
+  --color-ring: rgba(15, 118, 110, 0.3);
+  --shell-gradient:
+    radial-gradient(circle at top, rgba(15, 118, 110, 0.12), transparent 30%),
+    linear-gradient(180deg, #edf4fb 0%, #f7fafc 100%);
+  --panel-gradient: linear-gradient(180deg, var(--color-surface-1), var(--color-surface-2));
+}
