@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @typedef {import("../../types.js").BookmarkNode} BookmarkNode
+ * @typedef {import("../../../types.js").BookmarkNode} BookmarkNode
  */
 
 /**

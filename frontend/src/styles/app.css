@@ -18,5 +18,5 @@
 @import "./components/titlebar.css";
 @import "./components/shell-panel.css";
 @import "../domains/tree/styles/tree-pane.css";
-@import "./components/detail-surface.css";
+@import "../domains/detail/styles/detail-surface.css";
 @import "./components/dialogs-extra.css";

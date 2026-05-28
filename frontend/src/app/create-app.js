@@ -12,7 +12,7 @@ import { collectConfirmModalShell, mountConfirmModal } from "../lib/features/con
 import {
   collectDetailPanelShell,
   mountDetailPanel,
-} from "../lib/features/detail-panel.js";
+} from "../domains/detail/view/detail-panel.js";
 import { mountGlobalShortcuts } from "../lib/features/global-shortcuts.js";
 import { collectLayoutShell, mountLayout } from "../lib/features/layout.js";
 import { collectMoveDialogShell, mountMoveDialog } from "../lib/features/move-dialog.js";
