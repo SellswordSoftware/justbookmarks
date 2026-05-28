@@ -14,7 +14,7 @@ import {
   mountDetailPanel,
 } from "../domains/detail/view/detail-panel.js";
 import { mountGlobalShortcuts } from "../domains/shortcuts/global-shortcuts.js";
-import { collectLayoutShell, mountLayout } from "../lib/features/layout.js";
+import { collectLayoutShell, mountLayout } from "../domains/chrome/layout.js";
 import { collectMoveDialogShell, mountMoveDialog } from "../domains/dialogs/move/move-dialog.js";
 import { collectSearchBarShell, mountSearchBar } from "../domains/search/view/search-bar.js";
 import {
@@ -25,8 +25,8 @@ import {
   collectImportMergeDialogShell,
   mountImportMergeDialog,
 } from "../domains/dialogs/import-merge/import-merge-dialog.js";
-import { collectToastContainerShell, mountToastContainer } from "../lib/features/toast-container.js";
-import { collectTitlebarShell, mountTitlebar } from "../lib/features/titlebar.js";
+import { collectToastContainerShell, mountToastContainer } from "../domains/chrome/toast-container.js";
+import { collectTitlebarShell, mountTitlebar } from "../domains/chrome/titlebar.js";
 import { treeState } from "../domains/tree/state/tree-state.js";
 import { appState } from "../shared/state/app-state.js";
 
