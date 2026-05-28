@@ -3,7 +3,7 @@
 import { GetFlatIndex, GetTree, LoadFile } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { computed, signal } from "../../../shared/runtime/naf-html.js";
-import { searchState } from "../../../lib/state/search-state.js";
+import { searchState } from "../../search/state/search-state.js";
 import {
   expandAncestorIds,
   getDefaultExpandedFolderIds,

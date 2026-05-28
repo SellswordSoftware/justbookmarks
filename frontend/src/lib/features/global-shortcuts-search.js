@@ -1,6 +1,6 @@
 // @ts-check
 
-import { searchState } from "../state/search-state.js";
+import { searchState } from "../../domains/search/state/search-state.js";
 import { treeState } from "../../domains/tree/state/tree-state.js";
 import {
   focusDetailForSelection,

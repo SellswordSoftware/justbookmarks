@@ -1,6 +1,6 @@
 // @ts-check
 
-import { searchState } from "../../../lib/state/search-state.js";
+import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
 
 /**

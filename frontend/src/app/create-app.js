@@ -16,7 +16,7 @@ import {
 import { mountGlobalShortcuts } from "../lib/features/global-shortcuts.js";
 import { collectLayoutShell, mountLayout } from "../lib/features/layout.js";
 import { collectMoveDialogShell, mountMoveDialog } from "../lib/features/move-dialog.js";
-import { collectSearchBarShell, mountSearchBar } from "../lib/features/search-bar.js";
+import { collectSearchBarShell, mountSearchBar } from "../domains/search/view/search-bar.js";
 import {
   collectKeyboardShortcutsDialogShell,
   mountKeyboardShortcutsDialog,
