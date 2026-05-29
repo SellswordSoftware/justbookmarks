@@ -1,89 +1,157 @@
 // @ts-check
 
-import { effect } from "../../shared/runtime/naf-html.js";
 import { appState } from "../../shared/state/app-state.js";
 import { searchState } from "../../features/search/state/search-state.js";
 import { treeState } from "../../features/tree/state/tree-state.js";
-import { mountGlobalShortcuts } from "../../features/shortcuts/global-shortcuts.js";
-import { collectSearchBarShell, mountSearchBar } from "../../features/search/view/search-bar.js";
-import { mountToolbarActions } from "../../components/toolbar/toolbar-actions.js";
+import {
+  cleanupCollector,
+  effect,
+  mount,
+  template,
+} from "../../shared/runtime/naf.js";
+import {
+  createPageHost,
+  showEmptyLibraryFrame,
+  showLibraryFrame,
+} from "../page-frame.js";
 
 /**
  * @typedef {object} EmptyLibraryPageShell
  * @property {HTMLElement} root
  * @property {HTMLElement} titlebarMeta
- * @property {HTMLInputElement} searchInput
- * @property {HTMLElement} treePaneMeta
- * @property {HTMLElement} treePaneActions
- * @property {HTMLElement} treePaneContent
- * @property {HTMLElement} detailPaneMeta
- * @property {HTMLElement} detailPaneContent
- * @property {HTMLElement} toolbarActions
+ * @property {HTMLElement} appToolbar
+ * @property {HTMLElement} mainContent
+ * @property {HTMLElement} treePane
+ * @property {HTMLElement} detailPane
+ * @property {HTMLButtonElement} paneResizer
  */
 
 /**
  * @typedef {object} EmptyLibraryPageActions
  * @property {() => Promise<void>} openFile
  * @property {() => Promise<void>} createFile
- * @property {() => Promise<void>} importFile
  */
 
 /**
- * @param {Array<{ cleanup: () => void }>} cleanups
- * @returns {{ cleanup: () => void }}
+ * @param {HTMLButtonElement} button
+ * @param {boolean} busy
+ * @param {string} idleLabel
+ * @param {string} busyLabel
+ * @returns {void}
  */
-function combineCleanups(cleanups) {
-  return {
-    cleanup() {
-      for (const item of cleanups) {
-        item.cleanup();
-      }
-    },
-  };
+function setButtonBusyState(button, busy, idleLabel, busyLabel) {
+  button.disabled = busy;
+  button.textContent = busy ? busyLabel : idleLabel;
 }
 
 /**
- * @param {string} title
- * @param {string} body
- * @returns {HTMLElement}
+ * @param {EmptyLibraryPageShell} shell
+ * @param {EmptyLibraryPageActions} actions
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
  */
-function createPlaceholderCard(title, body) {
-  const card = document.createElement("div");
-  card.className = "placeholder-card";
+function createEmptyLibrarySplash(shell, actions) {
+  const cleanup = cleanupCollector();
+  const renderSplash =
+    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+      template({
+        root: ".empty-library-page",
+        onMount(el, _parent, ctx) {
+          if (!(el instanceof HTMLElement)) {
+            throw new Error("Expected empty library page root");
+          }
 
-  const heading = document.createElement("strong");
-  heading.textContent = title;
+          const openButton = ctx.refs.openButton;
+          const createButton = ctx.refs.createButton;
+          if (!(openButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected empty library open button");
+          }
+          if (!(createButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected empty library create button");
+          }
 
-  const text = document.createElement("span");
-  text.textContent = body;
+          const handleOpenClick = () => {
+            void actions.openFile();
+          };
+          const handleCreateClick = () => {
+            void actions.createFile();
+          };
 
-  card.append(heading, text);
-  return card;
-}
+          openButton.addEventListener("click", handleOpenClick);
+          createButton.addEventListener("click", handleCreateClick);
 
-/**
- * @returns {HTMLElement}
- */
-function createEmptyTreeContent() {
-  const stack = document.createElement("div");
-  stack.className = "placeholder-stack";
-  stack.append(
-    createPlaceholderCard("No library open", "Open an existing bookmark file or create a new one."),
-    createPlaceholderCard("Import is available later", "Open a library first, then import or merge another file into it."),
-  );
-  return stack;
-}
+          cleanup.add(
+            () => openButton.removeEventListener("click", handleOpenClick),
+            () => createButton.removeEventListener("click", handleCreateClick),
+            effect(() => {
+              const treeError = treeState.selectors.getError();
+              const loading = treeState.selectors.isLoading();
+              const hasAttemptedLoad = appState.hasTriedLoad();
 
-/**
- * @returns {HTMLElement}
- */
-function createEmptyDetailContent() {
-  const stack = document.createElement("div");
-  stack.className = "placeholder-stack";
-  stack.append(
-    createPlaceholderCard("Nothing selected", "Selection details appear here after you open a library."),
-  );
-  return stack;
+              shell.titlebarMeta.textContent = treeError
+                ? treeError
+                : loading
+                  ? "Loading bookmark library..."
+                  : hasAttemptedLoad
+                    ? "No bookmark file is open"
+                    : "Ready to open a bookmark library";
+
+              setButtonBusyState(
+                openButton,
+                loading,
+                "Open File",
+                "Opening...",
+              );
+              setButtonBusyState(
+                createButton,
+                loading,
+                "Create File",
+                "Creating...",
+              );
+            }),
+          );
+
+          queueMicrotask(() => {
+            openButton.focus();
+          });
+        },
+        onUnmount() {
+          cleanup.run();
+        },
+      })
+    );
+
+  return renderSplash /*html*/ `
+    <section class="empty-library-page" aria-labelledby="empty-library-title">
+      <div class="empty-library-page__crest" aria-hidden="true">JB</div>
+      <p class="empty-library-page__eyebrow">Single-file bookmark library</p>
+      <h2 id="empty-library-title" class="empty-library-page__title">
+        Open your archive or start a fresh one.
+      </h2>
+      <p class="empty-library-page__copy">
+        JustBookmarks keeps everything in a plain bookmarks HTML file, so your
+        library stays portable, inspectable, and yours.
+      </p>
+      <div class="empty-library-page__actions">
+        <button
+          type="button"
+          class="empty-library-page__open btn btn-primary empty-library-page__button"
+          data-ref="openButton"
+        >
+          Open File
+        </button>
+        <button
+          type="button"
+          class="empty-library-page__create btn btn-ghost empty-library-page__button empty-library-page__button--secondary"
+          data-ref="createButton"
+        >
+          Create File
+        </button>
+      </div>
+      <p class="empty-library-page__hint">
+        Shortcuts: Ctrl/Cmd+O to open, Ctrl/Cmd+N to create.
+      </p>
+    </section>
+  `;
 }
 
 /**
@@ -93,50 +161,17 @@ function createEmptyDetailContent() {
  */
 export function mountEmptyLibraryPage(shell, actions) {
   searchState.actions.clearQuery();
-  shell.treePaneActions.replaceChildren();
-  shell.treePaneContent.replaceChildren(createEmptyTreeContent());
-  shell.detailPaneContent.replaceChildren(createEmptyDetailContent());
-  shell.searchInput.disabled = false;
-  shell.searchInput.placeholder = "Search becomes available after opening a library";
+  showEmptyLibraryFrame(shell);
+  const host = createPageHost(shell.mainContent);
 
-  const toolbarActions = mountToolbarActions(shell, actions);
-  const searchBar = mountSearchBar(collectSearchBarShell(shell.root));
-  const globalShortcuts = mountGlobalShortcuts({
-    searchInput: shell.searchInput,
-    focusSearch: () => searchBar.focus(),
-    focusTree: () => {},
-    openFile: actions.openFile,
-    createFile: actions.createFile,
-  });
+  const splash = createEmptyLibrarySplash(shell, actions);
+  mount(splash, host);
 
-  const stopStatus = effect(() => {
-    const treeError = treeState.selectors.getError();
-    const loading = treeState.selectors.isLoading();
-    const hasAttemptedLoad = appState.selectors.hasTriedLoad();
-
-    shell.titlebarMeta.textContent = treeError
-      ? treeError
-      : loading
-        ? "Loading bookmark library..."
-        : hasAttemptedLoad
-          ? "No bookmark file is open"
-          : "Preparing bookmark library";
-    shell.treePaneMeta.textContent = loading
-      ? "Loading bookmark file..."
-      : "Open or create a bookmark file to begin";
-    shell.detailPaneMeta.textContent = "No library loaded";
-  });
-
-  searchBar.focus();
-
-  return combineCleanups([
-    globalShortcuts,
-    searchBar,
-    toolbarActions,
-    {
-      cleanup() {
-        stopStatus();
-      },
+  return {
+    cleanup() {
+      splash.unmount?.();
+      host.remove();
+      showLibraryFrame(shell);
     },
-  ]);
+  };
 }

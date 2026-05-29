@@ -1,32 +1,145 @@
-# NAF-HTML Usage Guidelines
+# NAF Runtime Usage Guidelines
 
 ## Purpose
 
-This project uses a local `naf-html` runtime to reduce repeated frontend wiring patterns.
+This frontend uses a single local NAF runtime for both:
 
-The goal is not to recreate a framework. The goal is to make the common cases smaller, clearer, and more consistent:
+- low-level reactive and DOM helpers
+- module-local template and component helpers
 
-- local reactive state
-- DOM binding
-- keyed list rendering
-- form input syncing
-- lifecycle cleanup
+The runtime entrypoint is `naf.js`.
 
-Use these guidelines to keep modules consistent across future changes.
+The goal of this document is to explain when to use each helper and when not to.
+
+## Reader
+
+This document is for engineers writing or changing frontend modules.
+
+After reading it, you should be able to:
+
+- choose the right NAF helper for a new module
+- decide whether a module should use `template()` or direct DOM code
+- structure state, effects, and cleanup consistently
 
 ## Core Principle
 
-Use `naf-html` when it removes repeated wiring.
+Use NAF when it makes ownership clearer.
 
-Do not use it just because a helper exists.
+Do not use NAF just because a helper exists.
 
-The best use cases are:
+The runtime should make common cases smaller and more predictable:
 
-- local UI state in a feature module
-- state-to-DOM syncing
-- keyed collection rendering
-- input binding
-- cleanup consolidation
+- local state
+- shell-local markup
+- fine-grained DOM binding
+- keyed list rendering
+- centralized cleanup
+
+If plain DOM is clearer, keep plain DOM.
+
+## Runtime Surface
+
+Treat `naf.js` as the single runtime entrypoint.
+
+The current runtime surface includes:
+
+- `signal()`
+- `computed()`
+- `effect()`
+- `mount()`
+- `template()`
+- `when()`
+- `fx()`
+- `model()`
+- `list()`
+- `cleanupCollector()`
+- `$()`
+- `$$()`
+- `$on()`
+- `attr()`
+- `setText()`
+- `text()`
+
+Use one runtime import surface per module. Do not split runtime imports across multiple helper files.
+
+The current app-state style alongside NAF is:
+
+- direct signal reads such as `appState.currentFilePath()`
+- direct signal writes when the module truly owns them
+- small domain groups such as `appState.session`, `appState.window`, `appState.keyboardShortcuts`, and `appState.importMerge`
+
+Do not add a second wrapper layer like `appState.selectors` or `appState.actions`.
+
+## Choosing The Right Level
+
+### Use `template()` for bounded shells
+
+Use `template()` when a module is mainly:
+
+- local markup
+- element lookup
+- mount-time listener wiring
+- bounded cleanup
+
+Typical good fits:
+
+- pages
+- dialogs
+- titlebar and toolbar shells
+- bounded feature shells
+
+Typical signs:
+
+- the main value is markup locality
+- the lifecycle is easy to describe as mount and unmount
+- the module is not dominated by row-level or field-level behavior
+
+Current preferred authoring pattern:
+
+1. define markup with `template()`
+2. mark important local nodes with `data-ref`
+3. use `onMount(el, parent, ctx)` and read `ctx.refs`
+4. register cleanup through one obvious cleanup path
+5. mount with `mount(component, host)` instead of writing `innerHTML` manually
+
+This keeps ownership local to the component subtree rather than depending on broad parent queries.
+
+If the module still needs several broad shell queries after that, the boundary is probably wrong and should be re-cut rather than patched with more helpers.
+
+### Use direct DOM plus NAF helpers for interaction-heavy surfaces
+
+Keep direct DOM ownership when a module is mainly:
+
+- field bindings
+- row updates
+- keyboard interaction
+- pointer interaction
+- drag and drop
+- fine-grained incremental UI updates
+
+Typical good fits:
+
+- tree rows
+- detail editors
+- drag-and-drop controllers
+- keyboard systems
+- row-level search and tree rendering
+
+`template()` is not a goal by itself. It is one tool.
+
+### Use `when()` only when it genuinely simplifies branching
+
+Good uses:
+
+- page branches
+- empty-state versus loaded-state branches
+- small conditional shell composition
+
+Avoid `when()` for:
+
+- row rendering
+- drag-and-drop surfaces
+- cases where imperative mount and cleanup are already clearer
 
 ## Helper Guide
 
@@ -36,25 +149,24 @@ Use for mutable local state.
 
 Good uses:
 
-- open/closed state
-- busy/loading state
-- current input values
-- selected local item
+- open or closed state
+- local loading state
+- draft form values
 - local error messages
+- local mode toggles such as editing
 
-Prefer local `signal()` state when the state belongs to one feature instance and does not need to be shared across modules.
-
-Do not put everything in shared `state/*` by default.
+Prefer local `signal()` state when the state belongs to one mounted instance.
 
 ### `computed(fn)`
 
-Use for derived values that depend on one or more signals.
+Use for derived values that depend on signals.
 
 Good uses:
 
-- filtered lists
-- booleans derived from multiple local signals
-- counts or labels derived from state
+- derived labels
+- filtered collections
+- booleans derived from several local signals
+- counts or status text
 
 Do not use `computed()` for side effects.
 
@@ -64,36 +176,34 @@ Use for coordination and side effects.
 
 Good uses:
 
-- syncing state into external APIs
+- syncing state into the DOM when a narrower helper does not fit
 - reacting to state changes that trigger work
-- top-level feature coordination
+- coordinating mount-level behavior
 
-Use carefully. If an `effect()` starts containing business logic, branching workflow logic, or large chunks of DOM updates, that is a sign to simplify or split the code.
+Keep `effect()` bodies small.
 
-Prefer `fx()` for element-specific DOM syncing.
+If an effect starts owning business logic, branching workflows, and many DOM updates at once, simplify it or split the module.
 
 ### `fx(el, fn)`
 
-Use for binding reactive state to one element.
+Use for element-scoped reactive binding.
 
-This should be the default helper for:
+Good uses:
 
 - `hidden`
 - `disabled`
 - `textContent`
 - `classList`
-- `attributes`
+- attributes
 - small style updates
 
-`fx()` is usually clearer than a large manual `render()` function because the binding stays close to the element it affects.
-
-Prefer multiple small `fx()` calls over one giant DOM-sync effect.
+Prefer multiple small `fx()` bindings over one large DOM-sync effect when that improves clarity.
 
 ### `model(el, sig, { reactive: true })`
 
-Use for form controls backed by a signal.
+Use for form controls bound to a signal.
 
-This should be the standard approach for:
+This is the standard approach for:
 
 - text inputs
 - textareas
@@ -102,167 +212,187 @@ This should be the standard approach for:
 
 Typical pattern:
 
-- `signal()` owns the local value
-- `model()` binds the control to the signal
-- `fx()` handles derived UI like error visibility or disabled state
+1. `signal()` owns the local value
+2. `model()` binds the control
+3. `fx()` or `effect()` handles derived UI such as error state or button availability
 
-Avoid manually setting `input.value` in a separate render path if `model()` already owns the binding.
+Avoid manually fighting `model()` with unrelated `input.value` assignments.
 
 ### `list(container, templateEl, items, key, setup)`
 
-Use for keyed collection rendering.
+Use for keyed repeated UI with stable identity.
 
 Good uses:
 
 - tree rows
+- search result rows
 - toast stacks
 - dialog option lists
-- import preview sections and rows
-- any dynamic repeated UI where entries need stable identity
 
 Prefer `list()` over rebuilding `replaceChildren()` loops when:
 
-- items have stable IDs
-- row-level setup has listeners or effects
-- entries should be updated incrementally
+- items have stable keys
+- row setup has listeners or effects
+- entries should update incrementally
 
-Avoid `list()` for one-off static DOM.
+Avoid `list()` for static or one-off markup.
 
 ### `cleanupCollector(...)`
 
-Use when a module registers multiple effects, listeners, bindings, or timers.
-
-This should be the standard cleanup pattern for feature modules with more than one teardown step.
+Use when a module registers several cleanups.
 
 Good uses:
 
-- combining event listener removals
-- combining `effect()` cleanup functions
-- combining `model()` cleanup functions
-- combining nested sub-feature cleanup functions
+- listeners
+- effects
+- model bindings
+- nested mounts
+- timers
 
 Prefer one obvious cleanup path per module.
 
-## Shared State vs Local State
+### `mount(component, host)`
 
-### Put state in `state/*` when:
+Use `mount()` as the default way to attach a template-backed component to a dedicated host.
 
-- multiple modules need it
-- it reflects app/session state
-- it affects cross-feature coordination
-- it should survive refreshes or tie into persistence
+Good uses:
 
-Examples:
+- titlebar
+- dialogs
+- bounded shell sections mounted into known anchors
 
-- current file path
-- tree state
-- search state
-- move dialog state
-- app-level modal state
+`mount()` should replace the older pattern:
 
-### Keep state local with `signal()` when:
+1. `host.innerHTML = component.html`
+2. `component.mount(host)`
 
-- it belongs to one feature instance
-- it is purely presentational or transient
-- it does not need to be imported elsewhere
+The older pattern still exists in older modules, but new or migrated modules should use `mount()` directly.
 
-Examples:
+### Local refs with `data-ref`
 
-- form open state
-- local edit mode
-- input drafts
-- local error message
-- local loading indicator
+Prefer `data-ref` markers over repeated `querySelector()` calls when a template-backed component owns the markup.
 
-## Preferred Module Pattern
+Good uses:
 
-For `features/*`, prefer this rough shape:
+- action buttons
+- dialog shell nodes
+- local headings or status nodes
+- shell wrappers that are only meaningful inside one component
 
-1. Create DOM
-2. Define local signals
-3. Bind inputs with `model()`
-4. Define event handlers
-5. Add small `fx()` bindings
-6. Add any coordinating `effect()` calls
-7. Return one cleanup path
+Keep refs local:
 
-This is not a strict template, but it keeps modules easier to scan.
+- only mark elements the component truly owns
+- do not use `data-ref` as a global lookup mechanism
+- if a module is mostly broad shell scavenging, it probably still needs a boundary cleanup rather than more refs
 
-## Prefer This Over `render()`
+Use `querySelector()` only when:
 
-Large imperative `render()` functions should usually be treated as a smell.
+- the node is not truly owned by the current template
+- the module is intentionally binding into a stable external shell anchor
+- imperative DOM ownership is clearer than ref-marking
 
-They are acceptable when:
+### `$()`, `$$()`, `$on()`, `attr()`, `setText()`, `text()`
 
-- the UI is very small
-- the whole surface genuinely changes together
-- splitting into fine-grained bindings would be harder to read
+Use these as lightweight DOM helpers, not as a mini-framework.
 
-But in most feature modules, prefer:
+Good uses:
 
-- `model()` for inputs
-- `fx()` for element bindings
-- `list()` for repeated structures
+- local element lookup
+- small event attachment helpers
+- simple attribute and text syncing
+- text escaping when building HTML strings
 
-This keeps updates local and reduces “rewrite the whole subtree” code.
+Do not build deep custom abstractions on top of them unless the pattern is genuinely repeated.
 
-## List Rendering Guidance
+## Shared State Versus Local State
 
-When using `list()`:
+Put state in shared state modules when:
 
-- always use stable keys
-- keep row setup small
-- let row setup return cleanup
-- move row-specific logic into a submodule if the setup becomes large
+- several modules need it
+- it represents app or session state
+- it coordinates features
+- it should survive restore or persistence flows
 
-If `setup()` grows into a large function with multiple behaviors, split it into a dedicated renderer or child feature.
+Keep state local with `signal()` when:
 
-## Cleanup Rules
+- it belongs to one mounted instance
+- it is transient or presentational
+- no other module should import it
 
-If a module creates any of the following, it must clean them up:
+Use the smallest ownership scope that still matches the real behavior.
 
-- event listeners
-- `effect()` subscriptions
-- `model()` bindings
-- timers
-- nested feature instances
-- list row bindings
+For shared state surfaces:
 
-Prefer `cleanupCollector()` once the cleanup list is longer than a couple of entries.
+- prefer direct signals for simple app/session values
+- prefer small domain groups for related workflows
+- avoid parallel APIs that expose the same value through multiple naming schemes
 
-## When Not To Use NAF-HTML
+## Recommended Module Shapes
+
+### Template-owned shell
+
+Use this rough flow:
+
+1. declare markup with `template()`
+2. gather important elements in `onMount`
+3. wire listeners and effects
+4. store cleanup with `cleanupCollector()`
+5. release everything in `onUnmount`
+
+This is a good fit for pages, dialogs, and reusable shell components.
+
+### Imperative feature surface
+
+Use this rough flow:
+
+1. create or collect DOM
+2. define local signals
+3. bind inputs with `model()`
+4. register listeners
+5. add `fx()` or `effect()` bindings
+6. mount repeated rows with `list()` if needed
+7. return one cleanup path
+
+This is a good fit for dense editors, rows, and interaction-heavy feature surfaces.
+
+## When Not To Use NAF
 
 Do not force helpers into places where plain DOM code is clearer.
 
 Examples:
 
-- static DOM created once with no reactive state
-- very small modules with one listener and no local state
-- cases where abstraction would hide more than it helps
+- static markup created once with no local state
+- very small modules with one listener and no meaningful repeated pattern
+- interaction-heavy modules where a template would hide ownership instead of clarifying it
 
-The rule is:
+The rule is simple:
 
-- use helpers for repeated patterns
-- keep plain DOM code for simple one-off logic
+- use the helper when it reduces repeated wiring
+- skip the helper when it adds indirection without a payoff
 
-## Anti-Patterns To Avoid
+## Anti-Patterns
 
-- putting business logic inside large `effect()` bodies
-- duplicating the same state in both a signal and manual mutable variables
-- using `model()` and also manually resetting `input.value` from unrelated code
-- rebuilding keyed collections manually when `list()` is a better fit
-- scattering cleanup across multiple nested return paths
+Avoid these:
+
+- large `effect()` bodies that mix business logic and DOM sync
+- duplicated state in both signals and manual mutable variables
+- manual input syncing where `model()` should own the control
+- rebuilding keyed lists manually when `list()` is a better fit
+- scattered cleanup paths
 - moving shared app state into local signals just to shrink imports
+- forcing `template()` into tree, DnD, or dense editor modules for consistency alone
+- using `when()` where plain mount logic is easier to understand
 
 ## Review Checklist
 
-When editing or creating a feature module, ask:
+When creating or editing a frontend module, ask:
 
-1. Should this state be local `signal()` state or shared `state/*` state?
-2. Can `model()` replace manual input syncing here?
-3. Can `fx()` replace manual `render()` DOM updates here?
-4. Should this repeated UI use `list()`?
-5. Is cleanup centralized and obvious?
-6. Did using the helper make the code simpler, or just more abstract?
+1. Is this mostly a bounded shell or an interaction-heavy surface?
+2. Should the shell be a `template()`?
+3. Should the state be local `signal()` state or shared state?
+4. Can `model()` or `fx()` remove repeated wiring here?
+5. Should repeated UI use `list()`?
+6. Is cleanup obvious and centralized?
+7. Did using NAF make the code clearer, or only more abstract?
 
-If the helper does not make the code simpler, do not force it.
+If the helper does not improve clarity, do not force it.

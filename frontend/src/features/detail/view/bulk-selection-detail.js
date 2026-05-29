@@ -6,7 +6,7 @@ import {
   RefreshTitlesForNodes,
 } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
-import { cleanupCollector, fx, signal } from "../../../shared/runtime/naf-html.js";
+import { cleanupCollector, fx, signal } from "../../../shared/runtime/naf.js";
 import { moveDialogState } from "../../move/move-dialog-state.js";
 import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";

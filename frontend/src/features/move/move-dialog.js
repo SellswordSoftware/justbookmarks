@@ -3,7 +3,7 @@
 import { MoveNode, MoveNodes } from "../../shared/api/api.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, list } from "../../shared/runtime/naf-html.js";
+import { cleanupCollector, effect, list, mount, template } from "../../shared/runtime/naf.js";
 import { moveDialogState } from "./move-dialog-state.js";
 import { treeState } from "../tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
@@ -27,8 +27,8 @@ export function collectMoveDialogShell(root) {
 
 /** @returns {HTMLTemplateElement} */
 function createMoveOptionTemplate() {
-  const template = document.createElement("template");
-  template.innerHTML = `
+  const templateEl = document.createElement("template");
+  templateEl.innerHTML = `
     <button type="button" class="move-dialog__option" role="option" data-keyboard-action="move-target">
       <span class="move-dialog__option-icon">📁</span>
       <span class="move-dialog__option-content">
@@ -37,7 +37,152 @@ function createMoveOptionTemplate() {
       </span>
     </button>
   `;
-  return template;
+  return templateEl;
+}
+
+/**
+ * @param {MoveTarget[]} folders
+ * @param {string} selectedTarget
+ * @returns {void}
+ */
+function ensureSelectedTarget(folders, selectedTarget) {
+  if (selectedTarget) {
+    return;
+  }
+  if (folders[0]) {
+    moveDialogState.actions.setSelectedTarget(folders[0].id);
+  }
+}
+
+async function move() {
+  const request = moveDialogState.selectors.getRequest();
+  const targetId = moveDialogState.selectors.getSelectedTarget();
+  if (!request || !targetId) {
+    return;
+  }
+
+  try {
+    if (request.nodeIds.length === 1) {
+      await MoveNode(request.nodeIds[0], targetId, -1);
+    } else {
+      await MoveNodes(request.nodeIds, targetId);
+    }
+    uiState.actions.showToast("Moved successfully", "success");
+    await treeState.actions.refresh();
+  } catch (caughtError) {
+    uiState.actions.showToast(`Move failed: ${getErrorMessage(caughtError)}`, "error");
+  }
+
+  moveDialogState.actions.closeMoveDialog();
+}
+
+/**
+ * @param {{
+ *   label: string,
+ *   hasFolders: boolean,
+ *   hasSelectedTarget: boolean
+ * }} view
+ * @param {(mounted: {
+ *   backdrop: HTMLDivElement,
+ *   dialog: HTMLDivElement,
+ *   listbox: HTMLDivElement,
+ *   cancelButton: HTMLButtonElement,
+ *   confirmButton: HTMLButtonElement,
+ * }) => void} onMountElements
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createMoveDialog(view, onMountElements) {
+  const emptyStateHtml = view.hasFolders
+    ? ""
+    : '<div class="move-dialog__empty">No eligible folders</div>';
+
+  const renderDialog = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    template({
+      onMount(_el, _parent, ctx) {
+        const backdrop = ctx.refs.backdrop;
+        const dialog = ctx.refs.dialog;
+        const listbox = ctx.refs.listbox;
+        const cancelButton = ctx.refs.cancelButton;
+        const confirmButton = ctx.refs.confirmButton;
+
+        if (!(backdrop instanceof HTMLDivElement)) {
+          throw new Error("Expected move dialog backdrop");
+        }
+        if (!(dialog instanceof HTMLDivElement)) {
+          throw new Error("Expected move dialog");
+        }
+        if (!(listbox instanceof HTMLDivElement)) {
+          throw new Error("Expected move dialog listbox");
+        }
+        if (!(cancelButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected move cancel button");
+        }
+        if (!(confirmButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected move confirm button");
+        }
+
+        onMountElements({
+          backdrop,
+          dialog,
+          listbox,
+          cancelButton,
+          confirmButton,
+        });
+      },
+    })
+  );
+
+  return renderDialog`
+    <div class="modal-backdrop" role="presentation" data-ref="backdrop">
+      <div
+        class="modal move-dialog"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        data-focus-zone="dialog"
+        data-ref="dialog"
+      >
+        <div class="modal__header move-dialog__header">
+          <div>
+            <h3 class="shell-panel__title">Move "${view.label}"</h3>
+            <p class="shell-panel__subtitle">Select a target folder</p>
+          </div>
+        </div>
+        <div class="modal__body">
+          <div class="move-dialog__list-shell">
+            <div class="move-dialog__list-header">Folder Tree</div>
+            <div
+              class="move-dialog__listbox"
+              role="listbox"
+              aria-label="Target folder"
+              data-ref="listbox"
+            >
+              ${emptyStateHtml}
+            </div>
+          </div>
+        </div>
+        <div class="modal__footer">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            data-keyboard-action="move-cancel"
+            data-ref="cancelButton"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            data-keyboard-action="move-confirm"
+            data-ref="confirmButton"
+            ${view.hasSelectedTarget ? "" : "disabled"}
+          >
+            Move
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 /**
@@ -48,46 +193,9 @@ export function mountMoveDialog(shell) {
   let cleanupRendered = () => {};
   const optionTemplate = createMoveOptionTemplate();
 
-  /**
-   * @param {MoveTarget[]} folders
-   * @param {string} selectedTarget
-   * @returns {void}
-   */
-  function ensureSelectedTarget(folders, selectedTarget) {
-    if (selectedTarget) {
-      return;
-    }
-    if (folders[0]) {
-      moveDialogState.actions.setSelectedTarget(folders[0].id);
-    }
-  }
-
-  async function move() {
-    const request = moveDialogState.selectors.getRequest();
-    const targetId = moveDialogState.selectors.getSelectedTarget();
-    if (!request || !targetId) {
-      return;
-    }
-
-    try {
-      if (request.nodeIds.length === 1) {
-        await MoveNode(request.nodeIds[0], targetId, -1);
-      } else {
-        await MoveNodes(request.nodeIds, targetId);
-      }
-      uiState.actions.showToast("Moved successfully", "success");
-      await treeState.actions.refresh();
-    } catch (caughtError) {
-      uiState.actions.showToast(`Move failed: ${getErrorMessage(caughtError)}`, "error");
-    }
-
-    moveDialogState.actions.closeMoveDialog();
-  }
-
   const stop = effect(() => {
     cleanupRendered();
     cleanupRendered = () => {};
-
     shell.container.replaceChildren();
 
     if (!moveDialogState.selectors.isOpen()) {
@@ -100,77 +208,35 @@ export function mountMoveDialog(shell) {
 
     ensureSelectedTarget(folders, selectedTarget);
 
-    const backdrop = document.createElement("div");
-    backdrop.className = "modal-backdrop";
-    backdrop.setAttribute("role", "presentation");
+    /** @type {{
+     *   backdrop: HTMLDivElement,
+     *   dialog: HTMLDivElement,
+     *   listbox: HTMLDivElement,
+     *   cancelButton: HTMLButtonElement,
+     *   confirmButton: HTMLButtonElement,
+     * } | undefined} */
+    let mounted;
 
-    const dialog = document.createElement("div");
-    dialog.className = "modal move-dialog";
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-modal", "true");
-    dialog.tabIndex = -1;
-    dialog.setAttribute("data-focus-zone", "dialog");
+    const host = document.createElement("div");
+    const component = createMoveDialog(
+      {
+        label: request?.label ?? "",
+        hasFolders: folders.length > 0,
+        hasSelectedTarget: Boolean(moveDialogState.selectors.getSelectedTarget()),
+      },
+      (elements) => {
+        mounted = elements;
+      },
+    );
 
-    const header = document.createElement("div");
-    header.className = "modal__header move-dialog__header";
+    shell.container.append(host);
+    mount(component, host);
 
-    const headingBlock = document.createElement("div");
-    const heading = document.createElement("h3");
-    heading.className = "shell-panel__title";
-    heading.textContent = `Move "${request?.label ?? ""}"`;
-
-    const subtitle = document.createElement("p");
-    subtitle.className = "shell-panel__subtitle";
-    subtitle.textContent = "Select a target folder";
-
-    headingBlock.append(heading, subtitle);
-    header.append(headingBlock);
-
-    const body = document.createElement("div");
-    body.className = "modal__body";
-
-    const listShell = document.createElement("div");
-    listShell.className = "move-dialog__list-shell";
-
-    const listHeader = document.createElement("div");
-    listHeader.className = "move-dialog__list-header";
-    listHeader.textContent = "Folder Tree";
-
-    const listbox = document.createElement("div");
-    listbox.className = "move-dialog__listbox";
-    listbox.setAttribute("role", "listbox");
-    listbox.setAttribute("aria-label", "Target folder");
-
-    if (folders.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "move-dialog__empty";
-      empty.textContent = "No eligible folders";
-      listbox.append(empty);
+    if (!mounted) {
+      throw new Error("Expected move dialog elements after mount");
     }
 
-    listShell.append(listHeader, listbox);
-    body.append(listShell);
-
-    const footer = document.createElement("div");
-    footer.className = "modal__footer";
-
-    const cancelButton = document.createElement("button");
-    cancelButton.type = "button";
-    cancelButton.className = "btn btn-ghost btn-sm";
-    cancelButton.textContent = "Cancel";
-    cancelButton.setAttribute("data-keyboard-action", "move-cancel");
-
-    const confirmButton = document.createElement("button");
-    confirmButton.type = "button";
-    confirmButton.className = "btn btn-primary btn-sm";
-    confirmButton.textContent = "Move";
-    confirmButton.setAttribute("data-keyboard-action", "move-confirm");
-    confirmButton.disabled = !moveDialogState.selectors.getSelectedTarget();
-
-    footer.append(cancelButton, confirmButton);
-    dialog.append(header, body, footer);
-    backdrop.append(dialog);
-    shell.container.append(backdrop);
+    const { backdrop, dialog, listbox, cancelButton, confirmButton } = mounted;
 
     const handleBackdropClick = () => {
       moveDialogState.actions.closeMoveDialog();
@@ -293,6 +359,8 @@ export function mountMoveDialog(shell) {
 
     cleanupRendered = () => {
       cleanup.run();
+      component.unmount?.();
+      host.remove();
     };
   });
 

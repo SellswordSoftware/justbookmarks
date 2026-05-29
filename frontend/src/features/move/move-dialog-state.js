@@ -1,6 +1,6 @@
 // @ts-check
 
-import { computed, signal } from "../../shared/runtime/naf-html.js";
+import { computed, signal } from "../../shared/runtime/naf.js";
 
 /**
  * Move dialog state owner.

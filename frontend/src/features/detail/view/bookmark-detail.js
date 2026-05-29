@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, fx, model, signal } from "../../../shared/runtime/naf-html.js";
+import { cleanupCollector, fx, model, signal } from "../../../shared/runtime/naf.js";
 import { createBookmarkDetailActions } from "../actions/bookmark-detail-actions.js";
 import { createBookmarkMetadataWorkflow } from "../actions/bookmark-detail-metadata.js";
 import { createBookmarkDetailShell } from "./bookmark-detail-shell.js";

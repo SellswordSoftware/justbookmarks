@@ -88,6 +88,15 @@ wails dev
 
 This starts the Wails app with the frontend dev server for fast iteration.
 
+### Frontend Docs
+
+For frontend work, start with:
+
+- `docs/agent-project-context.md`
+- `docs/frontend-architecture.md`
+- `docs/frontend-maintainability-guidelines.md`
+- `docs/naf-html-usage-guidelines.md`
+
 ## Building
 
 Build a production desktop app:

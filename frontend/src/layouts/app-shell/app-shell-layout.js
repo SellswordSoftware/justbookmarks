@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../../shared/runtime/naf-html.js";
+import { effect } from "../../shared/runtime/naf.js";
 import { setLeftPaneWidth } from "../../shared/infra/persistence.js";
 import { appState } from "../../shared/state/app-state.js";
 
@@ -63,7 +63,7 @@ export function collectLayoutShell(root) {
  * @returns {() => void}
  */
 export function mountLayout(shell) {
-  let leftPaneWidth = appState.selectors.getPersistedState().leftPaneWidth;
+  let leftPaneWidth = appState.persistedState().leftPaneWidth;
   let isResizing = false;
 
   /**
@@ -77,7 +77,7 @@ export function mountLayout(shell) {
     shell.root.style.setProperty("--left-pane-width", `${leftPaneWidth}px`);
     if (persist) {
       const nextState = setLeftPaneWidth(leftPaneWidth);
-      appState.signals.persistedState(nextState);
+      appState.persistedState(nextState);
     }
   }
 
@@ -126,7 +126,7 @@ export function mountLayout(shell) {
   window.addEventListener("resize", handleWindowResize);
 
   const stopEffect = effect(() => {
-    applyLeftPaneWidth(appState.selectors.getPersistedState().leftPaneWidth);
+    applyLeftPaneWidth(appState.persistedState().leftPaneWidth);
   });
 
   applyLeftPaneWidth(leftPaneWidth);

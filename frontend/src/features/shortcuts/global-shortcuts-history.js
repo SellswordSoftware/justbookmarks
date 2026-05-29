@@ -11,7 +11,7 @@ import { uiState } from "../../shared/state/ui-state.js";
  * @returns {Promise<void>}
  */
 export async function runHistoryAction(direction) {
-  if (!appState.selectors.getCurrentFilePath()) {
+  if (!appState.currentFilePath()) {
     return;
   }
 

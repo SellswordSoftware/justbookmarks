@@ -19,6 +19,7 @@
 @import "../components/toolbar/toolbar.css";
 @import "../components/shell-panel/shell-panel.css";
 
+@import "../pages/empty-library/empty-library-page.css";
 @import "../features/tree/styles/tree-list.css";
 @import "../features/tree/styles/tree-pane.css";
 @import "../features/detail/styles/detail-surface.css";

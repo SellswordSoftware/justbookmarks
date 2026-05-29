@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../shared/runtime/naf-html.js";
+import { effect } from "../shared/runtime/naf.js";
 import { setPerFileTreeState } from "../shared/infra/persistence.js";
 import { appState } from "../shared/state/app-state.js";
 import { treeState } from "../features/tree/state/tree-state.js";
@@ -32,7 +32,7 @@ export function mountAppLifecycle(options) {
     }
 
     saveWindowSizeTimer = setTimeout(() => {
-      void appState.actions.persistCurrentWindowSize();
+      void appState.window.persistCurrentSize();
     }, 150);
   }
 
@@ -40,7 +40,7 @@ export function mountAppLifecycle(options) {
     schedulePersistWindowSize();
   };
   const stopTreePersistence = effect(() => {
-    const currentFilePath = appState.selectors.getCurrentFilePath();
+    const currentFilePath = appState.currentFilePath();
     if (!currentFilePath) {
       return;
     }
@@ -57,7 +57,7 @@ export function mountAppLifecycle(options) {
     window.removeEventListener("resize", handleWindowResize);
     cleanupFeatures();
     stopTreePersistence();
-    void appState.actions.persistCurrentWindowSize();
+    void appState.window.persistCurrentSize();
   };
 
   window.addEventListener("resize", handleWindowResize);

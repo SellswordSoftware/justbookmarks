@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector } from "../../shared/runtime/naf-html.js";
+import { cleanupCollector } from "../../shared/runtime/naf.js";
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
 import { importMergeState } from "./import-merge-state.js";
 

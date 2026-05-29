@@ -1,7 +1,7 @@
 // @ts-check
 
 import { AddBookmark, FetchFavicon, FetchPageTitle } from "../../shared/api/api.js";
-import { cleanupCollector, effect, fx, model, signal } from "../../shared/runtime/naf-html.js";
+import { cleanupCollector, effect, fx, model, signal } from "../../shared/runtime/naf.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { appState } from "../../shared/state/app-state.js";
 import { treeState } from "../tree/state/tree-state.js";
@@ -300,7 +300,7 @@ export function createAddBookmarkForm(options) {
   titleInput.addEventListener("input", handleTitleInput);
 
   const stop = effect(() => {
-    const available = options.isAvailable ? options.isAvailable() : Boolean(appState.selectors.getCurrentFilePath());
+    const available = options.isAvailable ? options.isAvailable() : Boolean(appState.currentFilePath());
     trigger.disabled = !available;
     if (!available) {
       setOpen(false);

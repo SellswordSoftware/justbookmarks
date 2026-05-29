@@ -1,26 +1,36 @@
 // @ts-check
 
-import { effect, list } from "../../shared/runtime/naf-html.js";
+import { effect, list } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /** @typedef {import("../../types.js").ToastType} ToastType */
 
 /**
  * @param {ParentNode} root
- * @returns {{ container: HTMLElement, template: HTMLTemplateElement }}
+ * @returns {{ container: HTMLElement }}
  */
 export function collectToastContainerShell(root) {
   const container = root.querySelector("#toast-container");
-  const template = root.querySelector("#toast-template");
 
   if (!(container instanceof HTMLElement)) {
     throw new Error("Expected #toast-container element");
   }
-  if (!(template instanceof HTMLTemplateElement)) {
-    throw new Error("Expected #toast-template element");
-  }
 
-  return { container, template };
+  return { container };
+}
+
+/**
+ * @returns {HTMLTemplateElement}
+ */
+function createToastTemplate() {
+  const template = document.createElement("template");
+  template.innerHTML = `
+    <article class="placeholder-card" data-template="toast">
+      <strong data-part="label">Toast</strong>
+      <span data-part="meta">Toast binding target.</span>
+    </article>
+  `;
+  return template;
 }
 
 /**
@@ -42,17 +52,18 @@ function getToastTypeClass(type) {
 }
 
 /**
- * @param {{ container: HTMLElement, template: HTMLTemplateElement }} shell
+ * @param {{ container: HTMLElement }} shell
  * @returns {{ cleanup: () => void }}
  */
 export function mountToastContainer(shell) {
   const stack = document.createElement("div");
+  const template = createToastTemplate();
   stack.className = "toast-stack";
   shell.container.append(stack);
 
   const stopList = list(
     stack,
-    shell.template,
+    template,
     () => uiState.selectors.getToasts(),
     (toast) => toast.id,
     (el, toast) => {
@@ -86,6 +97,7 @@ export function mountToastContainer(shell) {
     cleanup() {
       stopVisibility();
       stopList();
+      stack.remove();
     },
   };
 }

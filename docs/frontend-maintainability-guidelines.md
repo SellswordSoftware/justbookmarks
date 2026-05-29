@@ -2,122 +2,237 @@
 
 ## Purpose
 
-This project does not need rigid file-size rules, but it does need consistent pressure toward small, legible modules.
+This frontend does not need heavy process, but it does need consistent pressure toward clear ownership and small-enough modules.
 
 The goal is:
 
 - easy scanning
-- obvious ownership
+- predictable module boundaries
 - low-risk edits
-- fewer files that mix unrelated concerns
+- fewer files that mix shell code, product behavior, and async workflows
 
-## File Size Guidelines
+## Reader
 
-Use these as heuristics, not hard laws:
+This document is for engineers changing frontend modules.
 
-- `150-250` lines: healthy target for most frontend modules
-- `300-400` lines: acceptable if the module is cohesive and still easy to scan
-- `400+` lines: review for extraction opportunities
-- `600+` lines: should usually be split unless the file is mostly static data or intentionally centralized
+After reading it, you should be able to:
 
-Line count alone is not enough. A `220` line file can still be worse than a `380` line file if it mixes too many responsibilities.
+- decide when a file should be split
+- keep NAF-based modules readable
+- avoid turning the runtime into a framework
+- separate shell composition from interaction-heavy logic
 
-## Primary Rule
+## Core Rule
 
-Split files based on responsibility, not just length.
+Split files by responsibility, not just by line count.
 
-A file should usually be broken up when it has more than one real reason to change.
+A module should usually be reviewed when it starts owning more than one of these concerns:
 
-In this frontend, the common reasons to split are:
-
-- state ownership
-- DOM structure creation
-- reactive bindings
+- shell markup
+- local reactive state
+- input binding
 - async workflows
-- keyboard and pointer interaction rules
-- reusable row/item renderers
-- formatting or display helpers
+- backend mutations
+- keyboard rules
+- pointer or drag-and-drop rules
+- list row behavior
 
-## Recommended Boundaries
+Large files are acceptable when they are cohesive. Small files are bad if they fragment one idea across too many places.
 
-### `state/*`
+## File Size Heuristics
 
-Keep state modules focused on:
+Use these as review triggers, not hard limits:
 
-- signals
-- computed values
-- selectors
-- actions
+- `150-250` lines: healthy target for many modules
+- `300-400` lines: acceptable when cohesive
+- `400+` lines: review for extraction opportunities
+- `600+` lines: usually justify why they are still one module
 
-Avoid mixing DOM code into state modules.
+A `220` line file can still be worse than a `380` line file if it mixes too many responsibilities.
 
-### `features/*`
+## The Main Split
 
-A feature module should usually own one UI surface.
+For this codebase, the most important maintainability split is:
 
-Examples:
+- shell composition versus interaction-heavy logic
 
-- tree
-- detail panel
-- one dialog
-- one form
+Shell composition usually means:
 
-If a feature grows large, split out:
+- `template()` markup
+- a few local refs or element lookups
+- a bounded listener set
+- mount and unmount cleanup
 
-- sub-renderers
-- list-row renderers
-- helper functions
+Interaction-heavy logic usually means:
+
+- many field bindings
+- many effects
+- keyboard rules
+- drag and drop
+- row-level state updates
+
+Keep these two modes distinct. Do not build giant modules that do both equally.
+
+## Preferred Boundaries
+
+### Pages
+
+Pages should own:
+
+- screen-level composition
+- shell visibility rules
+- page-specific mounts
+
+Pages should not absorb deep feature internals.
+
+If a page file grows, extract:
+
+- page-local shell helpers
+- feature mounts
+- page-specific UI helpers
+
+### Features
+
+A feature should usually own one product surface.
+
+If a feature grows, split out:
+
+- state owner
 - async workflow helpers
+- row or sub-view renderers
+- keyboard or pointer interaction systems
+- shell builders when markup is significant
 
-### `naf-html` helpers
+Do not split a feature into fragments so small that the workflow becomes harder to follow.
 
-If the same DOM/event/effect pattern appears in multiple modules, prefer improving or using the helper layer instead of re-implementing it.
+### Components
 
-But do not force every module into abstraction if the result is less clear.
+Components should stay bounded.
+
+A component should usually do one of these jobs:
+
+- render shell markup
+- own a contained interaction surface
+- provide dialog or toolbar chrome
+
+If a component starts owning product workflow, move that behavior into a feature.
+
+### Shared
+
+Shared code should be hard to earn.
+
+Only create or grow shared abstractions when:
+
+- the reuse is real
+- the abstraction is simpler than duplication
+- the name still describes what it does without knowing the old caller
+
+## NAF-Specific Guidance
+
+### Use NAF templates for shell locality
+
+Use `template()` when the main benefit is:
+
+- keeping markup next to behavior
+- reducing `index.html` growth
+- making mount and cleanup easier to scan
+
+Do not convert every module to `template()` by default.
+
+### Use NAF helpers for fine-grained behavior
+
+Use low-level helpers when they make repeated patterns clearer:
+
+- `signal()`
+- `computed()`
+- `effect()`
+- `fx()`
+- `model()`
+- `list()`
+- `cleanupCollector()`
+
+For template-backed shell modules, also prefer:
+
+- `mount()` for dedicated host mounting
+- `data-ref` plus `ctx.refs` for owned nodes
+
+If the helper makes the module harder to understand, do not force it.
+
+### Keep imperative ownership where it is better
+
+Direct DOM code is still the right choice for:
+
+- tree rendering
+- tree rows
+- search result rows
+- drag and drop
+- keyboard-heavy widgets
+- dense detail editing surfaces
+
+The goal is maintainability, not uniformity.
 
 ## Practical Split Triggers
 
-Strong signals that a file should be reviewed for extraction:
+Review a file when you notice any of these:
 
-- repeated `render()`-style imperative DOM syncing
-- more than one local state machine in the same file
-- long blocks of event listener registration and cleanup
-- a mix of UI rendering and backend mutation orchestration
-- nested loops or branching that make scanning slow
-- difficulty naming the file after a single responsibility
+- repeated render-style DOM syncing
+- repeated `querySelector()` calls for elements already owned by one template
+- more than one local state machine
+- large listener registration blocks
+- async workflow logic mixed with shell composition
+- deeply nested branching that slows scanning
+- several helper functions with unrelated reasons to change
+- difficulty naming the file after one responsibility
 
-## Project-Specific Guidance
+## Good Extraction Targets In This Frontend
 
-For this codebase:
+Common extraction targets in this codebase:
 
-- start reviewing files for splits around `350` lines
-- require a conscious reason to keep a file above `500` lines
-- prefer extracting by responsibility instead of arbitrary chunking
-
-Good extraction targets in this frontend include:
-
-- dialog option/row renderers
-- detail-panel edit flows
-- metadata fetch workflows
+- dialog option or row renderers
+- detail metadata workflows
+- form state wiring
 - tree row interaction helpers
-- repeated form state wiring
+- keyboard handling systems
+- async mutation helpers
+- shell builders for bounded feature surfaces
 
 ## What Not To Do
 
-- do not split files into tiny fragments that are harder to follow than the original
-- do not create generic abstractions too early
-- do not move logic out just to reduce line count if cohesion gets worse
+Avoid these patterns:
 
-The aim is not “small files at all costs”. The aim is clear ownership and lower maintenance cost.
+- splitting by line count alone
+- extracting tiny helpers that hide straightforward code
+- creating generic abstractions too early
+- moving code into shared modules just to reduce imports
+- mixing shell markup, backend mutation, and interaction rules in one large file when the boundaries are already clear
 
 ## Review Checklist
 
-When touching a large frontend file, ask:
+When touching a frontend file, ask:
 
 1. Does this file still have one clear responsibility?
-2. Are state, DOM, and async logic separated well enough to scan quickly?
-3. Is there repeated wiring that should use `naf-html` helpers instead?
-4. Would extracting a submodule make future edits safer and clearer?
-5. If the file stays large, is there a concrete reason it is better kept together?
+2. Is this module mostly shell composition or mostly interaction logic?
+3. Should the shell portion be a NAF template?
+4. Is local state kept local, and shared state kept shared?
+5. Is cleanup centralized and obvious?
+6. Would a submodule make future edits safer and clearer?
+7. Did the abstraction make the code simpler, or just more indirect?
 
-If those answers are weak, split the file.
+For shared state modules, also ask:
+
+8. Is the public state surface direct enough, or is a wrapper layer hiding straightforward reads and writes?
+
+If those answers are weak, split the file or simplify the abstraction.
+
+## Maintenance Rule
+
+Keep modules boring to read.
+
+If a future editor can understand:
+
+- what the module owns
+- where the state lives
+- how it mounts
+- how it cleans up
+
+without reconstructing hidden conventions, the file is in good shape.

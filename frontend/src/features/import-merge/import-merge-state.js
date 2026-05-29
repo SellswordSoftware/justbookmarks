@@ -2,7 +2,7 @@
 
 import { ApplyImportMerge, OpenImportFilePicker, PreviewImportMerge } from "../../shared/api/api.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
-import { signal } from "../../shared/runtime/naf-html.js";
+import { signal } from "../../shared/runtime/naf.js";
 import { treeState } from "../tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
 import { appState } from "../../shared/state/app-state.js";
@@ -78,7 +78,7 @@ export const importMergeState = {
      * @returns {Promise<void>}
      */
     async openImportMerge() {
-      if (!appState.selectors.getCurrentFilePath()) {
+      if (!appState.currentFilePath()) {
         uiState.actions.showToast("Open a bookmark file before importing", "info");
         return;
       }

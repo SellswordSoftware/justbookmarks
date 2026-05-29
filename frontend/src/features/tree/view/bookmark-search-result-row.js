@@ -1,6 +1,6 @@
 // @ts-check
 
-import { $, effect } from "../../../shared/runtime/naf-html.js";
+import { $, effect } from "../../../shared/runtime/naf.js";
 import { treeState } from "../state/tree-state.js";
 
 /**

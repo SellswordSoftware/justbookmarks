@@ -1,6 +1,11 @@
 // @ts-check
 
-import { effect } from "../../shared/runtime/naf-html.js";
+import {
+  cleanupCollector,
+  effect,
+  mount,
+  template,
+} from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 import { treeState } from "../../features/tree/state/tree-state.js";
 import {
@@ -16,12 +21,24 @@ import {
   mountDetailPanel,
 } from "../../features/detail/view/detail-panel.js";
 import { mountGlobalShortcuts } from "../../features/shortcuts/global-shortcuts.js";
-import { collectSearchBarShell, mountSearchBar } from "../../features/search/view/search-bar.js";
+import {
+  collectSearchBarShell,
+  mountSearchBar,
+} from "../../features/search/view/search-bar.js";
+import {
+  createPageHost,
+  showLibraryFrame,
+} from "../page-frame.js";
 
 /**
  * @typedef {object} LibraryPageShell
  * @property {HTMLElement} root
  * @property {HTMLElement} titlebarMeta
+ * @property {HTMLElement} appToolbar
+ * @property {HTMLElement} mainContent
+ * @property {HTMLElement} treePane
+ * @property {HTMLElement} detailPane
+ * @property {HTMLButtonElement} paneResizer
  * @property {HTMLInputElement} searchInput
  * @property {HTMLElement} treePaneActions
  * @property {HTMLElement} toolbarActions
@@ -35,17 +52,13 @@ import { collectSearchBarShell, mountSearchBar } from "../../features/search/vie
  */
 
 /**
- * @param {Array<{ cleanup: () => void }>} cleanups
- * @returns {{ cleanup: () => void }}
+ * @param {LibraryPageShell} shell
+ * @returns {void}
  */
-function combineCleanups(cleanups) {
-  return {
-    cleanup() {
-      for (const item of cleanups) {
-        item.cleanup();
-      }
-    },
-  };
+function activateLibraryShell(shell) {
+  showLibraryFrame(shell);
+  shell.searchInput.disabled = false;
+  shell.searchInput.placeholder = "Search bookmarks...";
 }
 
 /**
@@ -53,15 +66,16 @@ function combineCleanups(cleanups) {
  * @param {LibraryPageActions} actions
  * @returns {{ cleanup: () => void }}
  */
-export function mountLibraryPage(shell, actions) {
-  shell.searchInput.disabled = false;
-  shell.searchInput.placeholder = "Search bookmarks...";
-
+function mountLibraryToolbarAndFeatures(shell, actions) {
   const toolbarActions = mountToolbarActions(shell, actions);
   const rootTreeActions = mountRootTreeActions(shell);
   const searchBar = mountSearchBar(collectSearchBarShell(shell.root));
-  const bookmarkTree = mountBookmarkTree(collectBookmarkTreeShell(shell.root));
-  const detailPanel = mountDetailPanel(collectDetailPanelShell(shell.root));
+  const bookmarkTree = mountBookmarkTree(
+    collectBookmarkTreeShell(shell.root),
+  );
+  const detailPanel = mountDetailPanel(
+    collectDetailPanelShell(shell.root),
+  );
   const globalShortcuts = mountGlobalShortcuts({
     searchInput: shell.searchInput,
     focusSearch: () => searchBar.focus(),
@@ -70,29 +84,87 @@ export function mountLibraryPage(shell, actions) {
     createFile: actions.createFile,
   });
 
-  const stopStatus = effect(() => {
-    const filePath = appState.selectors.getCurrentFilePath();
+  queueMicrotask(() => {
+    searchBar.focus();
+  });
+
+  return {
+    cleanup() {
+      globalShortcuts.cleanup();
+      searchBar.cleanup();
+      bookmarkTree.cleanup();
+      detailPanel.cleanup();
+      rootTreeActions.cleanup();
+      toolbarActions.cleanup();
+    },
+  };
+}
+
+/**
+ * @param {LibraryPageShell} shell
+ * @returns {() => void}
+ */
+function mountLibraryTitlebarMeta(shell) {
+  return effect(() => {
+    const filePath = appState.currentFilePath();
     const treeError = treeState.selectors.getError();
     const loading = treeState.selectors.isLoading();
 
     shell.titlebarMeta.textContent = treeError
       ? treeError
-      : filePath || (loading ? "Loading bookmark library..." : "Bookmark library");
+      : filePath ||
+        (loading
+          ? "Loading bookmark library..."
+          : "Bookmark library");
   });
+}
 
-  searchBar.focus();
+/**
+ * @param {LibraryPageShell} shell
+ * @param {LibraryPageActions} actions
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createLibraryPageComponent(shell, actions) {
+  const cleanup = cleanupCollector();
+  const renderLibraryPage =
+    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+      template({
+        root: ".library-page-runtime-anchor",
+        onMount() {
+          activateLibraryShell(shell);
 
-  return combineCleanups([
-    globalShortcuts,
-    searchBar,
-    bookmarkTree,
-    detailPanel,
-    rootTreeActions,
-    toolbarActions,
-    {
-      cleanup() {
-        stopStatus();
-      },
+          const mountedFeatures = mountLibraryToolbarAndFeatures(shell, actions);
+          cleanup.add(
+            () => mountedFeatures.cleanup(),
+            mountLibraryTitlebarMeta(shell),
+          );
+        },
+        onUnmount() {
+          cleanup.run();
+        },
+      })
+    );
+
+  return renderLibraryPage /*html*/ `
+    <div class="library-page-runtime-anchor" hidden></div>
+  `;
+}
+
+/**
+ * @param {LibraryPageShell} shell
+ * @param {LibraryPageActions} actions
+ * @returns {{ cleanup: () => void }}
+ */
+export function mountLibraryPage(shell, actions) {
+  const host = createPageHost(shell.mainContent);
+
+  const libraryPage = createLibraryPageComponent(shell, actions);
+  mount(libraryPage, host);
+
+  return {
+    cleanup() {
+      libraryPage.unmount?.();
+      host.remove();
     },
-  ]);
+  };
 }

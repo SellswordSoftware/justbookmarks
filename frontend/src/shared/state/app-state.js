@@ -10,7 +10,7 @@ import {
   setLastOpenedFile,
   setWindowState,
 } from "../../shared/infra/persistence.js";
-import { signal } from "../../shared/runtime/naf-html.js";
+import { signal } from "../../shared/runtime/naf.js";
 import { importMergeState } from "../../features/import-merge/import-merge-state.js";
 import {
   WindowGetSize,
@@ -89,20 +89,14 @@ function persistWindowState(windowState) {
 }
 
 export const appState = {
-  signals: {
-    currentFilePath,
-    hasTriedLoad,
-    persistenceReady,
-    isMaximised,
-    keyboardShortcutsOpen,
-    ...importMergeState.signals,
-    persistedState,
-  },
-  computed: {},
-  actions: {
-    /**
-     * @returns {PersistedUIState}
-     */
+  currentFilePath,
+  hasTriedLoad,
+  persistenceReady,
+  isMaximised,
+  keyboardShortcutsOpen,
+  persistedState,
+  hasWailsRuntime,
+  session: {
     reloadPersistedState,
     /**
      * @param {string} path
@@ -133,26 +127,6 @@ export const appState = {
       return persistenceReady(value);
     },
     /**
-     * @param {boolean} value
-     * @returns {boolean}
-     */
-    setKeyboardShortcutsOpen(value) {
-      return keyboardShortcutsOpen(value);
-    },
-    /**
-     * @returns {boolean}
-     */
-    openKeyboardShortcuts() {
-      return keyboardShortcutsOpen(true);
-    },
-    /**
-     * @returns {boolean}
-     */
-    closeKeyboardShortcuts() {
-      return keyboardShortcutsOpen(false);
-    },
-    ...importMergeState.actions,
-    /**
      * @returns {Promise<string>}
      */
     async getStartupFilePath() {
@@ -179,11 +153,14 @@ export const appState = {
         WindowSetSize(state.window.width, state.window.height);
       }
     },
-    syncWindowState,
+  },
+  window: {
+    hasRuntime: hasWailsRuntime,
+    sync: syncWindowState,
     /**
      * @returns {Promise<WindowState | null>}
      */
-    async persistCurrentWindowSize() {
+    async persistCurrentSize() {
       if (!persistenceReady() || !hasWailsRuntime()) {
         return null;
       }
@@ -206,48 +183,32 @@ export const appState = {
      * @param {WindowState | null} windowState
      * @returns {PersistedUIState}
      */
-    persistWindowState(windowState) {
+    persistState(windowState) {
       return persistWindowState(windowState);
     },
   },
-  selectors: {
+  keyboardShortcuts: {
     /**
-     * @returns {string}
+     * @param {boolean} value
+     * @returns {boolean}
      */
-    getCurrentFilePath() {
-      return currentFilePath();
+    set(value) {
+      return keyboardShortcutsOpen(value);
     },
     /**
      * @returns {boolean}
      */
-    hasTriedLoad() {
-      return hasTriedLoad();
+    open() {
+      return keyboardShortcutsOpen(true);
     },
     /**
      * @returns {boolean}
      */
-    isPersistenceReady() {
-      return persistenceReady();
+    close() {
+      return keyboardShortcutsOpen(false);
     },
-    /**
-     * @returns {boolean}
-     */
-    isMaximised() {
-      return isMaximised();
-    },
-    /**
-     * @returns {boolean}
-     */
-    isKeyboardShortcutsOpen() {
-      return keyboardShortcutsOpen();
-    },
-    ...importMergeState.selectors,
-    /**
-     * @returns {PersistedUIState}
-     */
-    getPersistedState() {
-      return persistedState();
-    },
-    hasWailsRuntime,
+  },
+  importMerge: {
+    openImportMerge: importMergeState.actions.openImportMerge,
   },
 };

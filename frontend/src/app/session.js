@@ -17,20 +17,20 @@ import { uiState } from "../shared/state/ui-state.js";
  * @returns {Promise<boolean>}
  */
 export async function loadFileIntoSession(path, silentFailure = false) {
-  appState.actions.setCurrentFilePath("");
+  appState.session.setCurrentFilePath("");
   const loaded = await treeState.actions.loadFile(path);
   if (loaded) {
-    const nextState = appState.actions.reloadPersistedState();
+    const nextState = appState.session.reloadPersistedState();
     treeState.actions.restoreUIState(nextState.files[path]);
-    appState.actions.rememberLoadedFile(path);
+    appState.session.rememberLoadedFile(path);
     return true;
   }
 
-  if (appState.actions.reloadPersistedState().lastOpenedFile === path) {
+  if (appState.session.reloadPersistedState().lastOpenedFile === path) {
     clearLastOpenedFile();
-    appState.actions.reloadPersistedState();
+    appState.session.reloadPersistedState();
   }
-  appState.actions.setCurrentFilePath("");
+  appState.session.setCurrentFilePath("");
   if (!silentFailure && treeState.selectors.getError()) {
     uiState.actions.showToast(treeState.selectors.getError(), "error");
   }
@@ -42,13 +42,13 @@ export async function loadFileIntoSession(path, silentFailure = false) {
  * @returns {Promise<void>}
  */
 export async function openFile(shell) {
-  const path = await appState.actions.openFilePicker();
+  const path = await appState.session.openFilePicker();
   if (!path) {
     return;
   }
 
   const loaded = await loadFileIntoSession(path);
-  appState.actions.setHasTriedLoad(true);
+  appState.session.setHasTriedLoad(true);
   if (loaded) {
     shell.searchInput.focus();
   }
@@ -60,13 +60,13 @@ export async function openFile(shell) {
  */
 export async function createFile(shell) {
   try {
-    const path = await appState.actions.createBookmarkFile();
+    const path = await appState.session.createBookmarkFile();
     if (!path) {
       return;
     }
 
     const loaded = await loadFileIntoSession(path);
-    appState.actions.setHasTriedLoad(true);
+    appState.session.setHasTriedLoad(true);
     if (!loaded) {
       return;
     }
@@ -82,22 +82,22 @@ export async function createFile(shell) {
 
 /** @returns {Promise<void>} */
 export async function bootstrapSession() {
-  const persistedState = appState.actions.reloadPersistedState();
-  await appState.actions.restoreWindowSize();
+  const persistedState = appState.session.reloadPersistedState();
+  await appState.session.restoreWindowSize();
 
   if (!window.go) {
-    appState.actions.setPersistenceReady(true);
+    appState.session.setPersistenceReady(true);
     return;
   }
 
-  const filePath = await appState.actions.getStartupFilePath();
+  const filePath = await appState.session.getStartupFilePath();
   if (typeof filePath === "string" && filePath.length > 0) {
     await loadFileIntoSession(filePath);
   } else if (persistedState.lastOpenedFile) {
     await loadFileIntoSession(persistedState.lastOpenedFile, true);
   }
 
-  appState.actions.setHasTriedLoad(true);
-  await appState.actions.syncWindowState();
-  appState.actions.setPersistenceReady(true);
+  appState.session.setHasTriedLoad(true);
+  await appState.window.sync();
+  appState.session.setPersistenceReady(true);
 }

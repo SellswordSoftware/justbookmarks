@@ -4,7 +4,7 @@ import { DeleteNode, UpdateFolderName } from "../../../shared/api/api.js";
 import { createAddBookmarkForm } from "../../editing/add-bookmark-form.js";
 import { createAddFolderForm } from "../../editing/add-folder-form.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
-import { cleanupCollector, fx, model, signal } from "../../../shared/runtime/naf-html.js";
+import { cleanupCollector, fx, model, signal } from "../../../shared/runtime/naf.js";
 import { moveDialogState } from "../../move/move-dialog-state.js";
 import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";

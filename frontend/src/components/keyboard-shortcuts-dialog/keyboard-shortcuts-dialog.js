@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { effect } from "../../shared/runtime/naf-html.js";
+import { effect, mount, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 
 const groups = [
@@ -77,147 +77,167 @@ export function collectKeyboardShortcutsDialogShell(root) {
 }
 
 /**
+ * @param {{ title: string, items: Array<{ keys: string, action: string }> }} group
+ * @returns {string}
+ */
+function renderGroup(group) {
+  const itemsHtml = group.items
+    .map(
+      (item) => `
+        <div class="shortcuts-dialog__row">
+          <kbd class="shortcuts-dialog__kbd">${item.keys}</kbd>
+          <span class="shortcuts-dialog__action">${item.action}</span>
+        </div>
+      `,
+    )
+    .join("");
+
+  return `
+    <section class="shortcuts-dialog__section">
+      <div class="shortcuts-dialog__section-header">
+        <h3 class="shortcuts-dialog__section-title">${group.title}</h3>
+      </div>
+      <div class="shortcuts-dialog__rows">${itemsHtml}</div>
+    </section>
+  `;
+}
+
+/**
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createKeyboardShortcutsDialog() {
+  let cleanupRendered = () => {};
+  const groupsHtml = groups.map(renderGroup).join("");
+  const renderDialog = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    template({
+      onMount(_el, _parent, ctx) {
+        const backdrop = ctx.refs.backdrop;
+        const dialog = ctx.refs.dialog;
+        const closeButton = ctx.refs.closeButton;
+
+        if (!(backdrop instanceof HTMLDivElement)) {
+          throw new Error("Expected shortcuts dialog backdrop");
+        }
+        if (!(dialog instanceof HTMLDivElement)) {
+          throw new Error("Expected shortcuts dialog element");
+        }
+        if (!(closeButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected shortcuts dialog close button");
+        }
+
+        const closeDialog = () => {
+          appState.keyboardShortcuts.close();
+        };
+        /** @param {MouseEvent} event */
+        const handleBackdropClick = (event) => {
+          if (event.target === backdrop) {
+            closeDialog();
+          }
+        };
+        /** @param {MouseEvent} event */
+        const handleDialogClick = (event) => {
+          event.stopPropagation();
+        };
+        const handleCloseClick = () => {
+          closeDialog();
+        };
+        /** @param {KeyboardEvent} event */
+        const handleDialogKeydown = (event) => {
+          if (trapFocusInContainer(event, dialog)) {
+            return;
+          }
+
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeDialog();
+          }
+        };
+
+        backdrop.addEventListener("click", handleBackdropClick);
+        dialog.addEventListener("click", handleDialogClick);
+        dialog.addEventListener("keydown", handleDialogKeydown);
+        closeButton.addEventListener("click", handleCloseClick);
+
+        queueMicrotask(() => {
+          closeButton.focus();
+        });
+
+        cleanupRendered = () => {
+          backdrop.removeEventListener("click", handleBackdropClick);
+          dialog.removeEventListener("click", handleDialogClick);
+          dialog.removeEventListener("keydown", handleDialogKeydown);
+          closeButton.removeEventListener("click", handleCloseClick);
+        };
+      },
+      onUnmount() {
+        cleanupRendered();
+        cleanupRendered = () => {};
+      },
+    })
+  );
+
+  return renderDialog`
+    <div class="modal-backdrop" role="presentation" data-ref="backdrop">
+      <div
+        class="modal shortcuts-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="keyboard-shortcuts-title"
+        data-focus-zone="dialog"
+        tabindex="-1"
+        data-ref="dialog"
+      >
+        <div class="modal__header shortcuts-dialog__header">
+          <div>
+            <h2 id="keyboard-shortcuts-title" class="shortcuts-dialog__title">Keyboard Shortcuts</h2>
+            <p class="shortcuts-dialog__subtitle">Core commands for mouse-free bookmark management.</p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            data-keyboard-action="shortcuts-close"
+            data-ref="closeButton"
+          >
+            Close
+          </button>
+        </div>
+        <div class="modal__body shortcuts-dialog__body">${groupsHtml}</div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * @param {{ container: HTMLElement }} shell
  * @returns {{ cleanup: () => void }}
  */
 export function mountKeyboardShortcutsDialog(shell) {
-  let cleanupRendered = () => {};
+  /** @type {(() => void) | undefined} */
+  let cleanupRendered;
 
   const stop = effect(() => {
-    cleanupRendered();
-    cleanupRendered = () => {};
-
+    cleanupRendered?.();
+    cleanupRendered = undefined;
     shell.container.replaceChildren();
 
-    if (!appState.selectors.isKeyboardShortcutsOpen()) {
+    if (!appState.keyboardShortcutsOpen()) {
       return;
     }
 
-    const backdrop = document.createElement("div");
-    backdrop.className = "modal-backdrop";
-    backdrop.setAttribute("role", "presentation");
-
-    const dialog = document.createElement("div");
-    dialog.className = "modal shortcuts-dialog";
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-modal", "true");
-    dialog.setAttribute("aria-labelledby", "keyboard-shortcuts-title");
-    dialog.setAttribute("data-focus-zone", "dialog");
-    dialog.tabIndex = -1;
-
-    const header = document.createElement("div");
-    header.className = "modal__header shortcuts-dialog__header";
-
-    const headingBlock = document.createElement("div");
-    const heading = document.createElement("h2");
-    heading.id = "keyboard-shortcuts-title";
-    heading.className = "shortcuts-dialog__title";
-    heading.textContent = "Keyboard Shortcuts";
-
-    const subtitle = document.createElement("p");
-    subtitle.className = "shortcuts-dialog__subtitle";
-    subtitle.textContent = "Core commands for mouse-free bookmark management.";
-
-    headingBlock.append(heading, subtitle);
-
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.className = "btn btn-ghost btn-sm";
-    closeButton.textContent = "Close";
-    closeButton.setAttribute("data-keyboard-action", "shortcuts-close");
-
-    header.append(headingBlock, closeButton);
-
-    const body = document.createElement("div");
-    body.className = "modal__body shortcuts-dialog__body";
-
-    for (const group of groups) {
-      const section = document.createElement("section");
-      section.className = "shortcuts-dialog__section";
-
-      const sectionHeader = document.createElement("div");
-      sectionHeader.className = "shortcuts-dialog__section-header";
-
-      const sectionTitle = document.createElement("h3");
-      sectionTitle.className = "shortcuts-dialog__section-title";
-      sectionTitle.textContent = group.title;
-      sectionHeader.append(sectionTitle);
-
-      const rows = document.createElement("div");
-      rows.className = "shortcuts-dialog__rows";
-
-      for (const item of group.items) {
-        const row = document.createElement("div");
-        row.className = "shortcuts-dialog__row";
-
-        const key = document.createElement("kbd");
-        key.className = "shortcuts-dialog__kbd";
-        key.textContent = item.keys;
-
-        const action = document.createElement("span");
-        action.className = "shortcuts-dialog__action";
-        action.textContent = item.action;
-
-        row.append(key, action);
-        rows.append(row);
-      }
-
-      section.append(sectionHeader, rows);
-      body.append(section);
-    }
-
-    dialog.append(header, body);
-    backdrop.append(dialog);
-    shell.container.append(backdrop);
-
-    const closeDialog = () => {
-      appState.actions.closeKeyboardShortcuts();
-    };
-    /** @param {MouseEvent} event */
-    const handleBackdropClick = (event) => {
-      if (event.target === backdrop) {
-        closeDialog();
-      }
-    };
-    /** @param {MouseEvent} event */
-    const handleDialogClick = (event) => {
-      event.stopPropagation();
-    };
-    const handleCloseClick = () => {
-      closeDialog();
-    };
-    /** @param {KeyboardEvent} event */
-    const handleDialogKeydown = (event) => {
-      if (trapFocusInContainer(event, dialog)) {
-        return;
-      }
-
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeDialog();
-      }
-    };
-
-    backdrop.addEventListener("click", handleBackdropClick);
-    dialog.addEventListener("click", handleDialogClick);
-    dialog.addEventListener("keydown", handleDialogKeydown);
-    closeButton.addEventListener("click", handleCloseClick);
-
-    queueMicrotask(() => {
-      closeButton.focus();
-    });
+    const host = document.createElement("div");
+    const component = createKeyboardShortcutsDialog();
+    shell.container.append(host);
+    mount(component, host);
 
     cleanupRendered = () => {
-      backdrop.removeEventListener("click", handleBackdropClick);
-      dialog.removeEventListener("click", handleDialogClick);
-      dialog.removeEventListener("keydown", handleDialogKeydown);
-      closeButton.removeEventListener("click", handleCloseClick);
+      component.unmount?.();
+      host.remove();
     };
   });
 
   return {
     cleanup() {
-      cleanupRendered();
+      cleanupRendered?.();
       stop();
     },
   };

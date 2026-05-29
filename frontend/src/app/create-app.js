@@ -1,8 +1,7 @@
 // @ts-check
 
-import { effect } from "../shared/runtime/naf-html.js";
 import { mountAppLifecycle } from "./lifecycle.js";
-import { bootstrapSession, createFile, openFile } from "./session.js";
+import { bootstrapSession } from "./session.js";
 import { collectConfirmModalShell, mountConfirmModal } from "../components/confirm-modal/confirm-modal.js";
 import { collectLayoutShell, mountLayout } from "../layouts/app-shell/app-shell-layout.js";
 import { collectMoveDialogShell, mountMoveDialog } from "../features/move/move-dialog.js";
@@ -16,10 +15,7 @@ import {
 } from "../features/import-merge/import-merge-dialog.js";
 import { collectToastContainerShell, mountToastContainer } from "../components/toast/toast-container.js";
 import { collectTitlebarShell, mountTitlebar } from "../components/titlebar/titlebar.js";
-import { mountEmptyLibraryPage } from "../pages/empty-library/empty-library-page.js";
-import { mountLibraryPage } from "../pages/library/library-page.js";
-import { treeState } from "../features/tree/state/tree-state.js";
-import { appState } from "../shared/state/app-state.js";
+import { mountPageHost } from "./page-host.js";
 
 /** @typedef {import("../types.js").TreeNode} TreeNode */
 
@@ -28,6 +24,11 @@ import { appState } from "../shared/state/app-state.js";
  * @property {HTMLElement} root
  * @property {HTMLElement} titlebar
  * @property {HTMLElement} titlebarMeta
+ * @property {HTMLElement} appToolbar
+ * @property {HTMLElement} mainContent
+ * @property {HTMLElement} treePane
+ * @property {HTMLElement} detailPane
+ * @property {HTMLButtonElement} paneResizer
  * @property {HTMLInputElement} searchInput
  * @property {HTMLElement} treePaneContent
  * @property {HTMLElement} treeList
@@ -43,7 +44,6 @@ import { appState } from "../shared/state/app-state.js";
  * @property {HTMLElement} keyboardShortcutsDialogContainer
  * @property {HTMLTemplateElement} treeNodeTemplate
  * @property {HTMLTemplateElement} searchResultTemplate
- * @property {HTMLTemplateElement} toastTemplate
  */
 
 /**
@@ -88,6 +88,11 @@ function collectShell(root) {
     root,
     titlebar: requireElement(root, "#titlebar"),
     titlebarMeta: requireElement(root, "#titlebar-meta"),
+    appToolbar: requireElement(root, ".app-toolbar"),
+    mainContent: requireElement(root, "#main-content"),
+    treePane: requireElement(root, "#tree-pane"),
+    detailPane: requireElement(root, "#detail-pane"),
+    paneResizer: /** @type {HTMLButtonElement} */ (requireElement(root, "#pane-resizer")),
     searchInput,
     treePaneContent: requireElement(root, "#tree-pane-content"),
     treeList: requireElement(root, "#tree-list"),
@@ -103,55 +108,6 @@ function collectShell(root) {
     keyboardShortcutsDialogContainer: requireElement(root, "#keyboard-shortcuts-dialog-container"),
     treeNodeTemplate: requireTemplate(root, "#tree-node-template"),
     searchResultTemplate: requireTemplate(root, "#search-result-template"),
-    toastTemplate: requireTemplate(root, "#toast-template"),
-  };
-}
-
-/**
- * @param {AppShell} shell
- * @returns {{ cleanup: () => void }}
- */
-function mountPageSelection(shell) {
-  let currentPage = /** @type {{ cleanup: () => void }} */ ({
-    cleanup() {},
-  });
-  let currentPageKind = "empty";
-
-  const pageActions = {
-    openFile: () => openFile(shell),
-    createFile: () => createFile(shell),
-    importFile: () => appState.actions.openImportMerge(),
-  };
-
-  const stop = effect(() => {
-    const filePath = appState.selectors.getCurrentFilePath();
-    const loading = treeState.selectors.isLoading();
-    const shouldKeepLibraryPage =
-      currentPageKind === "library" &&
-      !filePath &&
-      !loading &&
-      treeState.selectors.getTree().length > 0;
-    const nextPageKind =
-      filePath || loading || shouldKeepLibraryPage ? "library" : "empty";
-
-    if (nextPageKind === currentPageKind) {
-      return;
-    }
-
-    currentPage.cleanup();
-    currentPageKind = nextPageKind;
-    currentPage =
-      currentPageKind === "library"
-        ? mountLibraryPage(shell, pageActions)
-        : mountEmptyLibraryPage(shell, pageActions);
-  });
-
-  currentPage = mountEmptyLibraryPage(shell, pageActions);
-
-  return {
-    cleanup() {
-      stop();
-    },
   };
 }
 
@@ -162,8 +118,8 @@ function mountPageSelection(shell) {
  * @returns {AppShell}
  */
 export function createApp(root) {
-  const shell = collectShell(root);
   const cleanupTitlebar = mountTitlebar(collectTitlebarShell(root));
+  const shell = collectShell(root);
   const cleanupLayout = mountLayout(collectLayoutShell(root));
   const toastContainer = mountToastContainer(collectToastContainerShell(root));
   const confirmModal = mountConfirmModal(collectConfirmModalShell(root));
@@ -172,7 +128,7 @@ export function createApp(root) {
   const shortcutsDialog = mountKeyboardShortcutsDialog(
     collectKeyboardShortcutsDialogShell(root),
   );
-  const pageSelection = mountPageSelection(shell);
+  const pageHost = mountPageHost(shell);
   const lifecycle = mountAppLifecycle({
     featureCleanups: [
       { cleanup: cleanupTitlebar },
@@ -182,7 +138,7 @@ export function createApp(root) {
       importMergeDialog,
       moveDialog,
       shortcutsDialog,
-      pageSelection,
+      pageHost,
     ],
   });
   void bootstrapSession();

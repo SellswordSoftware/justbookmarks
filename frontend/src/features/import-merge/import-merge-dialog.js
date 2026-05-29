@@ -1,10 +1,9 @@
 // @ts-check
 
-import { effect } from "../../shared/runtime/naf-html.js";
+import { effect, mount, template } from "../../shared/runtime/naf.js";
 import { importMergeState } from "./import-merge-state.js";
 import { bindImportMergeDialogInteractions } from "./import-merge-dialog-interactions.js";
 import { mountImportMergePreview } from "./import-merge-dialog-preview.js";
-import { createImportMergeDialogShell } from "./import-merge-dialog-shell.js";
 
 /**
  * @param {ParentNode} root
@@ -20,16 +19,164 @@ export function collectImportMergeDialogShell(root) {
 }
 
 /**
+ * @typedef {object} ImportMergeDialogElements
+ * @property {HTMLDivElement} backdrop
+ * @property {HTMLDivElement} dialog
+ * @property {HTMLDivElement} body
+ * @property {HTMLButtonElement} closeButton
+ * @property {HTMLButtonElement} chooseFileButton
+ * @property {HTMLButtonElement} cancelButton
+ * @property {HTMLButtonElement} applyButton
+ */
+
+/**
+ * @param {{
+ *   importPath: string,
+ *   preview: import("../../types.js").MergePreview | null,
+ *   previewLoading: boolean,
+ *   applyLoading: boolean,
+ *   error: string
+ * }} view
+ * @param {(elements: ImportMergeDialogElements) => void} onMountElements
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createImportMergeDialog(view, onMountElements) {
+  const errorHtml = view.error
+    ? `
+        <div class="alert alert-error">
+          <span>${view.error}</span>
+        </div>
+      `
+    : "";
+
+  const applyLabel = view.applyLoading ? "Applying..." : "Apply Merge";
+  const renderDialog = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    template({
+      onMount(_el, _parent, ctx) {
+        const backdrop = ctx.refs.backdrop;
+        const dialog = ctx.refs.dialog;
+        const body = ctx.refs.body;
+        const closeButton = ctx.refs.closeButton;
+        const chooseFileButton = ctx.refs.chooseFileButton;
+        const cancelButton = ctx.refs.cancelButton;
+        const applyButton = ctx.refs.applyButton;
+
+        if (!(backdrop instanceof HTMLDivElement)) {
+          throw new Error("Expected import merge backdrop");
+        }
+        if (!(dialog instanceof HTMLDivElement)) {
+          throw new Error("Expected import merge dialog");
+        }
+        if (!(body instanceof HTMLDivElement)) {
+          throw new Error("Expected import merge dialog body");
+        }
+        if (!(closeButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected import merge close button");
+        }
+        if (!(chooseFileButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected import merge choose file button");
+        }
+        if (!(cancelButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected import merge cancel button");
+        }
+        if (!(applyButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected import merge apply button");
+        }
+
+        onMountElements({
+          backdrop,
+          dialog,
+          body,
+          closeButton,
+          chooseFileButton,
+          cancelButton,
+          applyButton,
+        });
+      },
+    })
+  );
+
+  return renderDialog`
+    <div class="modal-backdrop" role="presentation" data-ref="backdrop">
+      <div
+        class="modal import-merge-dialog"
+        data-focus-zone="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-merge-title"
+        tabindex="-1"
+        data-ref="dialog"
+      >
+        <div class="modal__body import-merge-dialog__body" data-ref="body">
+          <div class="import-merge-dialog__header">
+            <div>
+              <h2 id="import-merge-title" class="import-merge-dialog__title">Import and Merge</h2>
+              <p class="import-merge-dialog__subtitle">
+                Review additive changes before updating the current bookmark file.
+              </p>
+            </div>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-square"
+              aria-label="Close import merge dialog"
+              data-ref="closeButton"
+            >
+              x
+            </button>
+          </div>
+          <div class="import-merge-dialog__file-bar">
+            <div class="import-merge-dialog__file-meta">
+              <div class="import-merge-dialog__file-label">Import file</div>
+              <div class="import-merge-dialog__file-value">${view.importPath || "No file selected"}</div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              data-keyboard-action="import-choose-file"
+              data-ref="chooseFileButton"
+              ${view.previewLoading || view.applyLoading ? "disabled" : ""}
+            >
+              Choose File
+            </button>
+          </div>
+          ${errorHtml}
+        </div>
+        <div class="modal__footer">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            data-keyboard-action="import-cancel"
+            data-ref="cancelButton"
+            ${view.applyLoading ? "disabled" : ""}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            data-keyboard-action="import-apply"
+            data-ref="applyButton"
+            ${!view.preview || view.previewLoading || view.applyLoading ? "disabled" : ""}
+          >
+            ${applyLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * @param {{ container: HTMLElement }} shell
  * @returns {{ cleanup: () => void }}
  */
 export function mountImportMergeDialog(shell) {
-  let cleanupRendered = () => {};
+  /** @type {(() => void) | undefined} */
+  let cleanupRendered;
 
   const stop = effect(() => {
-    cleanupRendered();
-    cleanupRendered = () => {};
-
+    cleanupRendered?.();
+    cleanupRendered = undefined;
     shell.container.replaceChildren();
 
     if (!importMergeState.selectors.isImportMergeOpen()) {
@@ -42,9 +189,22 @@ export function mountImportMergeDialog(shell) {
     const applyLoading = importMergeState.selectors.isImportMergeApplyLoading();
     const error = importMergeState.selectors.getImportMergeError();
 
-    const view = { importPath, preview, previewLoading, applyLoading, error };
-    const elements = createImportMergeDialogShell(view);
-    shell.container.append(elements.backdrop);
+    /** @type {ImportMergeDialogElements | undefined} */
+    let elements;
+    const host = document.createElement("div");
+    const component = createImportMergeDialog(
+      { importPath, preview, previewLoading, applyLoading, error },
+      (mountedElements) => {
+        elements = mountedElements;
+      },
+    );
+
+    shell.container.append(host);
+    mount(component, host);
+
+    if (!elements) {
+      throw new Error("Expected import merge dialog elements after mount");
+    }
 
     const previewCleanup = mountImportMergePreview(elements.body, preview, previewLoading);
     const interactionCleanup = bindImportMergeDialogInteractions(elements, {
@@ -56,12 +216,14 @@ export function mountImportMergeDialog(shell) {
     cleanupRendered = () => {
       interactionCleanup();
       previewCleanup();
+      component.unmount?.();
+      host.remove();
     };
   });
 
   return {
     cleanup() {
-      cleanupRendered();
+      cleanupRendered?.();
       stop();
     },
   };
