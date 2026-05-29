@@ -418,6 +418,10 @@ export function cleanupCollector(...initial) {
  */
 
 /**
+ * @typedef {{ id: number, component: Component }} ComponentSlot
+ */
+
+/**
  * @template {Element} [T=Element]
  * @typedef {object} ComponentContext
  * @property {Element} host
@@ -445,10 +449,10 @@ function isComponent(value) {
 /**
  * @param {TemplateStringsArray} strings
  * @param {TemplateValue[]} values
- * @returns {{ html: string, components: Component[] }}
+ * @returns {{ html: string, components: ComponentSlot[] }}
  */
 function buildTemplate(strings, values) {
-  /** @type {Component[]} */
+  /** @type {ComponentSlot[]} */
   const components = [];
   /** @type {string[]} */
   const parts = [strings[0] ?? ""];
@@ -456,8 +460,11 @@ function buildTemplate(strings, values) {
   for (let index = 0; index < values.length; index += 1) {
     const value = values[index];
     if (isComponent(value)) {
-      components.push(value);
-      parts.push(value.html);
+      const id = slotId++;
+      components.push({ id, component: value });
+      parts.push(
+        `<span data-naf-component-slot="${id}" style="display: contents;"></span>`,
+      );
     } else if (typeof value === "string") {
       parts.push(value);
     } else if (value !== null && value !== undefined && value !== false) {
@@ -473,31 +480,87 @@ function buildTemplate(strings, values) {
 }
 
 /**
- * @param {Element} host
+ * @param {Element[]} elements
  * @returns {Record<string, Element>}
  */
-function collectRefs(host) {
+function collectRefs(elements) {
   /** @type {Record<string, Element>} */
   const refs = {};
 
-  for (const element of host.querySelectorAll("[data-ref]")) {
+  for (const element of elements) {
     const name = element.getAttribute("data-ref");
-    if (!name) {
-      continue;
+    if (name) {
+      if (refs[name]) {
+        throw new Error(`Duplicate data-ref found: ${name}`);
+      }
+      refs[name] = element;
     }
-    if (refs[name]) {
-      throw new Error(`Duplicate data-ref found: ${name}`);
+
+    for (const child of element.querySelectorAll("[data-ref]")) {
+      const childName = child.getAttribute("data-ref");
+      if (!childName) {
+        continue;
+      }
+      if (refs[childName]) {
+        throw new Error(`Duplicate data-ref found: ${childName}`);
+      }
+      refs[childName] = child;
     }
-    refs[name] = element;
   }
 
   return refs;
 }
 
 /**
+ * @param {string} html
+ * @returns {DocumentFragment}
+ */
+function createFragment(html) {
+  tempDiv.innerHTML = html;
+  const fragment = document.createDocumentFragment();
+  while (tempDiv.firstChild) {
+    fragment.appendChild(tempDiv.firstChild);
+  }
+  return fragment;
+}
+
+/**
+ * @param {Element[]} elements
+ * @param {string} selector
+ * @returns {Element | undefined}
+ */
+function findScopedElement(elements, selector) {
+  for (const element of elements) {
+    if (element.matches(selector)) {
+      return element;
+    }
+
+    const nested = element.querySelector(selector);
+    if (nested) {
+      return nested;
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * @param {Element} host
+ * @param {DocumentFragment} fragment
+ * @returns {Element[]}
+ */
+function mountFragment(host, fragment) {
+  const elements = /** @type {Element[]} */ (
+    Array.from(fragment.childNodes).filter((node) => node instanceof Element)
+  );
+  host.appendChild(fragment);
+  return elements;
+}
+
+/**
  * @template {Element} T
  * @param {string} html
- * @param {Component[]} components
+ * @param {ComponentSlot[]} components
  * @param {TemplateOptions<T>=} options
  * @returns {Component<T>}
  */
@@ -505,6 +568,8 @@ function createComponent(html, components, options) {
   const cleanup = cleanupCollector();
   /** @type {ComponentContext<T> | undefined} */
   let context;
+  /** @type {Element[]} */
+  let mountedElements = [];
 
   /** @type {Component<T>} */
   const component = {
@@ -512,23 +577,18 @@ function createComponent(html, components, options) {
     el: undefined,
     refs: {},
     mount(parent) {
-      if (!parent.innerHTML) {
-        parent.innerHTML = html;
-      }
-
-      for (const child of components) {
-        child.mount(parent);
-      }
+      const fragment = createFragment(html);
+      mountedElements = mountFragment(parent, fragment);
 
       if (options?.root) {
-        const found = parent.querySelector(options.root);
+        const found = findScopedElement(mountedElements, options.root);
         if (!found) {
           throw new Error(`Element not found for selector: ${options.root}`);
         }
         component.el = /** @type {T} */ (found);
       }
 
-      component.refs = collectRefs(parent);
+      component.refs = collectRefs(mountedElements);
       context = {
         host: parent,
         root: component.el,
@@ -538,10 +598,21 @@ function createComponent(html, components, options) {
       };
 
       options?.onMount?.(component.el, parent, context);
+
+      for (const childSlot of components) {
+        const slotHost = findScopedElement(
+          mountedElements,
+          `[data-naf-component-slot="${childSlot.id}"]`,
+        );
+        if (!(slotHost instanceof HTMLElement)) {
+          throw new Error(`Component slot host not found: ${childSlot.id}`);
+        }
+        childSlot.component.mount(slotHost);
+      }
     },
     unmount() {
-      for (const child of components) {
-        child.unmount?.();
+      for (const childSlot of components) {
+        childSlot.component.unmount?.();
       }
       if (options?.onUnmount && context) {
         options.onUnmount(context);
@@ -549,6 +620,7 @@ function createComponent(html, components, options) {
       cleanup.run();
       component.el = undefined;
       component.refs = {};
+      mountedElements = [];
       context = undefined;
     },
   };
@@ -700,20 +772,35 @@ export function when(condition, thenBranch, elseBranch) {
 
   return reactiveSlot((placeholder) => {
     const commentId = placeholder.textContent?.replace("naf-", "") || "0";
+    const whenSlotId = slotId++;
 
     const stop = effect(() => {
       currentComponent?.unmount?.();
       const value = condition();
       currentComponent = value ? thenBranch(value) : elseBranch?.(value);
-
-      updateSlotContent(placeholder, commentId, currentComponent?.html ?? "");
-
       const parent = placeholder.parentNode;
       if (!(parent instanceof Element)) {
         throw new Error("Reactive slot placeholder is not attached to an element parent");
       }
+      updateSlotContent(
+        placeholder,
+        commentId,
+        currentComponent
+          ? `<span data-naf-when-slot="${whenSlotId}" style="display: contents;"></span>`
+          : "",
+      );
 
-      currentComponent?.mount(parent);
+      if (!currentComponent) {
+        return;
+      }
+
+      const slotHost = parent.querySelector(
+        `[data-naf-when-slot="${whenSlotId}"]`,
+      );
+      if (!(slotHost instanceof HTMLElement)) {
+        throw new Error("Reactive slot host not found");
+      }
+      currentComponent.mount(slotHost);
     });
 
     return () => {

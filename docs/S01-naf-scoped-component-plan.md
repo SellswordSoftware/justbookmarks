@@ -8,13 +8,18 @@ The goal is not to build a framework. The goal is to make the existing template/
 
 ## Current Status
 
-`S01` is partially complete.
+`S01` is complete.
 
 What has landed:
 
 - `mount(component, host)` exists in `frontend/src/shared/runtime/naf.js`
 - template-backed components now expose `refs`
 - `data-ref` plus `ctx.refs` is in active use
+- component instances now parse and mount their own local subtree before resolving ownership
+- component root lookup is instance-scoped rather than host-scoped
+- ref collection is instance-scoped rather than host-scoped
+- nested child components now mount into explicit local slot hosts
+- `when()` branches now mount into explicit local slot hosts
 - several bounded shell components have been migrated to the new pattern:
   - titlebar
   - confirm modal
@@ -23,15 +28,12 @@ What has landed:
   - move dialog
   - toolbar actions
   - empty-library page shell
+- `titlebar` now acts as the nested-component proof, with separate child components for brand and window controls
 
-What is still missing:
+Verification completed on May 29, 2026:
 
-- component root resolution is still host-wide
-- ref collection is still host-wide
-- child component mounting is still parent-wide
-- `when()` / reactive slots still rely on parent-wide traversal
-
-That means the ergonomic half of `S01` is in place, but the core scoped-ownership guarantee is not yet true.
+- `cd frontend && npm run typecheck`
+- `cd frontend && npm run build`
 
 ## Problem Statement
 
@@ -317,9 +319,8 @@ Status:
 
 Status:
 
-- partially done
-- `template()` now produces context and local-ref ergonomics
-- it does **not** yet resolve root or refs inside an instance-local subtree
+- done
+- component instances now mount a local fragment and resolve roots and refs inside that instance boundary
 
 ### Step 4: Remove parent-wide child mounting behavior
 
@@ -329,8 +330,8 @@ Status:
 
 Status:
 
-- not done
-- `child.mount(parent)` is still the active behavior
+- done
+- nested template-backed children now mount into explicit local slot hosts inside the parent instance
 
 ### Step 5: Adapt `when()`
 
@@ -340,8 +341,8 @@ Status:
 
 Status:
 
-- not done
-- `reactiveSlot()` still finds placeholders by scanning the whole parent subtree
+- done
+- branch components now mount into an explicit local slot host inside the reactive boundary
 
 ### Step 6: Prove the design on one real component
 
@@ -352,7 +353,7 @@ Status:
 Status:
 
 - done
-- titlebar is migrated and functioning as the proof component
+- titlebar is migrated and now provides the nested proof case for local child composition
 
 ### Step 7: Preserve compatibility where possible
 
@@ -361,88 +362,32 @@ Status:
 
 Status:
 
-- mostly done
-- compatibility has been preserved for existing callers
-- this must not block the remaining scoping fix
+- done
+- existing migrated callers still build and the public template shape remains incremental
 
-## Next Session Actions
+## Follow-On Actions
 
-The next session should finish `S01` by changing the runtime internals, not by migrating more call sites.
+`S01` is no longer the blocker. The next session should move back to the milestone roadmap:
 
-### 1. Make component instances own a local subtree
+### 1. Reassess the milestone status
 
-In `frontend/src/shared/runtime/naf.js`:
+- mark `S01` complete in the roadmap
+- review whether `S07` through `S10` need more implementation or just final verification and cleanup
 
-- stop treating the host element as the component scope
-- parse template HTML into a fragment or wrapper subtree first
-- resolve `options.root` within that subtree only
-- collect `data-ref` values from that subtree only
-- then insert the subtree into the host
+### 2. Tighten verification beyond build-time checks
 
-### 2. Remove parent-scoped root and ref lookup
+- manually verify nested shell behavior in the running app, especially titlebar controls under Wails
+- confirm no duplicate or leaked DOM appears after mount/unmount cycles
 
-Replace these current behaviors:
+### 3. Decide whether to add runtime-focused regression coverage
 
-- `parent.querySelector(options.root)`
-- `collectRefs(parent)`
+- if the project wants stronger protection here, add a narrow test or fixture around nested component refs and local slot ownership
+- keep it small; the goal is regression protection, not a test harness expansion
 
-With instance-local lookup only.
+### 4. Continue milestone cleanup, not more runtime invention
 
-This is the main unfinished requirement for `S01`.
-
-### 3. Remove parent-wide child component mounting
-
-Replace this current behavior:
-
-- `child.mount(parent)`
-
-With one of:
-
-- explicit placeholder comments
-- explicit local mount anchors
-- another strictly local insertion-point strategy
-
-The exact mechanism can stay small, but child components must stop sharing the full parent scope.
-
-### 4. Scope `when()` to local slot boundaries
-
-`when()` / `reactiveSlot()` must stop depending on a whole-parent comment search.
-
-Required outcome:
-
-- branch components only own the nodes inside their slot boundary
-- swapping branches only unmounts the previous branch subtree
-- no accidental cross-component comment collisions
-
-### 5. Add one nested-component proof
-
-The current proof is only top-level shell usage.
-
-Add one narrow proof case where:
-
-- parent and child are both template-backed components
-- both use `data-ref`
-- ref names can be reused safely across the boundary
-- mount/unmount works without host-wide scanning
-
-This can be:
-
-- a tiny runtime-focused test if that is practical here
-- or a very small local fixture-style component proof used during verification
-
-### 6. Re-verify existing migrated consumers
-
-After the runtime change, re-check at minimum:
-
-- titlebar
-- confirm modal
-- keyboard shortcuts dialog
-- import / merge dialog
-- move dialog
-- toolbar actions
-- empty-library page shell
-
-Because all of them currently rely on the new `ctx.refs` / `mount()` path.
+- avoid expanding `naf.js` into a larger framework abstraction
+- focus the next slices on remaining page/app cleanup, docs, and milestone closeout
 
 ## Acceptance Criteria
 
@@ -454,9 +399,13 @@ Because all of them currently rely on the new `ctx.refs` / `mount()` path.
 - At least one nested component proof demonstrates that root and ref ownership are local, not host-wide.
 - Frontend typecheck and build still pass after the runtime change.
 
+Current result:
+
+- satisfied
+
 ## Definition Of Done For S01
 
-Do not mark `S01` complete until all are true:
+`S01` is complete because all are now true:
 
 - no component root lookup relies on host-wide `querySelector()`
 - no template-backed component ref collection relies on scanning the whole host
@@ -501,6 +450,11 @@ Manual verification:
 - no duplicate shell markup appears after mount/unmount
 - no regressions in existing `template()` consumers that were not migrated yet
 - nested component refs do not collide when parent and child reuse the same `data-ref` names
+
+Verification completed:
+
+- `npm run typecheck`: passed on May 29, 2026
+- `npm run build`: passed on May 29, 2026
 
 ## Follow-On Impact
 

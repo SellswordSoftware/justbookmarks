@@ -41,19 +41,29 @@ function closeWindow() {
 /**
  * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
  */
-function createTitlebarComponent() {
-  const renderTitlebar = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+function createTitlebarBrandComponent() {
+  const renderBrand = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (template);
+
+  return renderBrand`
+    <div class="titlebar__brand">
+      <h1 class="titlebar__title">JustBookmarks</h1>
+      <p id="titlebar-meta" class="titlebar__meta">Vanilla frontend shell active</p>
+    </div>
+  `;
+}
+
+/**
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createTitlebarWindowControlsComponent() {
+  const renderControls = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
     template({
-      onMount(_el, host, ctx) {
+      onMount(_el, _host, ctx) {
         const { refs, cleanup } = ctx;
-        const windowControls = refs.windowControls;
         const minimizeButton = refs.minimizeButton;
         const maximizeButton = refs.maximizeButton;
         const closeButton = refs.closeButton;
 
-        if (!(windowControls instanceof HTMLElement)) {
-          throw new Error("Expected titlebar window controls");
-        }
         if (!(minimizeButton instanceof HTMLButtonElement)) {
           throw new Error("Expected minimize button");
         }
@@ -67,14 +77,6 @@ function createTitlebarComponent() {
         const handleMaximiseClick = () => {
           void toggleMaximiseWindow();
         };
-        /** @param {Event} event */
-        const handleDoubleClick = (event) => {
-          const target = event.target;
-          if (target instanceof HTMLElement && target.closest("[data-wails-no-drag]")) {
-            return;
-          }
-          void toggleMaximiseWindow();
-        };
         const handleFocus = () => {
           void appState.window.sync();
         };
@@ -82,14 +84,12 @@ function createTitlebarComponent() {
         minimizeButton.addEventListener("click", minimiseWindow);
         maximizeButton.addEventListener("click", handleMaximiseClick);
         closeButton.addEventListener("click", closeWindow);
-        host.addEventListener("dblclick", handleDoubleClick);
         window.addEventListener("focus", handleFocus);
 
         cleanup.add(
           () => minimizeButton.removeEventListener("click", minimiseWindow),
           () => maximizeButton.removeEventListener("click", handleMaximiseClick),
           () => closeButton.removeEventListener("click", closeWindow),
-          () => host.removeEventListener("dblclick", handleDoubleClick),
           () => window.removeEventListener("focus", handleFocus),
           effect(() => {
             const hasRuntime = appState.hasWailsRuntime();
@@ -113,11 +113,7 @@ function createTitlebarComponent() {
     })
   );
 
-  return renderTitlebar`
-    <div class="titlebar__brand">
-      <h1 class="titlebar__title">JustBookmarks</h1>
-      <p id="titlebar-meta" class="titlebar__meta">Vanilla frontend shell active</p>
-    </div>
+  return renderControls`
     <div class="titlebar__window-controls" data-wails-no-drag data-ref="windowControls">
       <button
         id="window-minimize"
@@ -147,6 +143,37 @@ function createTitlebarComponent() {
         &#10005;
       </button>
     </div>
+  `;
+}
+
+/**
+ * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createTitlebarComponent() {
+  const brand = createTitlebarBrandComponent();
+  const controls = createTitlebarWindowControlsComponent();
+  const renderTitlebar = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    template({
+      onMount(_el, host, ctx) {
+        const { cleanup } = ctx;
+        /** @param {Event} event */
+        const handleDoubleClick = (event) => {
+          const target = event.target;
+          if (target instanceof HTMLElement && target.closest("[data-wails-no-drag]")) {
+            return;
+          }
+          void toggleMaximiseWindow();
+        };
+
+        host.addEventListener("dblclick", handleDoubleClick);
+        cleanup.add(() => host.removeEventListener("dblclick", handleDoubleClick));
+      },
+    })
+  );
+
+  return renderTitlebar`
+    ${brand}
+    ${controls}
   `;
 }
 

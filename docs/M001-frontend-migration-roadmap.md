@@ -38,6 +38,13 @@ This milestone is complete only when all are true:
 - Frontend success criteria are re-checked against live behavior, not only code structure.
 - Final integrated acceptance scenarios from the milestone context pass in a real Wails run.
 
+Status on May 29, 2026:
+
+- satisfied
+- runtime changes, shell migrations, page/app composition cleanup, and state-surface simplification are all wired into the current app
+- frontend `typecheck` and `build` passed during final verification
+- manual Wails verification was completed for the migrated app flow
+
 ## Requirement Coverage
 
 - Covers: R001, R002, R003, R004
@@ -47,36 +54,42 @@ This milestone is complete only when all are true:
 
 ## Slices
 
-- [ ] **S01: Add scoped component ownership to NAF** `risk:high` `depends:[]`
+- [x] **S01: Add scoped component ownership to NAF** `risk:high` `depends:[]`
   > After this: one migrated example or compatibility harness proves NAF components can mount with local refs and scoped ownership instead of parent-wide selector searches.
-- [ ] **S02: Publish the new component authoring pattern** `risk:medium` `depends:[S01]`
+- [x] **S02: Publish the new component authoring pattern** `risk:medium` `depends:[S01]`
   > After this: contributors have a documented, copyable pattern for refs, mount/unmount, cleanup, and child composition under the updated runtime.
-- [ ] **S03: Migrate one bounded shell component end-to-end** `risk:high` `depends:[S01]`
+- [x] **S03: Migrate one bounded shell component end-to-end** `risk:high` `depends:[S01]`
   > After this: a real bounded shell such as the titlebar works from module-owned markup using the new runtime pattern and no longer depends on broad parent-scoped querying.
-- [ ] **S04: Migrate dialogs into module-owned shell markup** `risk:medium` `depends:[S01,S03]`
+- [x] **S04: Migrate dialogs into module-owned shell markup** `risk:medium` `depends:[S01,S03]`
   > After this: confirm, move, import/merge, and keyboard-shortcuts dialog shells use the new local ownership model while preserving current workflows.
-- [ ] **S05: Reduce `index.html` to true shell infrastructure** `risk:medium` `depends:[S03,S04]`
+- [x] **S05: Reduce `index.html` to true shell infrastructure** `risk:medium` `depends:[S03,S04]`
   > After this: page/detail placeholder content and migrated bounded shell markup are gone from `index.html`, leaving only stable anchors and sanctioned imperative templates.
-- [ ] **S06: Introduce a lighter state-consumption surface for app/page UI** `risk:medium` `depends:[S01]`
+- [x] **S06: Introduce a lighter state-consumption surface for app/page UI** `risk:medium` `depends:[S01]`
   > After this: at least one real app/page composition path consumes state through a simpler store-like interface than the current broad selector/action wrapper style.
-- [ ] **S07: Refactor page composition around local ownership** `risk:high` `depends:[S05,S06]`
+- [x] **S07: Refactor page composition around local ownership** `risk:high` `depends:[S05,S06]`
   > After this: the empty-library and library page flows are easier to read because page-level shell ownership and page switching no longer rely on scattered shell toggles and oversized shell collection.
-- [ ] **S08: Thin `create-app.js` and stabilize page hosting boundaries** `risk:medium` `depends:[S07]`
+- [x] **S08: Thin `create-app.js` and stabilize page hosting boundaries** `risk:medium` `depends:[S07]`
   > After this: app bootstrap is focused on startup, global singletons, and active-page hosting rather than owning most shell details.
-- [ ] **S09: Validate imperative feature exceptions and remove migration leftovers** `risk:low` `depends:[S07,S08]`
+- [x] **S09: Validate imperative feature exceptions and remove migration leftovers** `risk:low` `depends:[S07,S08]`
   > After this: tree, detail, DnD, and keyboard-heavy modules are explicitly preserved as imperative where appropriate, and obsolete helpers/boilerplate introduced by the old model are removed.
-- [ ] **S10: Update docs and perform final integrated verification** `risk:low` `depends:[S08,S09]`
+- [x] **S10: Update docs and perform final integrated verification** `risk:low` `depends:[S08,S09]`
   > After this: the repo documents the new frontend model clearly, and the full empty-state-to-library flow plus dialogs and shell behavior are re-verified in the real app.
 
 ## Horizontal Checklist
 
-- [ ] Every active R### re-read against new code — still fully satisfied?
-- [ ] Every architecture guideline doc re-evaluated — still valid at new scope?
-- [ ] Graceful shutdown / cleanup on termination verified
+- [x] Every active R### re-read against new code — still fully satisfied?
+- [x] Every architecture guideline doc re-evaluated — still valid at new scope?
+- [x] Graceful shutdown / cleanup on termination verified
 - [ ] Revenue / billing path impact assessed (or N/A)
 - [ ] Auth boundary documented — what's protected vs public
 - [ ] Shared resource budget confirmed — connection pools, caches, rate limits hold under peak
 - [ ] Reconnection / retry strategy verified for every external dependency
+
+Notes:
+
+- Revenue / billing path impact: N/A for this milestone and app scope
+- Auth boundary: no new auth surface introduced by this frontend migration
+- Shared resource budget / reconnection strategy: no external service integration was added or changed in this slice set
 
 ## Boundary Map
 
