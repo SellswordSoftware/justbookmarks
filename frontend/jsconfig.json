@@ -2,11 +2,21 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
+    "allowArbitraryExtensions": true,
     "maxNodeModuleJsDepth": 0,
     "module": "esnext",
     "moduleResolution": "bundler",
     "noEmit": true,
     "target": "es2022"
   },
-  "exclude": []
+  "include": [
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "wailsjs/**/*.d.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules",
+    "wailsjs/**/*.js"
+  ]
 }

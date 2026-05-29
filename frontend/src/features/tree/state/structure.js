@@ -6,7 +6,7 @@
 
 /**
  * @param {TreeNode} node
- * @returns {boolean}
+ * @returns {node is FolderNode}
  */
 export function isFolderNode(node) {
   return node.type === 0;

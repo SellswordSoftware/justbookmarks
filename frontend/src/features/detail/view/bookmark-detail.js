@@ -60,6 +60,10 @@ export function createBookmarkDetail(bookmark) {
     detailError("");
   }
 
+  /**
+   * @param {boolean} nextEditing
+   * @returns {void}
+   */
   function setEditing(nextEditing) {
     editing(nextEditing);
     if (!nextEditing) {
@@ -117,6 +121,7 @@ export function createBookmarkDetail(bookmark) {
     detailError("");
   }
 
+  /** @param {MouseEvent} event */
   function handleOpenLinkClick(event) {
     event.preventDefault();
     void actions.openInBrowser();

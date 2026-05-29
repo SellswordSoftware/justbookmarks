@@ -175,6 +175,7 @@ export function mountMoveDialog(shell) {
     const handleBackdropClick = () => {
       moveDialogState.actions.closeMoveDialog();
     };
+    /** @param {MouseEvent} event */
     const handleDialogClick = (event) => {
       event.stopPropagation();
     };

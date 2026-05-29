@@ -137,6 +137,10 @@ export function createFolderDetail(folder) {
     nameBinding.cleanup,
   );
 
+  /**
+   * @param {boolean} nextEditing
+   * @returns {void}
+   */
   function setEditing(nextEditing) {
     editing(nextEditing);
     nameErrorMessage("");

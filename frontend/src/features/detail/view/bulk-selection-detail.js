@@ -17,7 +17,7 @@ import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
  * @param {import("../../../types.js").TreeNode} node
- * @returns {boolean}
+ * @returns {node is import("../../../types.js").FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;
@@ -96,14 +96,14 @@ export function createBulkSelectionDetail() {
   const cleanup = cleanupCollector();
 
   /**
-   * @returns {import("../../types.js").TreeNode[]}
+   * @returns {import("../../../types.js").TreeNode[]}
    */
   function getSelectedNodes() {
     return treeState.selectors.getSelectedNodes();
   }
 
   /**
-   * @returns {import("../../types.js").TreeNode | null}
+   * @returns {import("../../../types.js").TreeNode | null}
    */
   function getFirstNode() {
     return getSelectedNodes()[0] ?? null;
@@ -128,6 +128,10 @@ export function createBulkSelectionDetail() {
     return parentNode && isFolderNode(parentNode) ? parentNode.folder.name : "Root";
   }
 
+  /**
+   * @param {string} message
+   * @returns {Promise<void>}
+   */
   async function refreshAfterAction(message) {
     await treeState.actions.refresh();
     uiState.actions.showToast(message, "success");

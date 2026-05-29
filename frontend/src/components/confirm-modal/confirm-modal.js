@@ -82,6 +82,7 @@ export function mountConfirmModal(shell) {
     const handleBackdropClick = () => {
       uiState.actions.closeModal();
     };
+    /** @param {MouseEvent} event */
     const handleDialogClick = (event) => {
       event.stopPropagation();
     };

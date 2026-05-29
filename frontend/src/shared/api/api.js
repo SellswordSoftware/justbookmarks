@@ -1,15 +1,18 @@
 // @ts-check
 
-/** @typedef {import("../types.js").BookmarkCreate} BookmarkCreate */
-/** @typedef {import("../types.js").BookmarkPatch} BookmarkPatch */
-/** @typedef {import("../types.js").TreeNode} TreeNode */
-/** @typedef {import("../types.js").BookmarkIndexEntry} BookmarkIndexEntry */
-/** @typedef {import("../types.js").FolderMergeItem} FolderMergeItem */
-/** @typedef {import("../types.js").BookmarkMergeItem} BookmarkMergeItem */
-/** @typedef {import("../types.js").BookmarkConflictItem} BookmarkConflictItem */
-/** @typedef {import("../types.js").MergePreview} MergePreview */
-/** @typedef {import("../types.js").MergeApplyResult} MergeApplyResult */
-/** @typedef {import("../types.js").HistoryState} HistoryState */
+/** @typedef {import("../../types.js").BookmarkCreate} BookmarkCreate */
+/** @typedef {import("../../types.js").BookmarkPatch} BookmarkPatch */
+/** @typedef {import("../../types.js").TreeNode} TreeNode */
+/** @typedef {import("../../types.js").BookmarkIndexEntry} BookmarkIndexEntry */
+/** @typedef {import("../../types.js").FolderMergeItem} FolderMergeItem */
+/** @typedef {import("../../types.js").BookmarkMergeItem} BookmarkMergeItem */
+/** @typedef {import("../../types.js").BookmarkConflictItem} BookmarkConflictItem */
+/** @typedef {import("../../types.js").MergePreview} MergePreview */
+/** @typedef {import("../../types.js").MergeApplyResult} MergeApplyResult */
+/** @typedef {import("../../types.js").HistoryState} HistoryState */
+/** @typedef {typeof import("../../../wailsjs/go/main/App")} WailsAppBindings */
+/** @typedef {typeof import("../../../wailsjs/go/wailsapi/Handler")} WailsHandlerBindings */
+/** @typedef {import("../../../wailsjs/go/models").wailsapi.NodeDTO} NodeDTO */
 
 /**
  * @returns {WailsAppBindings | null}
@@ -76,6 +79,43 @@ function normalizeHistoryState(state) {
   };
 }
 
+/**
+ * @param {NodeDTO | null | undefined} node
+ * @returns {TreeNode}
+ */
+function normalizeTreeNode(node) {
+  if (node?.type === 0 && node.folder) {
+    return {
+      id: node.id ?? "",
+      type: 0,
+      folder: {
+        id: node.folder.id ?? "",
+        name: node.folder.name ?? "",
+        icon: node.folder.icon ?? "",
+        addDate: node.folder.addDate ?? "",
+        lastModified: node.folder.lastModified ?? "",
+        meta: node.folder.meta ?? "",
+        children: (node.folder.children ?? []).map(normalizeTreeNode),
+      },
+    };
+  }
+
+  return {
+    id: node?.id ?? "",
+    type: 1,
+    bookmark: {
+      id: node?.bookmark?.id ?? "",
+      title: node?.bookmark?.title ?? "",
+      url: node?.bookmark?.url ?? "",
+      icon: node?.bookmark?.icon ?? "",
+      iconURI: node?.bookmark?.iconURI ?? "",
+      addDate: node?.bookmark?.addDate ?? "",
+      lastModified: node?.bookmark?.lastModified ?? "",
+      meta: node?.bookmark?.meta ?? "",
+    },
+  };
+}
+
 export async function GetFilePath() {
   const app = getAppBindings();
   return app ? app.GetFilePath() : "";
@@ -126,7 +166,7 @@ export async function LoadFile(path) {
 /** @returns {Promise<TreeNode[]>} */
 export async function GetTree() {
   const handler = getHandlerBindings();
-  return handler ? handler.GetTree() : [];
+  return handler ? (await handler.GetTree()).map(normalizeTreeNode) : [];
 }
 
 /** @returns {Promise<BookmarkIndexEntry[]>} */
@@ -138,7 +178,7 @@ export async function GetFlatIndex() {
 /** @returns {Promise<TreeNode[]>} */
 export async function GetAllFolders() {
   const handler = getHandlerBindings();
-  return handler ? handler.GetAllFolders() : [];
+  return handler ? (await handler.GetAllFolders()).map(normalizeTreeNode) : [];
 }
 
 /**
@@ -151,7 +191,13 @@ export async function AddBookmark(parentFolderId, bookmark) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return handler.AddBookmark(parentFolderId, bookmark);
+  return handler.AddBookmark(parentFolderId, {
+    title: bookmark.title,
+    url: bookmark.url,
+    icon: bookmark.icon ?? "",
+    iconURI: bookmark.iconURI ?? "",
+    meta: bookmark.meta ?? "",
+  });
 }
 
 /**

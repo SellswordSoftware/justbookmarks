@@ -173,11 +173,13 @@ export function mountKeyboardShortcutsDialog(shell) {
     const closeDialog = () => {
       appState.actions.closeKeyboardShortcuts();
     };
+    /** @param {MouseEvent} event */
     const handleBackdropClick = (event) => {
       if (event.target === backdrop) {
         closeDialog();
       }
     };
+    /** @param {MouseEvent} event */
     const handleDialogClick = (event) => {
       event.stopPropagation();
     };

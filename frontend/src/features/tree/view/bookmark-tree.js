@@ -102,7 +102,12 @@ export function mountBookmarkTree(shell) {
         shell.searchResultTemplate,
         () => searchState.selectors.getResults(),
         (item) => item.nodeId,
-        (el, item) => mountBookmarkSearchResultRow(el, item),
+        (el, item) => {
+          if (!(el instanceof HTMLElement)) {
+            throw new Error("Expected search result element");
+          }
+          return mountBookmarkSearchResultRow(el, item);
+        },
       );
       return;
     }
@@ -118,11 +123,15 @@ export function mountBookmarkTree(shell) {
       shell.treeNodeTemplate,
       () => treeState.selectors.getVisibleNodeEntries(),
       (item) => item.id,
-        (el, item) =>
-          mountBookmarkTreeRow(el, item, {
+        (el, item) => {
+          if (!(el instanceof HTMLElement)) {
+            throw new Error("Expected tree row element");
+          }
+          return mountBookmarkTreeRow(el, item, {
             onPointerDown: dnd.handleNodePointerDown,
             shouldIgnoreClick: dnd.shouldIgnoreClick,
-          }),
+          });
+        },
     );
   }
 

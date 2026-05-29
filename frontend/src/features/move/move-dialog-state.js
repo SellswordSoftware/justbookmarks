@@ -23,7 +23,7 @@ const treeNodes = signal(/** @type {TreeNode[]} */ ([]));
 
 /**
  * @param {TreeNode} node
- * @returns {boolean}
+ * @returns {node is import("../../types.js").FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;

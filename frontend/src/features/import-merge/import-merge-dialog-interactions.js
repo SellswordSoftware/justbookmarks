@@ -20,11 +20,13 @@ export function bindImportMergeDialogInteractions(elements, view) {
   const closeDialog = () => {
     importMergeState.actions.closeImportMergeDialog();
   };
+  /** @param {MouseEvent} event */
   const handleBackdropClick = (event) => {
     if (event.target === elements.backdrop) {
       closeDialog();
     }
   };
+  /** @param {MouseEvent} event */
   const handleDialogClick = (event) => {
     event.stopPropagation();
   };

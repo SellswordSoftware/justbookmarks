@@ -23,10 +23,21 @@ import {
 
 /**
  * @param {import("../../types.js").TreeNode} node
- * @returns {boolean}
+ * @returns {node is import("../../types.js").FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;
+}
+
+/**
+ * @param {string} selector
+ * @returns {void}
+ */
+function focusIfHTMLElement(selector) {
+  const element = document.querySelector(selector);
+  if (element instanceof HTMLElement) {
+    element.focus();
+  }
 }
 
 /** @returns {string} */
@@ -185,7 +196,7 @@ export async function openAddBookmarkShortcut(_options) {
       return;
     }
     await Promise.resolve();
-    document.querySelector('[data-keyboard-action="add-bookmark-url"]')?.focus();
+    focusIfHTMLElement('[data-keyboard-action="add-bookmark-url"]');
     return;
   }
 
@@ -195,14 +206,14 @@ export async function openAddBookmarkShortcut(_options) {
     await focusDetailForSelection();
     if (clickKeyboardAction("folder-add-bookmark")) {
       await Promise.resolve();
-      document.querySelector('[data-keyboard-action="add-bookmark-url"]')?.focus();
+      focusIfHTMLElement('[data-keyboard-action="add-bookmark-url"]');
     }
     return;
   }
 
   clickKeyboardAction("root-add-bookmark");
   await Promise.resolve();
-  document.querySelector('[data-keyboard-action="add-bookmark-url"]')?.focus();
+  focusIfHTMLElement('[data-keyboard-action="add-bookmark-url"]');
 }
 
 /**
@@ -216,7 +227,7 @@ export async function openAddFolderShortcut(_options) {
       return;
     }
     await Promise.resolve();
-    document.querySelector('[data-keyboard-action="add-folder-name"]')?.focus();
+    focusIfHTMLElement('[data-keyboard-action="add-folder-name"]');
     return;
   }
 
@@ -226,14 +237,14 @@ export async function openAddFolderShortcut(_options) {
     await focusDetailForSelection();
     if (clickKeyboardAction("folder-add-folder")) {
       await Promise.resolve();
-      document.querySelector('[data-keyboard-action="add-folder-name"]')?.focus();
+      focusIfHTMLElement('[data-keyboard-action="add-folder-name"]');
     }
     return;
   }
 
   clickKeyboardAction("root-add-folder");
   await Promise.resolve();
-  document.querySelector('[data-keyboard-action="add-folder-name"]')?.focus();
+  focusIfHTMLElement('[data-keyboard-action="add-folder-name"]');
 }
 
 /**
@@ -249,13 +260,13 @@ export async function triggerEditShortcut(renameOnly = false) {
   if (isFolderNode(selectedNode)) {
     if (clickKeyboardAction("folder-edit")) {
       await Promise.resolve();
-      document.querySelector('[data-keyboard-action="folder-name"]')?.focus();
+      focusIfHTMLElement('[data-keyboard-action="folder-name"]');
     }
     return;
   }
 
   if (renameOnly || clickKeyboardAction("bookmark-edit")) {
     await Promise.resolve();
-    document.querySelector('[data-keyboard-action="bookmark-title"]')?.focus();
+    focusIfHTMLElement('[data-keyboard-action="bookmark-title"]');
   }
 }

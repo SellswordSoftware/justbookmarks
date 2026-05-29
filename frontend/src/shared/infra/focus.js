@@ -14,11 +14,18 @@ const FOCUSABLE_SELECTOR = [
  * @returns {HTMLElement[]}
  */
 export function getFocusableElements(container) {
-  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-    (element) =>
-      element instanceof HTMLElement &&
-      !element.hasAttribute("disabled") &&
-      element.offsetParent !== null,
+  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(isFocusableElement);
+}
+
+/**
+ * @param {Element} element
+ * @returns {element is HTMLElement}
+ */
+function isFocusableElement(element) {
+  return (
+    element instanceof HTMLElement &&
+    !element.hasAttribute("disabled") &&
+    element.offsetParent !== null
   );
 }
 

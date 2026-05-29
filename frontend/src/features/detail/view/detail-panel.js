@@ -12,7 +12,7 @@ import { treeState } from "../../tree/state/tree-state.js";
 
 /**
  * @param {TreeNode} node
- * @returns {boolean}
+ * @returns {node is import("../../../types.js").FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;

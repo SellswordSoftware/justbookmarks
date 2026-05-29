@@ -16,7 +16,7 @@ import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
  * @param {VisibleTreeNodeEntry["node"]} node
- * @returns {boolean}
+ * @returns {node is import("../../../types.js").FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;
@@ -41,7 +41,7 @@ function getNodeLabel(node) {
  */
 export function mountBookmarkTreeRow(el, entry, options) {
   const row = $(".tree-row", el);
-  const toggle = $(".tree-row__toggle", el);
+  const toggle = /** @type {HTMLButtonElement | null} */ ($(".tree-row__toggle", el));
   const folderIcon = $(".tree-row__folder-icon", el);
   const bookmarkIcon = $(".tree-row__bookmark-icon", el);
   const favicon = /** @type {HTMLImageElement | null} */ (

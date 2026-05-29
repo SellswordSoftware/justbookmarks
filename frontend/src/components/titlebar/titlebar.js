@@ -18,6 +18,7 @@ import {
 
 /**
  * @param {HTMLElement} titlebar
+ * @param {string} selector
  * @returns {HTMLButtonElement}
  */
 function requireButton(titlebar, selector) {

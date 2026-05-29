@@ -169,7 +169,7 @@ export function createBookmarkTreeDndController(options) {
   }
 
   /**
-   * @param {import("../../types.js").VisibleTreeNodeEntry} entry
+   * @param {import("../../../types.js").VisibleTreeNodeEntry} entry
    * @param {MouseEvent} event
    * @returns {void}
    */

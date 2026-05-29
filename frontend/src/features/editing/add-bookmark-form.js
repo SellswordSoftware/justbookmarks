@@ -130,6 +130,10 @@ export function createAddBookmarkForm(options) {
     }
   }
 
+  /**
+   * @param {boolean} fetching
+   * @returns {void}
+   */
   function syncLoading(fetching) {
     loadingState(fetching);
   }
