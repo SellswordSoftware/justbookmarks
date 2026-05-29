@@ -2,111 +2,145 @@
 
 ## Purpose
 
-The frontend uses a domain-first structure so the first question is "what app area is this?" instead of "is this feature code or state code?"
+The frontend now uses a layered structure that separates bootstrap, pages, features, reusable UI pieces, shell layout, and shared infrastructure.
 
-This keeps navigation predictable:
-
-- go to `app/` for startup and app-wide wiring
-- go to `domains/<name>/` for product behavior in one area
-- go to `shared/` only for code reused across multiple domains
-- go to `styles/` only for global style foundation
+Use this model to answer "what level of the app owns this code?" before deciding which folder it belongs in.
 
 ## Top-Level Layout
 
 ```text
 frontend/src/
   app/
-  domains/
+  pages/
+  features/
+  components/
+  layouts/
   shared/
   styles/
 ```
 
+## Layer Roles
+
 ### `app/`
 
-Owns bootstrap and app-wide composition:
+Owns bootstrap and lifecycle only:
 
-- app creation
-- startup and session restore
-- lifecycle wiring
-- shell-level action wiring
+- app startup
+- session bootstrap and file restore
+- top-level shell anchor collection
+- page selection
+- lifecycle persistence wiring
 
-`app/` should not become a dumping ground for feature logic. If code mainly belongs to one app area, move it to that domain.
+`app/` should compose the frontend, not own feature behavior.
 
-### `domains/`
+### `pages/`
 
-Each domain is a user-facing app area such as:
+Owns screen-level composition.
+
+Current pages:
+
+- `pages/library/`
+  - loaded bookmark-library experience
+- `pages/empty-library/`
+  - no-file experience before a library is open
+
+If a new top-level app state appears, start by asking whether it should become a page.
+
+### `features/`
+
+Owns behavior-rich product areas:
 
 - `tree`
 - `detail`
 - `search`
-- `dialogs`
-- `shortcuts`
-- `chrome`
+- `import-merge`
+- `move`
 - `editing`
+- `shortcuts`
 
-Inside a domain, split by responsibility only as needed:
+Features can contain state, DOM bindings, workflows, and interactions. They do not need to be reusable outside this app.
 
-- `view/` for DOM creation, rendering, and bindings
-- `state/` for domain-owned state and selectors
-- `interactions/` for keyboard, pointer, and drag/drop systems
-- `actions/` for domain workflows and mutations
-- `styles/` for styles owned by that domain
+### `components/`
 
-Not every domain needs every subfolder. Add structure when it clarifies responsibility.
+Owns reusable, bounded UI units:
+
+- `titlebar`
+- `toolbar`
+- `toast`
+- `confirm-modal`
+- `keyboard-shortcuts-dialog`
+- `shell-panel`
+
+Components may have local state and event handling, but they should not own broad product workflows.
+
+### `layouts/`
+
+Owns shell structure and structural interaction:
+
+- `app-shell`
+  - pane layout
+  - pane resizing
+
+Use `layouts/` for the app frame that sits between pages and smaller UI pieces.
 
 ### `shared/`
 
-Only place code here when it is genuinely cross-domain:
+Owns only true cross-feature dependencies:
 
-- `api/` for backend bindings and transport helpers
-- `infra/` for shared utilities like focus, persistence, and errors
-- `runtime/` for local reactive/runtime primitives
-- `state/` for app-global state that is not owned by one domain
-- `styles/` for reusable visual primitives
+- `api/`
+- `infra/`
+- `runtime/`
+- `state/`
+- `styles/`
 
-If a module is mainly used by one domain, keep it with that domain even if another area might reuse it later.
+If code mainly serves one feature or one component, keep it there even if reuse seems possible later.
 
 ### `styles/`
 
-This folder is for app-wide style foundation only:
+Owns app-wide style foundation and the top-level import hub:
 
 - reset
 - tokens
 - themes
-- base element styling
-- layout scaffolding
-- the top-level `app.css` import hub
+- base styles
+- global layout primitives
+- `app.css`
 
-Feature or surface styles should live with the domain that owns them.
+Feature, component, or layout-owned styles should live with the module that owns them.
 
 ## Placement Rules
 
-Use these rules when adding or moving code:
-
-1. Start with the domain. If the code belongs to tree behavior, put it under `domains/tree/`.
-2. Keep DOM-free domain logic in that domain's `state/` or `actions/` before promoting it to `shared/`.
-3. Put keyboard, pointer, and drag/drop systems in `interactions/` when they are substantial enough to deserve their own module.
-4. Put reusable visual primitives in `shared/styles/`. Put surface-specific styling in the domain's `styles/`.
-5. Only put code in `shared/` when at least two domains depend on it and the abstraction is still clear.
+1. Start at the highest meaningful layer.
+2. If code describes a whole screen state, put it in `pages/`.
+3. If code owns product behavior, state, or workflows, put it in `features/`.
+4. If code is a reusable contained UI unit, put it in `components/`.
+5. If code defines shell structure or structural resizing, put it in `layouts/`.
+6. Only put code in `shared/` when at least two areas depend on it and the abstraction is still clear.
+7. Keep `app/` thin. If it starts accumulating product logic, move that logic down into pages, features, components, or layouts.
 
 ## Naming Rules
 
-- `*-state.js` means state owner or state facade
-- `*-actions.js` means workflow or mutation helpers
-- `*-dialog.js` means a dialog entrypoint or composition layer
-- `*-row.js` means a row-level renderer or binding module
-- `*-keyboard.js` and `*-dnd.js` mean interaction systems
+- `*-page.js` for page compositions
+- `*-layout.js` for shell layout modules
+- `*-state.js` for state owners or facades
+- `*-actions.js` for workflows and mutations
+- `*-dialog.js` for dialog composition entrypoints
+- `*-row.js` for row-level render/bind modules
+- `*-keyboard.js` and `*-dnd.js` for interaction systems
 
-Prefer names that describe the visible responsibility directly. Avoid vague names that require history to understand.
+Prefer names that describe visible responsibility directly.
 
-## Practical Examples
+## Repo-Specific Examples
 
-- Change tree indentation or row markup: start in `frontend/src/domains/tree/view/`
-- Change tree selection or expansion rules: start in `frontend/src/domains/tree/state/`
-- Change move dialog behavior: start in `frontend/src/domains/dialogs/move/`
-- Change app startup or restore flow: start in `frontend/src/app/`
-- Change button, modal, or form primitives: start in `frontend/src/shared/styles/`
+- Change app startup or page switching: start in `frontend/src/app/`
+- Change loaded-library composition: start in `frontend/src/pages/library/`
+- Change empty/no-file experience: start in `frontend/src/pages/empty-library/`
+- Change tree rendering or selection behavior: start in `frontend/src/features/tree/`
+- Change bookmark or folder detail behavior: start in `frontend/src/features/detail/`
+- Change import/merge or move workflow: start in `frontend/src/features/import-merge/` or `frontend/src/features/move/`
+- Change titlebar, toast, or toolbar UI: start in `frontend/src/components/`
+- Change pane resizing or shell structure: start in `frontend/src/layouts/app-shell/`
 
 ## Maintenance Rule
 
-When a file starts mixing multiple reasons to change, split it within its current domain before creating a new cross-domain abstraction.
+When a file starts mixing multiple reasons to change, split it within its current layer first. Promote code to `shared/` only when the cross-layer dependency is real and stable.

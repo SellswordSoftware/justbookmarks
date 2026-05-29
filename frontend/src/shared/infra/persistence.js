@@ -1,8 +1,8 @@
 // @ts-check
 
-/** @typedef {import("../types.js").PerFileTreeState} PerFileTreeState */
-/** @typedef {import("../types.js").WindowState} WindowState */
-/** @typedef {import("../types.js").PersistedUIState} PersistedUIState */
+/** @typedef {import("../../types.js").PerFileTreeState} PerFileTreeState */
+/** @typedef {import("../../types.js").WindowState} WindowState */
+/** @typedef {import("../../types.js").PersistedUIState} PersistedUIState */
 
 const STORAGE_KEY = "justbookmarks.ui-state.v1";
 const MAX_FILE_STATES = 10;
@@ -19,7 +19,9 @@ const defaultState = {
  * @returns {boolean}
  */
 function hasStorage() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  return (
+    typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+  );
 }
 
 /**
@@ -49,7 +51,9 @@ function sanitizeState(raw) {
           ? fileState.expandedNodeIds.filter((id) => typeof id === "string")
           : [],
         selectedNodeId:
-          typeof fileState.selectedNodeId === "string" ? fileState.selectedNodeId : "",
+          typeof fileState.selectedNodeId === "string"
+            ? fileState.selectedNodeId
+            : "",
       };
     }
   }
@@ -57,7 +61,9 @@ function sanitizeState(raw) {
   const windowState = candidate.window;
   return {
     lastOpenedFile:
-      typeof candidate.lastOpenedFile === "string" ? candidate.lastOpenedFile : "",
+      typeof candidate.lastOpenedFile === "string"
+        ? candidate.lastOpenedFile
+        : "",
     leftPaneWidth:
       typeof candidate.leftPaneWidth === "number"
         ? candidate.leftPaneWidth
@@ -162,7 +168,10 @@ export function setPerFileTreeState(path, treeState) {
   const orderedPaths = Object.keys(files);
 
   if (orderedPaths.length > MAX_FILE_STATES) {
-    for (const stalePath of orderedPaths.slice(0, orderedPaths.length - MAX_FILE_STATES)) {
+    for (const stalePath of orderedPaths.slice(
+      0,
+      orderedPaths.length - MAX_FILE_STATES,
+    )) {
       delete files[stalePath];
     }
   }

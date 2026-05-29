@@ -3,31 +3,22 @@
 import { effect } from "../shared/runtime/naf-html.js";
 import { mountAppLifecycle } from "./lifecycle.js";
 import { bootstrapSession, createFile, openFile } from "./session.js";
-import { mountRootTreeActions, mountToolbarActions } from "./shell-actions.js";
-import {
-  collectBookmarkTreeShell,
-  mountBookmarkTree,
-} from "../domains/tree/view/bookmark-tree.js";
-import { collectConfirmModalShell, mountConfirmModal } from "../domains/dialogs/confirm/confirm-modal.js";
-import {
-  collectDetailPanelShell,
-  mountDetailPanel,
-} from "../domains/detail/view/detail-panel.js";
-import { mountGlobalShortcuts } from "../domains/shortcuts/global-shortcuts.js";
-import { collectLayoutShell, mountLayout } from "../domains/chrome/layout.js";
-import { collectMoveDialogShell, mountMoveDialog } from "../domains/dialogs/move/move-dialog.js";
-import { collectSearchBarShell, mountSearchBar } from "../domains/search/view/search-bar.js";
+import { collectConfirmModalShell, mountConfirmModal } from "../components/confirm-modal/confirm-modal.js";
+import { collectLayoutShell, mountLayout } from "../layouts/app-shell/app-shell-layout.js";
+import { collectMoveDialogShell, mountMoveDialog } from "../features/move/move-dialog.js";
 import {
   collectKeyboardShortcutsDialogShell,
   mountKeyboardShortcutsDialog,
-} from "../domains/dialogs/keyboard-shortcuts/keyboard-shortcuts-dialog.js";
+} from "../components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.js";
 import {
   collectImportMergeDialogShell,
   mountImportMergeDialog,
-} from "../domains/dialogs/import-merge/import-merge-dialog.js";
-import { collectToastContainerShell, mountToastContainer } from "../domains/chrome/toast-container.js";
-import { collectTitlebarShell, mountTitlebar } from "../domains/chrome/titlebar.js";
-import { treeState } from "../domains/tree/state/tree-state.js";
+} from "../features/import-merge/import-merge-dialog.js";
+import { collectToastContainerShell, mountToastContainer } from "../components/toast/toast-container.js";
+import { collectTitlebarShell, mountTitlebar } from "../components/titlebar/titlebar.js";
+import { mountEmptyLibraryPage } from "../pages/empty-library/empty-library-page.js";
+import { mountLibraryPage } from "../pages/library/library-page.js";
+import { treeState } from "../features/tree/state/tree-state.js";
 import { appState } from "../shared/state/app-state.js";
 
 /** @typedef {import("../types.js").TreeNode} TreeNode */
@@ -38,9 +29,11 @@ import { appState } from "../shared/state/app-state.js";
  * @property {HTMLElement} titlebar
  * @property {HTMLElement} titlebarMeta
  * @property {HTMLInputElement} searchInput
+ * @property {HTMLElement} treePaneContent
  * @property {HTMLElement} treeList
  * @property {HTMLElement} treePaneMeta
  * @property {HTMLElement} treePaneActions
+ * @property {HTMLElement} detailPaneContent
  * @property {HTMLElement} detailPaneMeta
  * @property {HTMLElement} toolbarActions
  * @property {HTMLElement} toastContainer
@@ -96,9 +89,11 @@ function collectShell(root) {
     titlebar: requireElement(root, "#titlebar"),
     titlebarMeta: requireElement(root, "#titlebar-meta"),
     searchInput,
+    treePaneContent: requireElement(root, "#tree-pane-content"),
     treeList: requireElement(root, "#tree-list"),
     treePaneMeta: requireElement(root, "#tree-pane-meta"),
     treePaneActions: requireElement(root, "#tree-pane-actions"),
+    detailPaneContent: requireElement(root, "#detail-pane-content"),
     detailPaneMeta: requireElement(root, "#detail-pane-meta"),
     toolbarActions: requireElement(root, "#toolbar-actions"),
     toastContainer: requireElement(root, "#toast-container"),
@@ -116,21 +111,42 @@ function collectShell(root) {
  * @param {AppShell} shell
  * @returns {{ cleanup: () => void }}
  */
-function mountShellStatus(shell) {
+function mountPageSelection(shell) {
+  let currentPage = /** @type {{ cleanup: () => void }} */ ({
+    cleanup() {},
+  });
+  let currentPageKind = "empty";
+
+  const pageActions = {
+    openFile: () => openFile(shell),
+    createFile: () => createFile(shell),
+    importFile: () => appState.actions.openImportMerge(),
+  };
+
   const stop = effect(() => {
     const filePath = appState.selectors.getCurrentFilePath();
-    const treeError = treeState.selectors.getError();
     const loading = treeState.selectors.isLoading();
-    const hasAttemptedLoad = appState.selectors.hasTriedLoad();
+    const shouldKeepLibraryPage =
+      currentPageKind === "library" &&
+      !filePath &&
+      !loading &&
+      treeState.selectors.getTree().length > 0;
+    const nextPageKind =
+      filePath || loading || shouldKeepLibraryPage ? "library" : "empty";
 
-    shell.titlebarMeta.textContent = treeError
-      ? treeError
-      : filePath || "Vanilla frontend shell active";
-
-    if (!filePath && !loading && hasAttemptedLoad && !treeError) {
-      shell.treePaneMeta.textContent = "No bookmark file is currently open";
+    if (nextPageKind === currentPageKind) {
+      return;
     }
+
+    currentPage.cleanup();
+    currentPageKind = nextPageKind;
+    currentPage =
+      currentPageKind === "library"
+        ? mountLibraryPage(shell, pageActions)
+        : mountEmptyLibraryPage(shell, pageActions);
   });
+
+  currentPage = mountEmptyLibraryPage(shell, pageActions);
 
   return {
     cleanup() {
@@ -147,13 +163,6 @@ function mountShellStatus(shell) {
  */
 export function createApp(root) {
   const shell = collectShell(root);
-  const toolbarActions = mountToolbarActions(shell, {
-    openFile: () => openFile(shell),
-    createFile: () => createFile(shell),
-    importFile: () => appState.actions.openImportMerge(),
-  });
-  const status = mountShellStatus(shell);
-  const rootTreeActions = mountRootTreeActions(shell);
   const cleanupTitlebar = mountTitlebar(collectTitlebarShell(root));
   const cleanupLayout = mountLayout(collectLayoutShell(root));
   const toastContainer = mountToastContainer(collectToastContainerShell(root));
@@ -163,16 +172,7 @@ export function createApp(root) {
   const shortcutsDialog = mountKeyboardShortcutsDialog(
     collectKeyboardShortcutsDialogShell(root),
   );
-  const searchBar = mountSearchBar(collectSearchBarShell(root));
-  const bookmarkTree = mountBookmarkTree(collectBookmarkTreeShell(root));
-  const detailPanel = mountDetailPanel(collectDetailPanelShell(root));
-  const globalShortcuts = mountGlobalShortcuts({
-    searchInput: shell.searchInput,
-    focusSearch: () => searchBar.focus(),
-    focusTree: () => bookmarkTree.focusTree(),
-    openFile: () => openFile(shell),
-    createFile: () => createFile(shell),
-  });
+  const pageSelection = mountPageSelection(shell);
   const lifecycle = mountAppLifecycle({
     featureCleanups: [
       { cleanup: cleanupTitlebar },
@@ -182,16 +182,9 @@ export function createApp(root) {
       importMergeDialog,
       moveDialog,
       shortcutsDialog,
-      globalShortcuts,
-      searchBar,
-      bookmarkTree,
-      detailPanel,
-      rootTreeActions,
-      toolbarActions,
-      status,
+      pageSelection,
     ],
   });
-  searchBar.focus();
   void bootstrapSession();
   void lifecycle;
   return shell;

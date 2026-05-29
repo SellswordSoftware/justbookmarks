@@ -4,19 +4,23 @@
 @import "./themes/dark.css";
 @import "./base.css";
 @import "./layout.css";
+
 @import "../shared/styles/button.css";
 @import "../shared/styles/form.css";
 @import "../shared/styles/card.css";
 @import "../shared/styles/modal.css";
 @import "../shared/styles/alert.css";
 @import "../shared/styles/badge.css";
-@import "../domains/chrome/styles/toast.css";
-@import "../domains/chrome/styles/toolbar.css";
 @import "../shared/styles/menu.css";
-@import "../domains/tree/styles/tree-list.css";
 @import "../shared/styles/spinner.css";
-@import "../domains/chrome/styles/titlebar.css";
-@import "../domains/chrome/styles/shell-panel.css";
-@import "../domains/tree/styles/tree-pane.css";
-@import "../domains/detail/styles/detail-surface.css";
+
+@import "../components/titlebar/titlebar.css";
+@import "../components/toast/toast.css";
+@import "../components/toolbar/toolbar.css";
+@import "../components/shell-panel/shell-panel.css";
+
+@import "../features/tree/styles/tree-list.css";
+@import "../features/tree/styles/tree-pane.css";
+@import "../features/detail/styles/detail-surface.css";
+
 @import "../shared/styles/dialogs-extra.css";

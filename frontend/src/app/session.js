@@ -3,7 +3,7 @@
 import { getErrorMessage } from "../shared/infra/errors.js";
 import { clearLastOpenedFile } from "../shared/infra/persistence.js";
 import { appState } from "../shared/state/app-state.js";
-import { treeState } from "../domains/tree/state/tree-state.js";
+import { treeState } from "../features/tree/state/tree-state.js";
 import { uiState } from "../shared/state/ui-state.js";
 
 /**
