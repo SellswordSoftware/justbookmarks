@@ -34,14 +34,15 @@ export function showEmptyLibraryFrame(shell) {
 }
 
 /**
- * Create a dedicated host div appended to mainContent without destroying
- * existing shell children (tree-pane, detail-pane, pane-resizer).
+ * Collect the dedicated page host anchor from the shell.
  *
- * @param {HTMLElement} mainContent
- * @returns {HTMLDivElement}
+ * @param {ParentNode} root
+ * @returns {HTMLElement}
  */
-export function createPageHost(mainContent) {
-  const host = document.createElement("div");
-  mainContent.append(host);
-  return host;
+export function collectPageHost(root) {
+  const pageHost = root.querySelector("#page-host");
+  if (!(pageHost instanceof HTMLElement)) {
+    throw new Error("Expected #page-host element");
+  }
+  return pageHost;
 }

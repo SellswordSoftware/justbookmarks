@@ -12,13 +12,54 @@ import { mountBookmarkTreeRow } from "./bookmark-tree-row.js";
  * @typedef {import("../../../types.js").BookmarkIndexEntry} BookmarkIndexEntry
  */
 
+/** @type {string} */
+const TREE_NODE_HTML = /*html*/ `
+  <article class="tree-node">
+    <div
+      class="tree-row menu-item"
+      role="treeitem"
+      tabindex="-1"
+      aria-selected="false"
+    >
+      <button
+        class="tree-row__toggle btn btn-ghost btn-sm btn-square"
+        type="button"
+        aria-label="Toggle folder"
+      ></button>
+      <span
+        class="tree-row__folder-icon"
+        aria-hidden="true"
+      ></span>
+      <img class="tree-row__favicon" alt="" hidden />
+      <span
+        class="tree-row__bookmark-icon"
+        aria-hidden="true"
+      ></span>
+      <span class="tree-row__label"></span>
+      <span class="tree-row__count"></span>
+    </div>
+  </article>
+`;
+
+/** @type {string} */
+const SEARCH_RESULT_HTML = /*html*/ `
+  <article
+    class="search-result menu-item"
+    role="button"
+    tabindex="0"
+    aria-selected="false"
+  >
+    <span class="search-result__icon" aria-hidden="true"></span>
+    <span class="search-result__label"></span>
+    <span class="search-result__meta"></span>
+  </article>
+`;
+
 /**
  * @typedef {object} BookmarkTreeShell
  * @property {HTMLElement} root
  * @property {HTMLElement} treeList
  * @property {HTMLElement} treePaneMeta
- * @property {HTMLTemplateElement} treeNodeTemplate
- * @property {HTMLTemplateElement} searchResultTemplate
  */
 
 /**
@@ -28,8 +69,6 @@ import { mountBookmarkTreeRow } from "./bookmark-tree-row.js";
 export function collectBookmarkTreeShell(root) {
   const treeList = root.querySelector("#tree-list");
   const treePaneMeta = root.querySelector("#tree-pane-meta");
-  const treeNodeTemplate = root.querySelector("#tree-node-template");
-  const searchResultTemplate = root.querySelector("#search-result-template");
 
   if (!(root instanceof HTMLElement)) {
     throw new Error("Expected bookmark tree root element");
@@ -40,19 +79,11 @@ export function collectBookmarkTreeShell(root) {
   if (!(treePaneMeta instanceof HTMLElement)) {
     throw new Error("Expected #tree-pane-meta element");
   }
-  if (!(treeNodeTemplate instanceof HTMLTemplateElement)) {
-    throw new Error("Expected #tree-node-template template");
-  }
-  if (!(searchResultTemplate instanceof HTMLTemplateElement)) {
-    throw new Error("Expected #search-result-template template");
-  }
 
   return {
     root,
     treeList,
     treePaneMeta,
-    treeNodeTemplate,
-    searchResultTemplate,
   };
 }
 
@@ -79,7 +110,7 @@ export function mountBookmarkTree(shell) {
    * @returns {void}
    */
   function renderEmptyState(message) {
-    const renderEmptyTreeState = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    const renderEmptyTreeState = /** @type {TemplateTag} */ (
       template
     );
     const emptyState = renderEmptyTreeState`
@@ -104,7 +135,7 @@ export function mountBookmarkTree(shell) {
 
       stopList = list(
         shell.treeList,
-        shell.searchResultTemplate,
+        SEARCH_RESULT_HTML,
         () => searchState.selectors.getResults(),
         (item) => item.nodeId,
         (el, item) => {
@@ -124,7 +155,7 @@ export function mountBookmarkTree(shell) {
 
     stopList = list(
       shell.treeList,
-      shell.treeNodeTemplate,
+      TREE_NODE_HTML,
       () => treeState.selectors.getVisibleNodeEntries(),
       (item) => item.id,
         (el, item) => {

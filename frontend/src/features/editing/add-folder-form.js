@@ -6,6 +6,7 @@ import {
   effect,
   fx,
   model,
+  raw,
   signal,
   template,
 } from "../../shared/runtime/naf.js";
@@ -40,7 +41,7 @@ export function createAddFolderForm(options) {
   const errorMessage = signal("");
   const cleanup = cleanupCollector();
 
-  const renderAddFolderForm = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderAddFolderForm = /** @type {TemplateTag} */ (
     template({
       root: ".add-folder-launcher",
       onMount(_el, _parent, ctx) {
@@ -193,13 +194,13 @@ export function createAddFolderForm(options) {
         type="button"
         class="${options.triggerClassName ?? "btn btn-secondary btn-sm"}"
         data-ref="trigger"
-        ${options.triggerKeyboardAction ? `data-keyboard-action="${options.triggerKeyboardAction}"` : ""}
-        ${options.triggerAriaLabel ? `aria-label="${options.triggerAriaLabel}"` : ""}
-        ${options.triggerTitle ? `title="${options.triggerTitle}"` : ""}
+        ${raw(options.triggerKeyboardAction ? `data-keyboard-action="${options.triggerKeyboardAction}"` : "")}
+        ${raw(options.triggerAriaLabel ? `aria-label="${options.triggerAriaLabel}"` : "")}
+        ${raw(options.triggerTitle ? `title="${options.triggerTitle}"` : "")}
       >
-        ${options.triggerIconClassName
+        ${raw(options.triggerIconClassName
           ? `<span class="${options.triggerIconClassName}" aria-hidden="true"></span>`
-          : options.triggerLabel}
+          : options.triggerLabel)}
       </button>
       <div class="add-folder-panel" hidden data-ref="panel">
         <p class="label">${options.formTitle ?? "Create folder"}</p>

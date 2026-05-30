@@ -4,13 +4,14 @@ import { appState } from "../../shared/state/app-state.js";
 import { searchState } from "../../features/search/state/search-state.js";
 import { treeState } from "../../features/tree/state/tree-state.js";
 import {
+  attr,
   cleanupCollector,
   effect,
   mount,
   template,
 } from "../../shared/runtime/naf.js";
 import {
-  createPageHost,
+  collectPageHost,
   showEmptyLibraryFrame,
   showLibraryFrame,
 } from "../page-frame.js";
@@ -40,19 +41,18 @@ import {
  * @returns {void}
  */
 function setButtonBusyState(button, busy, idleLabel, busyLabel) {
-  button.disabled = busy;
   button.textContent = busy ? busyLabel : idleLabel;
 }
 
 /**
  * @param {EmptyLibraryPageShell} shell
  * @param {EmptyLibraryPageActions} actions
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createEmptyLibrarySplash(shell, actions) {
   const cleanup = cleanupCollector();
   const renderSplash =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template({
         root: ".empty-library-page",
         onMount(el, _parent, ctx) {
@@ -82,6 +82,8 @@ function createEmptyLibrarySplash(shell, actions) {
           cleanup.add(
             () => openButton.removeEventListener("click", handleOpenClick),
             () => createButton.removeEventListener("click", handleCreateClick),
+            attr(openButton, "disabled", () => treeState.selectors.isLoading()),
+            attr(createButton, "disabled", () => treeState.selectors.isLoading()),
             effect(() => {
               const treeError = treeState.selectors.getError();
               const loading = treeState.selectors.isLoading();
@@ -162,15 +164,15 @@ function createEmptyLibrarySplash(shell, actions) {
 export function mountEmptyLibraryPage(shell, actions) {
   searchState.actions.clearQuery();
   showEmptyLibraryFrame(shell);
-  const host = createPageHost(shell.mainContent);
+  const pageHost = collectPageHost(shell.root);
 
   const splash = createEmptyLibrarySplash(shell, actions);
-  mount(splash, host);
+  mount(splash, pageHost);
 
   return {
     cleanup() {
       splash.unmount?.();
-      host.remove();
+      pageHost.replaceChildren();
       showLibraryFrame(shell);
     },
   };

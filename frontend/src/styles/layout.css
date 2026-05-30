@@ -25,9 +25,21 @@
   min-width: 0;
 }
 
+.page-host {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.page-host > :first-child {
+  pointer-events: auto;
+}
+
 .shell-layout {
   display: grid;
   grid-template-columns: minmax(260px, var(--left-pane-width, 360px)) 10px minmax(320px, 1fr);
+  grid-template-rows: 1fr;
   gap: 0;
   flex: 1;
   min-height: 0;

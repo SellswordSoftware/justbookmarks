@@ -139,7 +139,7 @@ export function createBulkSelectionDetail() {
     }
   }
 
-  const renderBulkSelectionDetail = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderBulkSelectionDetail = /** @type {TemplateTag} */ (
     template({
       root: ".bulk-selection-detail",
       onMount(_el, _parent, ctx) {

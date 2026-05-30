@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { effect, mount, template } from "../../shared/runtime/naf.js";
+import { effect, mount, raw, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 
 const groups = [
@@ -108,7 +108,7 @@ function renderGroup(group) {
 function createKeyboardShortcutsDialog() {
   let cleanupRendered = () => {};
   const groupsHtml = groups.map(renderGroup).join("");
-  const renderDialog = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderDialog = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _parent, ctx) {
         const backdrop = ctx.refs.backdrop;
@@ -201,7 +201,7 @@ function createKeyboardShortcutsDialog() {
             Close
           </button>
         </div>
-        <div class="modal__body shortcuts-dialog__body">${groupsHtml}</div>
+        <div class="modal__body shortcuts-dialog__body">${raw(groupsHtml)}</div>
       </div>
     </div>
   `;

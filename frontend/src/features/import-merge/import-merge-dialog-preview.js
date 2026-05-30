@@ -11,19 +11,19 @@ import { cleanupCollector, effect, list } from "../../shared/runtime/naf.js";
 const SECTION_ROW_HTML = /*html*/ `
   <section class="import-merge-dialog__section">
     <div class="import-merge-dialog__section-header">
-      <h3 class="import-merge-dialog__section-title"></h3>
-      <span class="badge"></span>
+      <h3 class="import-merge-dialog__section-title" data-ref="title"></h3>
+      <span class="badge" data-ref="badge"></span>
     </div>
-    <p class="import-merge-dialog__empty" hidden>None</p>
-    <div class="import-merge-dialog__rows"></div>
+    <p class="import-merge-dialog__empty" hidden data-ref="empty">None</p>
+    <div class="import-merge-dialog__rows" data-ref="rows"></div>
   </section>
 `;
 
 /** @type {string} */
 const PREVIEW_ROW_HTML = /*html*/ `
   <div class="import-merge-dialog__row">
-    <div class="import-merge-dialog__row-title"></div>
-    <div class="import-merge-dialog__row-subtitle"></div>
+    <div class="import-merge-dialog__row-title" data-ref="title"></div>
+    <div class="import-merge-dialog__row-subtitle" data-ref="subtitle"></div>
   </div>
 `;
 
@@ -138,10 +138,10 @@ export function mountImportMergePreview(body, preview, previewLoading) {
         throw new Error("Import merge section template must render an element");
       }
 
-      const titleEl = el.querySelector(".import-merge-dialog__section-title");
-      const badgeEl = el.querySelector(".badge");
-      const emptyEl = el.querySelector(".import-merge-dialog__empty");
-      const rowsEl = el.querySelector(".import-merge-dialog__rows");
+      const titleEl = el.querySelector('[data-ref="title"]');
+      const badgeEl = el.querySelector('[data-ref="badge"]');
+      const emptyEl = el.querySelector('[data-ref="empty"]');
+      const rowsEl = el.querySelector('[data-ref="rows"]');
       if (!(rowsEl instanceof HTMLElement)) {
         throw new Error(
           "Import merge section template must include a rows container",
@@ -174,12 +174,8 @@ export function mountImportMergePreview(body, preview, previewLoading) {
               );
             }
 
-            const rowTitle = rowEl.querySelector(
-              ".import-merge-dialog__row-title",
-            );
-            const rowSubtitle = rowEl.querySelector(
-              ".import-merge-dialog__row-subtitle",
-            );
+            const rowTitle = rowEl.querySelector('[data-ref="title"]');
+            const rowSubtitle = rowEl.querySelector('[data-ref="subtitle"]');
             return effect(() => {
               const currentRow = row();
               if (rowTitle instanceof HTMLElement) {

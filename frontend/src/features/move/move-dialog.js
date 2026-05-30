@@ -4,10 +4,12 @@ import { MoveNode, MoveNodes } from "../../shared/api/api.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
 import {
+  attr,
   cleanupCollector,
   effect,
   list,
   mount,
+  raw,
   template,
 } from "../../shared/runtime/naf.js";
 import { moveDialogState } from "./move-dialog-state.js";
@@ -36,8 +38,8 @@ const MOVE_OPTION_HTML = /*html*/ `
   <button type="button" class="move-dialog__option" role="option" data-keyboard-action="move-target">
     <span class="move-dialog__option-icon">📁</span>
     <span class="move-dialog__option-content">
-      <span class="move-dialog__option-name"></span>
-      <span class="move-dialog__option-path"></span>
+      <span data-ref="name"></span>
+      <span data-ref="path"></span>
     </span>
   </button>
 `;
@@ -97,16 +99,13 @@ async function move() {
  * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
  */
 function createMoveDialog(view, onMountElements) {
-  const emptyStateHtml = view.hasFolders
-    ? ""
-    : /*html*/ '<div class="move-dialog__empty">No eligible folders</div>';
-
   const renderDialog =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template({
         onMount(_el, _parent, ctx) {
           const backdrop = ctx.refs.backdrop;
           const dialog = ctx.refs.dialog;
+          const title = ctx.refs.title;
           const listbox = ctx.refs.listbox;
           const cancelButton = ctx.refs.cancelButton;
           const confirmButton = ctx.refs.confirmButton;
@@ -116,6 +115,9 @@ function createMoveDialog(view, onMountElements) {
           }
           if (!(dialog instanceof HTMLDivElement)) {
             throw new Error("Expected move dialog");
+          }
+          if (!(title instanceof HTMLElement)) {
+            throw new Error("Expected move dialog title");
           }
           if (!(listbox instanceof HTMLDivElement)) {
             throw new Error("Expected move dialog listbox");
@@ -127,6 +129,12 @@ function createMoveDialog(view, onMountElements) {
             throw new Error("Expected move confirm button");
           }
 
+          title.textContent = `Move "${view.label}"`;
+
+          ctx.cleanup.add(
+            attr(confirmButton, "disabled", () => !view.hasSelectedTarget),
+          );
+
           onMountElements({
             backdrop,
             dialog,
@@ -137,6 +145,10 @@ function createMoveDialog(view, onMountElements) {
         },
       })
     );
+
+  const emptyStateComponent = view.hasFolders
+    ? null
+    : raw('<div class="move-dialog__empty">No eligible folders</div>');
 
   return renderDialog /*html*/ `
     <div class="modal-backdrop" role="presentation" data-ref="backdrop">
@@ -150,7 +162,7 @@ function createMoveDialog(view, onMountElements) {
       >
         <div class="modal__header move-dialog__header">
           <div>
-            <h3 class="shell-panel__title">Move "${view.label}"</h3>
+            <h3 class="shell-panel__title" data-ref="title"></h3>
             <p class="shell-panel__subtitle">Select a target folder</p>
           </div>
         </div>
@@ -163,7 +175,7 @@ function createMoveDialog(view, onMountElements) {
               aria-label="Target folder"
               data-ref="listbox"
             >
-              ${emptyStateHtml}
+              ${emptyStateComponent}
             </div>
           </div>
         </div>
@@ -181,7 +193,6 @@ function createMoveDialog(view, onMountElements) {
             class="btn btn-primary btn-sm"
             data-keyboard-action="move-confirm"
             data-ref="confirmButton"
-            ${view.hasSelectedTarget ? "" : "disabled"}
           >
             Move
           </button>
@@ -326,8 +337,8 @@ export function mountMoveDialog(shell) {
               throw new Error("Move option template must render a button");
             }
 
-            const name = el.querySelector(".move-dialog__option-name");
-            const path = el.querySelector(".move-dialog__option-path");
+            const name = el.querySelector('[data-ref="name"]');
+            const path = el.querySelector('[data-ref="path"]');
             const handleOptionClick = () => {
               moveDialogState.actions.setSelectedTarget(folder().id);
             };

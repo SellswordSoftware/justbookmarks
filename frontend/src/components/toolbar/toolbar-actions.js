@@ -1,8 +1,8 @@
 // @ts-check
 
 import {
+  attr,
   cleanupCollector,
-  effect,
   mount,
   template,
 } from "../../shared/runtime/naf.js";
@@ -27,7 +27,7 @@ import { createAddFolderForm } from "../../features/editing/add-folder-form.js";
 function createToolbarActionsComponent(actions) {
   const cleanup = cleanupCollector();
   const renderToolbarActions =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template({
         root: ".toolbar-actions-runtime",
         onMount(el, _parent, ctx) {
@@ -67,9 +67,7 @@ function createToolbarActionsComponent(actions) {
             () => openButton.removeEventListener("click", handleOpenClick),
             () => createButton.removeEventListener("click", handleCreateClick),
             () => importButton.removeEventListener("click", handleImportClick),
-            effect(() => {
-              importButton.disabled = !appState.currentFilePath();
-            }),
+            attr(importButton, "disabled", () => !appState.currentFilePath()),
           );
         },
         onUnmount() {
@@ -159,7 +157,7 @@ export function mountRootTreeActions(shell) {
     getParentFolderId: () => "",
   });
   const renderRootActions =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template
     );
   const rootActions = renderRootActions`

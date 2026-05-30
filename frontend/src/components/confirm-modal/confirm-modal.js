@@ -23,13 +23,16 @@ export function collectConfirmModalShell(root) {
  */
 function createConfirmModal(modal) {
   const renderConfirmModal =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template({
         onMount(_el, _parent, ctx) {
           const backdrop = ctx.refs.backdrop;
           const dialog = ctx.refs.dialog;
+          const title = ctx.refs.title;
+          const message = ctx.refs.message;
           const cancelButton = ctx.refs.cancelButton;
           const confirmButton = ctx.refs.confirmButton;
+          const confirmLabel = ctx.refs.confirmLabel;
 
           if (!(backdrop instanceof HTMLDivElement)) {
             throw new Error("Expected confirm modal backdrop");
@@ -37,12 +40,25 @@ function createConfirmModal(modal) {
           if (!(dialog instanceof HTMLDivElement)) {
             throw new Error("Expected confirm modal dialog");
           }
+          if (!(title instanceof HTMLElement)) {
+            throw new Error("Expected confirm modal title");
+          }
+          if (!(message instanceof HTMLElement)) {
+            throw new Error("Expected confirm modal message");
+          }
           if (!(cancelButton instanceof HTMLButtonElement)) {
             throw new Error("Expected confirm modal cancel button");
           }
           if (!(confirmButton instanceof HTMLButtonElement)) {
             throw new Error("Expected confirm modal confirm button");
           }
+          if (!(confirmLabel instanceof HTMLElement)) {
+            throw new Error("Expected confirm modal confirm label");
+          }
+
+          title.textContent = modal.title;
+          message.textContent = modal.message;
+          confirmLabel.textContent = modal.confirmLabel;
 
           const handleBackdropClick = () => {
             uiState.actions.closeModal();
@@ -107,8 +123,8 @@ function createConfirmModal(modal) {
         data-ref="dialog"
       >
         <div class="modal__body confirm-modal__body">
-          <h3 class="shell-panel__title">${modal.title}</h3>
-          <p class="confirm-modal__message">${modal.message}</p>
+          <h3 class="shell-panel__title" data-ref="title"></h3>
+          <p class="confirm-modal__message" data-ref="message"></p>
         </div>
         <div class="modal__footer">
           <button
@@ -125,7 +141,7 @@ function createConfirmModal(modal) {
             data-keyboard-action="modal-confirm"
             data-ref="confirmButton"
           >
-            ${modal.confirmLabel}
+            <span data-ref="confirmLabel"></span>
           </button>
         </div>
       </div>

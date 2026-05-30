@@ -42,12 +42,10 @@ import {
 
 /** Tree state owner for normalized tree data, selection, expansion, and load/restore workflows. */
 
-/** @typedef {import("../../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../../types.js").FolderNode} FolderNode */
-/** @typedef {import("../../../types.js").PerFileTreeState} PerFileTreeState */
-
 /** @typedef {import("./selection.js").SelectionSnapshot} SelectionSnapshot */
-const tree = signal(/** @type {TreeNode[]} */ ([]));
+/** @type {TreeNode[]} */
+const emptyTree = [];
+const tree = signal(emptyTree);
 const primarySelectedNodeId = signal("");
 const selectedNodeIds = signal(/** @type {string[]} */ ([]));
 const selectionAnchorNodeId = signal("");

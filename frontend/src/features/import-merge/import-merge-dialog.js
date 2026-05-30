@@ -1,6 +1,12 @@
 // @ts-check
 
-import { effect, mount, template } from "../../shared/runtime/naf.js";
+import {
+  attr,
+  effect,
+  mount,
+  raw,
+  template,
+} from "../../shared/runtime/naf.js";
 import { importMergeState } from "./import-merge-state.js";
 import { bindImportMergeDialogInteractions } from "./import-merge-dialog-interactions.js";
 import { mountImportMergePreview } from "./import-merge-dialog-preview.js";
@@ -41,16 +47,17 @@ export function collectImportMergeDialogShell(root) {
  * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
  */
 function createImportMergeDialog(view, onMountElements) {
-  const errorHtml = view.error
-    ? `
+  const applyLabel = view.applyLoading ? "Applying..." : "Apply Merge";
+
+  const errorComponent = view.error
+    ? raw(`
         <div class="alert alert-error">
           <span>${view.error}</span>
         </div>
-      `
-    : "";
+      `)
+    : null;
 
-  const applyLabel = view.applyLoading ? "Applying..." : "Apply Merge";
-  const renderDialog = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderDialog = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _parent, ctx) {
         const backdrop = ctx.refs.backdrop;
@@ -60,6 +67,7 @@ function createImportMergeDialog(view, onMountElements) {
         const chooseFileButton = ctx.refs.chooseFileButton;
         const cancelButton = ctx.refs.cancelButton;
         const applyButton = ctx.refs.applyButton;
+        const filePath = ctx.refs.filePath;
 
         if (!(backdrop instanceof HTMLDivElement)) {
           throw new Error("Expected import merge backdrop");
@@ -82,6 +90,18 @@ function createImportMergeDialog(view, onMountElements) {
         if (!(applyButton instanceof HTMLButtonElement)) {
           throw new Error("Expected import merge apply button");
         }
+        if (!(filePath instanceof HTMLElement)) {
+          throw new Error("Expected import merge file path");
+        }
+
+        filePath.textContent = view.importPath || "No file selected";
+        applyButton.textContent = applyLabel;
+
+        ctx.cleanup.add(
+          attr(chooseFileButton, "disabled", () => view.previewLoading || view.applyLoading),
+          attr(cancelButton, "disabled", () => view.applyLoading),
+          attr(applyButton, "disabled", () => !view.preview || view.previewLoading || view.applyLoading),
+        );
 
         onMountElements({
           backdrop,
@@ -127,19 +147,18 @@ function createImportMergeDialog(view, onMountElements) {
           <div class="import-merge-dialog__file-bar">
             <div class="import-merge-dialog__file-meta">
               <div class="import-merge-dialog__file-label">Import file</div>
-              <div class="import-merge-dialog__file-value">${view.importPath || "No file selected"}</div>
+              <div class="import-merge-dialog__file-value" data-ref="filePath"></div>
             </div>
             <button
               type="button"
               class="btn btn-outline btn-sm"
               data-keyboard-action="import-choose-file"
               data-ref="chooseFileButton"
-              ${view.previewLoading || view.applyLoading ? "disabled" : ""}
             >
               Choose File
             </button>
           </div>
-          ${errorHtml}
+          ${errorComponent}
         </div>
         <div class="modal__footer">
           <button
@@ -147,7 +166,6 @@ function createImportMergeDialog(view, onMountElements) {
             class="btn btn-ghost"
             data-keyboard-action="import-cancel"
             data-ref="cancelButton"
-            ${view.applyLoading ? "disabled" : ""}
           >
             Cancel
           </button>
@@ -156,9 +174,7 @@ function createImportMergeDialog(view, onMountElements) {
             class="btn btn-primary"
             data-keyboard-action="import-apply"
             data-ref="applyButton"
-            ${!view.preview || view.previewLoading || view.applyLoading ? "disabled" : ""}
           >
-            ${applyLabel}
           </button>
         </div>
       </div>

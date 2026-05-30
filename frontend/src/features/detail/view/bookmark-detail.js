@@ -37,7 +37,7 @@ export function createBookmarkDetail(bookmark) {
   const detailError = signal("");
   const cleanup = cleanupCollector();
 
-  const renderBookmarkDetail = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderBookmarkDetail = /** @type {TemplateTag} */ (
     template({
       root: ".bookmark-detail",
       onMount(_el, _parent, ctx) {

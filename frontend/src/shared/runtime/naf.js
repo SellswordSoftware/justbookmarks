@@ -431,7 +431,7 @@ export function cleanupCollector(...initial) {
  */
 
 /**
- * @typedef {Component | string | number | boolean | null | undefined} TemplateValue
+ * @typedef {Component | string | number | boolean | null | undefined | ReturnType<typeof raw>} TemplateValue
  */
 
 /**
@@ -464,6 +464,31 @@ function isComponent(value) {
 }
 
 /**
+ * Mark a string as safe raw HTML for template interpolation.
+ * Use this when you intentionally want to inject HTML fragments.
+ *
+ * @param {string} html
+ * @returns {{ __raw: true, html: string }}
+ */
+export function raw(html) {
+  return { __raw: true, html };
+}
+
+/**
+ * @param {unknown} value
+ * @returns {value is { __raw: true, html: string }}
+ */
+function isRawHtml(value) {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    "__raw" in value &&
+    value.__raw === true &&
+    "html" in value
+  );
+}
+
+/**
  * @param {TemplateStringsArray} strings
  * @param {TemplateValue[]} values
  * @returns {{ html: string, components: ComponentSlot[] }}
@@ -482,10 +507,12 @@ function buildTemplate(strings, values) {
       parts.push(
         `<span data-naf-component-slot="${id}" style="display: contents;"></span>`,
       );
+    } else if (isRawHtml(value)) {
+      parts.push(value.html);
     } else if (typeof value === "string") {
-      parts.push(value);
+      parts.push(text(value));
     } else if (value !== null && value !== undefined && value !== false) {
-      parts.push(String(value));
+      parts.push(text(String(value)));
     }
     parts.push(strings[index + 1] ?? "");
   }

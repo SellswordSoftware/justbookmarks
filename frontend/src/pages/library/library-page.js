@@ -26,7 +26,7 @@ import {
   mountSearchBar,
 } from "../../features/search/view/search-bar.js";
 import {
-  createPageHost,
+  collectPageHost,
   showLibraryFrame,
 } from "../page-frame.js";
 
@@ -122,12 +122,12 @@ function mountLibraryTitlebarMeta(shell) {
 /**
  * @param {LibraryPageShell} shell
  * @param {LibraryPageActions} actions
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createLibraryPageComponent(shell, actions) {
   const cleanup = cleanupCollector();
   const renderLibraryPage =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template({
         root: ".library-page-runtime-anchor",
         onMount() {
@@ -156,15 +156,15 @@ function createLibraryPageComponent(shell, actions) {
  * @returns {{ cleanup: () => void }}
  */
 export function mountLibraryPage(shell, actions) {
-  const host = createPageHost(shell.mainContent);
+  const pageHost = collectPageHost(shell.root);
 
   const libraryPage = createLibraryPageComponent(shell, actions);
-  mount(libraryPage, host);
+  mount(libraryPage, pageHost);
 
   return {
     cleanup() {
       libraryPage.unmount?.();
-      host.remove();
+      pageHost.replaceChildren();
     },
   };
 }

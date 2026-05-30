@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, mount, template } from "../../shared/runtime/naf.js";
+import { attr, effect, mount, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 import {
   Quit,
@@ -42,7 +42,7 @@ function closeWindow() {
  * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
  */
 function createTitlebarBrandComponent() {
-  const renderBrand = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (template);
+  const renderBrand = /** @type {TemplateTag} */ (template);
 
   return renderBrand`
     <div class="titlebar__brand">
@@ -56,7 +56,7 @@ function createTitlebarBrandComponent() {
  * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
  */
 function createTitlebarWindowControlsComponent() {
-  const renderControls = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderControls = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _host, ctx) {
         const { refs, cleanup } = ctx;
@@ -91,13 +91,11 @@ function createTitlebarWindowControlsComponent() {
           () => maximizeButton.removeEventListener("click", handleMaximiseClick),
           () => closeButton.removeEventListener("click", closeWindow),
           () => window.removeEventListener("focus", handleFocus),
+          attr(minimizeButton, "disabled", () => !appState.hasWailsRuntime()),
+          attr(maximizeButton, "disabled", () => !appState.hasWailsRuntime()),
+          attr(closeButton, "disabled", () => !appState.hasWailsRuntime()),
           effect(() => {
-            const hasRuntime = appState.hasWailsRuntime();
             const maximised = appState.isMaximised();
-
-            minimizeButton.disabled = !hasRuntime;
-            maximizeButton.disabled = !hasRuntime;
-            closeButton.disabled = !hasRuntime;
 
             maximizeButton.textContent = maximised ? "❐" : "□";
             maximizeButton.setAttribute(
@@ -152,7 +150,7 @@ function createTitlebarWindowControlsComponent() {
 function createTitlebarComponent() {
   const brand = createTitlebarBrandComponent();
   const controls = createTitlebarWindowControlsComponent();
-  const renderTitlebar = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderTitlebar = /** @type {TemplateTag} */ (
     template({
       onMount(_el, host, ctx) {
         const { cleanup } = ctx;

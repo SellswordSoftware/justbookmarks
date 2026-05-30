@@ -52,7 +52,7 @@ export function createFolderDetail(folder) {
   });
   const cleanup = cleanupCollector();
 
-  const renderFolderDetail = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+  const renderFolderDetail = /** @type {TemplateTag} */ (
     template({
       root: ".folder-detail",
       onMount(_el, _parent, ctx) {

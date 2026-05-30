@@ -10,6 +10,7 @@ import {
   effect,
   fx,
   model,
+  raw,
   signal,
   template,
 } from "../../shared/runtime/naf.js";
@@ -93,7 +94,7 @@ export function createAddBookmarkForm(options) {
   }
 
   const renderAddBookmarkForm =
-    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    /** @type {TemplateTag} */ (
       template({
         root: ".add-bookmark-launcher",
         onMount(_el, _parent, ctx) {
@@ -350,15 +351,15 @@ export function createAddBookmarkForm(options) {
         type="button"
         class="${options.triggerClassName ?? "btn btn-secondary btn-sm"}"
         data-ref="trigger"
-        ${options.triggerKeyboardAction ? `data-keyboard-action="${options.triggerKeyboardAction}"` : ""}
-        ${options.triggerAriaLabel ? `aria-label="${options.triggerAriaLabel}"` : ""}
-        ${options.triggerTitle ? `title="${options.triggerTitle}"` : ""}
+        ${raw(options.triggerKeyboardAction ? `data-keyboard-action="${options.triggerKeyboardAction}"` : "")}
+        ${raw(options.triggerAriaLabel ? `aria-label="${options.triggerAriaLabel}"` : "")}
+        ${raw(options.triggerTitle ? `title="${options.triggerTitle}"` : "")}
       >
-        ${
+        ${raw(
           options.triggerIconClassName
             ? `<span class="${options.triggerIconClassName}" aria-hidden="true"></span>`
             : options.triggerLabel
-        }
+        )}
       </button>
       <div class="add-bookmark-panel" hidden data-ref="panel">
         <p class="label">${options.formTitle ?? "Create bookmark"}</p>

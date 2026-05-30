@@ -22,8 +22,8 @@ export function collectToastContainerShell(root) {
 /** @type {string} */
 const TOAST_ROW_HTML = /*html*/ `
   <article class="placeholder-card" data-template="toast">
-    <strong data-part="label">Toast</strong>
-    <span data-part="meta">Toast binding target.</span>
+    <strong data-ref="label">Toast</strong>
+    <span data-ref="meta">Toast binding target.</span>
   </article>
 `;
 
@@ -64,8 +64,8 @@ export function mountToastContainer(shell) {
         throw new Error("Toast template must have a first element child");
       }
 
-      const label = el.querySelector('[data-part="label"]');
-      const meta = el.querySelector('[data-part="meta"]');
+      const label = el.querySelector('[data-ref="label"]');
+      const meta = el.querySelector('[data-ref="meta"]');
 
       return effect(() => {
         const currentToast = toast();

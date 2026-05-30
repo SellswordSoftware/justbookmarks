@@ -42,8 +42,6 @@ import { mountPageHost } from "./page-host.js";
  * @property {HTMLElement} moveDialogContainer
  * @property {HTMLElement} importMergeDialogContainer
  * @property {HTMLElement} keyboardShortcutsDialogContainer
- * @property {HTMLTemplateElement} treeNodeTemplate
- * @property {HTMLTemplateElement} searchResultTemplate
  */
 
 /**
@@ -55,19 +53,6 @@ function requireElement(root, selector) {
   const el = root.querySelector(selector);
   if (!(el instanceof HTMLElement)) {
     throw new Error(`Expected element for selector: ${selector}`);
-  }
-  return el;
-}
-
-/**
- * @param {ParentNode} root
- * @param {string} selector
- * @returns {HTMLTemplateElement}
- */
-function requireTemplate(root, selector) {
-  const el = root.querySelector(selector);
-  if (!(el instanceof HTMLTemplateElement)) {
-    throw new Error(`Expected template for selector: ${selector}`);
   }
   return el;
 }
@@ -106,8 +91,6 @@ function collectShell(root) {
     moveDialogContainer: requireElement(root, "#move-dialog-container"),
     importMergeDialogContainer: requireElement(root, "#import-merge-dialog-container"),
     keyboardShortcutsDialogContainer: requireElement(root, "#keyboard-shortcuts-dialog-container"),
-    treeNodeTemplate: requireTemplate(root, "#tree-node-template"),
-    searchResultTemplate: requireTemplate(root, "#search-result-template"),
   };
 }
 
