@@ -3,7 +3,7 @@
 import { createBookmarkDetail } from "./bookmark-detail.js";
 import { createBulkSelectionDetail } from "./bulk-selection-detail.js";
 import { createFolderDetail } from "./folder-detail.js";
-import { effect } from "../../../shared/runtime/naf.js";
+import { effect, mount, template } from "../../../shared/runtime/naf.js";
 import { treeState } from "../../tree/state/tree-state.js";
 
 /**
@@ -46,27 +46,8 @@ export function collectDetailPanelShell(root) {
 }
 
 /**
- * @param {string} title
- * @param {string} body
- * @returns {HTMLElement}
- */
-function createPlaceholderCard(title, body) {
-  const card = document.createElement("div");
-  card.className = "placeholder-card";
-
-  const heading = document.createElement("strong");
-  heading.textContent = title;
-
-  const text = document.createElement("span");
-  text.textContent = body;
-
-  card.append(heading, text);
-  return card;
-}
-
-/**
  * @param {TreeNode} node
- * @returns {{ element: HTMLElement, cleanup: () => void }}
+ * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
  */
 function renderSingleSelection(node) {
   if (isFolderNode(node)) {
@@ -77,62 +58,60 @@ function renderSingleSelection(node) {
 }
 
 /**
+ * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
+ */
+function createDetailEmptyState() {
+  const renderEmptyState = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    template
+  );
+
+  return renderEmptyState`
+    <div class="detail-empty-state">
+      <p class="detail-empty-state__title">Select a bookmark or folder</p>
+      <p class="detail-empty-state__subtitle">from the tree on the left</p>
+    </div>
+  `;
+}
+
+/**
  * @param {DetailPanelShell} shell
  * @returns {{ cleanup: () => void }}
  */
 export function mountDetailPanel(shell) {
-  let cleanupRendered = () => {};
+  /** @type {import("../../../shared/runtime/naf.js").Component<HTMLElement> | undefined} */
+  let currentComponent;
 
   const stop = effect(() => {
-    cleanupRendered();
-    cleanupRendered = () => {};
+    currentComponent?.unmount?.();
+    currentComponent = undefined;
+    shell.content.replaceChildren();
 
     const selectionCount = treeState.computed.selectionCount();
     const selectedNodeId = treeState.selectors.getSelectedNodeId();
     const selectedNode = selectedNodeId ? treeState.selectors.getNode(selectedNodeId) : null;
 
-    shell.content.replaceChildren();
-
     if (selectionCount > 1) {
       shell.meta.textContent = `${selectionCount} items selected`;
-      const rendered = createBulkSelectionDetail();
-      cleanupRendered = rendered.cleanup;
-      shell.content.append(rendered.element);
+      currentComponent = createBulkSelectionDetail();
+      mount(currentComponent, shell.content);
       return;
     }
 
     if (!selectedNode) {
       shell.meta.textContent = "No selection yet";
-
-      const empty = document.createElement("div");
-      empty.className = "detail-empty-state";
-
-      const title = document.createElement("p");
-      title.className = "detail-empty-state__title";
-      title.textContent = "Select a bookmark or folder";
-
-      const subtitle = document.createElement("p");
-      subtitle.className = "detail-empty-state__subtitle";
-      subtitle.textContent = "from the tree on the left";
-
-      empty.append(title, subtitle);
-      shell.content.append(empty);
+      currentComponent = createDetailEmptyState();
+      mount(currentComponent, shell.content);
       return;
     }
 
-    if (isFolderNode(selectedNode)) {
-      shell.meta.textContent = "Folder selected";
-    } else {
-      shell.meta.textContent = "Bookmark selected";
-    }
-    const rendered = renderSingleSelection(selectedNode);
-    cleanupRendered = rendered.cleanup;
-    shell.content.append(rendered.element);
+    shell.meta.textContent = isFolderNode(selectedNode) ? "Folder selected" : "Bookmark selected";
+    currentComponent = renderSingleSelection(selectedNode);
+    mount(currentComponent, shell.content);
   });
 
   return {
     cleanup() {
-      cleanupRendered();
+      currentComponent?.unmount?.();
       stop();
     },
   };

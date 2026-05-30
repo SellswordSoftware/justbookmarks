@@ -1,6 +1,11 @@
 // @ts-check
 
-import { cleanupCollector, effect, mount, template } from "../../shared/runtime/naf.js";
+import {
+  cleanupCollector,
+  effect,
+  mount,
+  template,
+} from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 import { createAddBookmarkForm } from "../../features/editing/add-bookmark-form.js";
 import { createAddFolderForm } from "../../features/editing/add-folder-form.js";
@@ -12,28 +17,6 @@ import { createAddFolderForm } from "../../features/editing/add-folder-form.js";
  */
 
 /**
- * @param {HTMLElement} wrapper
- * @param {string} label
- * @param {string} iconClassName
- * @returns {void}
- */
-function initializeTreeHeaderAction(wrapper, label, iconClassName) {
-  const button = wrapper.querySelector("button");
-  if (!(button instanceof HTMLButtonElement)) {
-    throw new Error("Expected root action trigger button");
-  }
-
-  button.setAttribute("aria-label", label);
-  button.title = label;
-  button.textContent = "";
-
-  const icon = document.createElement("span");
-  icon.className = iconClassName;
-  icon.setAttribute("aria-hidden", "true");
-  button.append(icon);
-}
-
-/**
  * @param {{
  *   openFile: () => Promise<void>,
  *   createFile: () => Promise<void>,
@@ -43,58 +26,59 @@ function initializeTreeHeaderAction(wrapper, label, iconClassName) {
  */
 function createToolbarActionsComponent(actions) {
   const cleanup = cleanupCollector();
-  const renderToolbarActions = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
-    template({
-      root: ".toolbar-actions-runtime",
-      onMount(el, _parent, ctx) {
-        if (!(el instanceof HTMLElement)) {
-          throw new Error("Expected toolbar actions root");
-        }
+  const renderToolbarActions =
+    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+      template({
+        root: ".toolbar-actions-runtime",
+        onMount(el, _parent, ctx) {
+          if (!(el instanceof HTMLElement)) {
+            throw new Error("Expected toolbar actions root");
+          }
 
-        const openButton = ctx.refs.openButton;
-        const createButton = ctx.refs.createButton;
-        const importButton = ctx.refs.importButton;
+          const openButton = ctx.refs.openButton;
+          const createButton = ctx.refs.createButton;
+          const importButton = ctx.refs.importButton;
 
-        if (!(openButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected open toolbar button");
-        }
-        if (!(createButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected create toolbar button");
-        }
-        if (!(importButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected import toolbar button");
-        }
+          if (!(openButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected open toolbar button");
+          }
+          if (!(createButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected create toolbar button");
+          }
+          if (!(importButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected import toolbar button");
+          }
 
-        const handleOpenClick = () => {
-          void actions.openFile();
-        };
-        const handleCreateClick = () => {
-          void actions.createFile();
-        };
-        const handleImportClick = () => {
-          void actions.importFile();
-        };
+          const handleOpenClick = () => {
+            void actions.openFile();
+          };
+          const handleCreateClick = () => {
+            void actions.createFile();
+          };
+          const handleImportClick = () => {
+            void actions.importFile();
+          };
 
-        openButton.addEventListener("click", handleOpenClick);
-        createButton.addEventListener("click", handleCreateClick);
-        importButton.addEventListener("click", handleImportClick);
+          openButton.addEventListener("click", handleOpenClick);
+          createButton.addEventListener("click", handleCreateClick);
+          importButton.addEventListener("click", handleImportClick);
 
-        cleanup.add(
-          () => openButton.removeEventListener("click", handleOpenClick),
-          () => createButton.removeEventListener("click", handleCreateClick),
-          () => importButton.removeEventListener("click", handleImportClick),
-          effect(() => {
-            importButton.disabled = !appState.currentFilePath();
-          }),
-        );
-      },
-      onUnmount() {
-        cleanup.run();
-      },
-    })
-  );
+          cleanup.add(
+            () => openButton.removeEventListener("click", handleOpenClick),
+            () => createButton.removeEventListener("click", handleCreateClick),
+            () => importButton.removeEventListener("click", handleImportClick),
+            effect(() => {
+              importButton.disabled = !appState.currentFilePath();
+            }),
+          );
+        },
+        onUnmount() {
+          cleanup.run();
+        },
+      })
+    );
 
-  return renderToolbarActions`
+  return renderToolbarActions /*html*/ `
     <div class="toolbar-actions-runtime">
       <button
         type="button"
@@ -153,35 +137,40 @@ export function mountRootTreeActions(shell) {
   const rootAddBookmark = createAddBookmarkForm({
     triggerLabel: "",
     formTitle: "Create bookmark at root",
-    triggerClassName: "btn btn-ghost btn-sm btn-square tree-pane__action-btn tree-pane__action-btn--bookmark",
+    triggerClassName:
+      "btn btn-ghost btn-sm btn-square tree-pane__action-btn tree-pane__action-btn--bookmark",
     triggerKeyboardAction: "root-add-bookmark",
+    triggerAriaLabel: "New bookmark",
+    triggerTitle: "New bookmark",
+    triggerIconClassName:
+      "tree-pane__action-icon tree-pane__action-icon--bookmark",
     getParentFolderId: () => "",
   });
   const rootAddFolder = createAddFolderForm({
     triggerLabel: "",
     formTitle: "Create folder at root",
-    triggerClassName: "btn btn-ghost btn-sm btn-square tree-pane__action-btn tree-pane__action-btn--folder",
+    triggerClassName:
+      "btn btn-ghost btn-sm btn-square tree-pane__action-btn tree-pane__action-btn--folder",
     triggerKeyboardAction: "root-add-folder",
+    triggerAriaLabel: "New folder",
+    triggerTitle: "New folder",
+    triggerIconClassName:
+      "tree-pane__action-icon tree-pane__action-icon--folder",
     getParentFolderId: () => "",
   });
-
-  initializeTreeHeaderAction(
-    rootAddBookmark.element,
-    "New bookmark",
-    "tree-pane__action-icon tree-pane__action-icon--bookmark",
-  );
-  initializeTreeHeaderAction(
-    rootAddFolder.element,
-    "New folder",
-    "tree-pane__action-icon tree-pane__action-icon--folder",
-  );
-
-  shell.treePaneActions.append(rootAddBookmark.element, rootAddFolder.element);
+  const renderRootActions =
+    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+      template
+    );
+  const rootActions = renderRootActions`
+    ${rootAddBookmark}
+    ${rootAddFolder}
+  `;
+  mount(rootActions, shell.treePaneActions);
 
   return {
     cleanup() {
-      rootAddBookmark.cleanup();
-      rootAddFolder.cleanup();
+      rootActions.unmount?.();
       shell.treePaneActions.replaceChildren();
     },
   };

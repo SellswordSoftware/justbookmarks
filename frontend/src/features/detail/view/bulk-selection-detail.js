@@ -6,7 +6,12 @@ import {
   RefreshTitlesForNodes,
 } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
-import { cleanupCollector, fx, signal } from "../../../shared/runtime/naf.js";
+import {
+  cleanupCollector,
+  fx,
+  signal,
+  template,
+} from "../../../shared/runtime/naf.js";
 import { moveDialogState } from "../../move/move-dialog-state.js";
 import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
@@ -24,74 +29,9 @@ function isFolderNode(node) {
 }
 
 /**
- * @returns {{ element: HTMLElement, cleanup: () => void }}
+ * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
  */
 export function createBulkSelectionDetail() {
-  const wrapper = document.createElement("div");
-  wrapper.className = "bulk-selection-detail";
-
-  const header = document.createElement("div");
-  header.className = "bulk-selection-detail__header";
-
-  const summary = document.createElement("div");
-
-  const eyebrow = document.createElement("p");
-  eyebrow.className = "bulk-selection-detail__eyebrow";
-  eyebrow.textContent = "Bulk Selection";
-
-  const title = document.createElement("h3");
-  title.className = "bulk-selection-detail__title";
-
-  const subtitle = document.createElement("p");
-  subtitle.className = "bulk-selection-detail__subtitle";
-
-  const clearButton = document.createElement("button");
-  clearButton.type = "button";
-  clearButton.className = "btn btn-ghost btn-sm";
-  clearButton.textContent = "Clear";
-  clearButton.setAttribute("data-keyboard-action", "bulk-clear");
-
-  const actions = document.createElement("div");
-  actions.className = "detail-inline-actions";
-
-  const moveButton = document.createElement("button");
-  moveButton.type = "button";
-  moveButton.className = "btn btn-primary btn-sm";
-  moveButton.textContent = "Move";
-  moveButton.setAttribute("data-keyboard-action", "bulk-move");
-
-  const deleteButton = document.createElement("button");
-  deleteButton.type = "button";
-  deleteButton.className = "btn btn-danger btn-sm btn-outline";
-  deleteButton.textContent = "Delete";
-  deleteButton.setAttribute("data-keyboard-action", "bulk-delete");
-
-  const faviconButton = document.createElement("button");
-  faviconButton.type = "button";
-  faviconButton.className = "btn btn-ghost btn-sm";
-  faviconButton.textContent = "Fetch Favicons";
-  faviconButton.setAttribute("data-keyboard-action", "bulk-fetch-favicons");
-
-  const titleRefreshButton = document.createElement("button");
-  titleRefreshButton.type = "button";
-  titleRefreshButton.className = "btn btn-ghost btn-sm";
-  titleRefreshButton.textContent = "Refresh Titles";
-  titleRefreshButton.setAttribute("data-keyboard-action", "bulk-refresh-titles");
-
-  const footer = document.createElement("div");
-  footer.className = "bulk-selection-detail__footer";
-
-  const footerText = document.createElement("p");
-  footerText.className = "bulk-selection-detail__footer-text";
-  footerText.textContent =
-    "Bulk actions operate on the current sibling selection and save once when the command completes.";
-
-  summary.append(eyebrow, title, subtitle);
-  header.append(summary, clearButton);
-  actions.append(moveButton, deleteButton, faviconButton, titleRefreshButton);
-  footer.append(footerText);
-  wrapper.append(header, actions, footer);
-
   const runningAction = signal(/** @type {RunningAction} */ (""));
   const cleanup = cleanupCollector();
 
@@ -199,72 +139,166 @@ export function createBulkSelectionDetail() {
     }
   }
 
-  function clearSelection() {
-    treeState.actions.clearSelection();
-  }
+  const renderBulkSelectionDetail = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+    template({
+      root: ".bulk-selection-detail",
+      onMount(_el, _parent, ctx) {
+        const title = ctx.refs.title;
+        const subtitle = ctx.refs.subtitle;
+        const clearButton = ctx.refs.clearButton;
+        const moveButton = ctx.refs.moveButton;
+        const deleteButton = ctx.refs.deleteButton;
+        const faviconButton = ctx.refs.faviconButton;
+        const titleRefreshButton = ctx.refs.titleRefreshButton;
 
-  const handleMoveClick = () => {
-    openMoveDialog();
-  };
-  const handleDeleteClick = () => {
-    confirmDelete();
-  };
-  const handleFaviconClick = () => {
-    void fetchFavicons();
-  };
-  const handleRefreshTitlesClick = () => {
-    void refreshTitles();
-  };
+        if (!(title instanceof HTMLElement)) {
+          throw new Error("Expected bulk selection detail title");
+        }
+        if (!(subtitle instanceof HTMLElement)) {
+          throw new Error("Expected bulk selection detail subtitle");
+        }
+        if (!(clearButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected bulk selection clear button");
+        }
+        if (!(moveButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected bulk selection move button");
+        }
+        if (!(deleteButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected bulk selection delete button");
+        }
+        if (!(faviconButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected bulk selection favicon button");
+        }
+        if (!(titleRefreshButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected bulk selection title refresh button");
+        }
 
-  moveButton.addEventListener("click", handleMoveClick);
-  deleteButton.addEventListener("click", handleDeleteClick);
-  faviconButton.addEventListener("click", handleFaviconClick);
-  titleRefreshButton.addEventListener("click", handleRefreshTitlesClick);
-  clearButton.addEventListener("click", clearSelection);
-  cleanup.add(
-    fx(title, (currentTitle) => {
-      const selectionCount = treeState.computed.selectionCount();
-      currentTitle.textContent = `${selectionCount} ${getSelectionLabel()}`;
-    }),
-    fx(subtitle, (currentSubtitle) => {
-      currentSubtitle.textContent = `Sibling group: ${getParentLabel()}`;
-    }),
-    fx(clearButton, (currentClearButton) => {
-      currentClearButton.disabled = runningAction() !== "";
-    }),
-    fx(moveButton, (currentMoveButton) => {
-      currentMoveButton.disabled = runningAction() !== "";
-    }),
-    fx(deleteButton, (currentDeleteButton) => {
-      const activeAction = runningAction();
-      currentDeleteButton.disabled = activeAction !== "";
-      currentDeleteButton.textContent = activeAction === "delete" ? "Deleting..." : "Delete";
-    }),
-    fx(faviconButton, (currentFaviconButton) => {
-      const activeAction = runningAction();
-      currentFaviconButton.hidden = isFolderSelection();
-      currentFaviconButton.disabled = activeAction !== "";
-      currentFaviconButton.textContent =
-        activeAction === "favicons" ? "Fetching..." : "Fetch Favicons";
-    }),
-    fx(titleRefreshButton, (currentTitleRefreshButton) => {
-      const activeAction = runningAction();
-      currentTitleRefreshButton.hidden = isFolderSelection();
-      currentTitleRefreshButton.disabled = activeAction !== "";
-      currentTitleRefreshButton.textContent =
-        activeAction === "titles" ? "Refreshing..." : "Refresh Titles";
-    }),
+        function clearSelection() {
+          treeState.actions.clearSelection();
+        }
+
+        const handleMoveClick = () => {
+          openMoveDialog();
+        };
+        const handleDeleteClick = () => {
+          confirmDelete();
+        };
+        const handleFaviconClick = () => {
+          void fetchFavicons();
+        };
+        const handleRefreshTitlesClick = () => {
+          void refreshTitles();
+        };
+
+        moveButton.addEventListener("click", handleMoveClick);
+        deleteButton.addEventListener("click", handleDeleteClick);
+        faviconButton.addEventListener("click", handleFaviconClick);
+        titleRefreshButton.addEventListener("click", handleRefreshTitlesClick);
+        clearButton.addEventListener("click", clearSelection);
+
+        cleanup.add(
+          fx(title, (currentTitle) => {
+            const selectionCount = treeState.computed.selectionCount();
+            currentTitle.textContent = `${selectionCount} ${getSelectionLabel()}`;
+          }),
+          fx(subtitle, (currentSubtitle) => {
+            currentSubtitle.textContent = `Sibling group: ${getParentLabel()}`;
+          }),
+          fx(clearButton, (currentClearButton) => {
+            currentClearButton.disabled = runningAction() !== "";
+          }),
+          fx(moveButton, (currentMoveButton) => {
+            currentMoveButton.disabled = runningAction() !== "";
+          }),
+          fx(deleteButton, (currentDeleteButton) => {
+            const activeAction = runningAction();
+            currentDeleteButton.disabled = activeAction !== "";
+            currentDeleteButton.textContent = activeAction === "delete" ? "Deleting..." : "Delete";
+          }),
+          fx(faviconButton, (currentFaviconButton) => {
+            const activeAction = runningAction();
+            currentFaviconButton.hidden = isFolderSelection();
+            currentFaviconButton.disabled = activeAction !== "";
+            currentFaviconButton.textContent =
+              activeAction === "favicons" ? "Fetching..." : "Fetch Favicons";
+          }),
+          fx(titleRefreshButton, (currentTitleRefreshButton) => {
+            const activeAction = runningAction();
+            currentTitleRefreshButton.hidden = isFolderSelection();
+            currentTitleRefreshButton.disabled = activeAction !== "";
+            currentTitleRefreshButton.textContent =
+              activeAction === "titles" ? "Refreshing..." : "Refresh Titles";
+          }),
+          () => moveButton.removeEventListener("click", handleMoveClick),
+          () => deleteButton.removeEventListener("click", handleDeleteClick),
+          () => faviconButton.removeEventListener("click", handleFaviconClick),
+          () => titleRefreshButton.removeEventListener("click", handleRefreshTitlesClick),
+          () => clearButton.removeEventListener("click", clearSelection),
+        );
+      },
+      onUnmount() {
+        cleanup.run();
+      },
+    })
   );
 
-  return {
-    element: wrapper,
-    cleanup() {
-      cleanup.run();
-      moveButton.removeEventListener("click", handleMoveClick);
-      deleteButton.removeEventListener("click", handleDeleteClick);
-      faviconButton.removeEventListener("click", handleFaviconClick);
-      titleRefreshButton.removeEventListener("click", handleRefreshTitlesClick);
-      clearButton.removeEventListener("click", clearSelection);
-    },
-  };
+  return renderBulkSelectionDetail`
+    <div class="bulk-selection-detail">
+      <div class="bulk-selection-detail__header">
+        <div>
+          <p class="bulk-selection-detail__eyebrow">Bulk Selection</p>
+          <h3 class="bulk-selection-detail__title" data-ref="title"></h3>
+          <p class="bulk-selection-detail__subtitle" data-ref="subtitle"></p>
+        </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          data-keyboard-action="bulk-clear"
+          data-ref="clearButton"
+        >
+          Clear
+        </button>
+      </div>
+      <div class="detail-inline-actions">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          data-keyboard-action="bulk-move"
+          data-ref="moveButton"
+        >
+          Move
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger btn-sm btn-outline"
+          data-keyboard-action="bulk-delete"
+          data-ref="deleteButton"
+        >
+          Delete
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          data-keyboard-action="bulk-fetch-favicons"
+          data-ref="faviconButton"
+        >
+          Fetch Favicons
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          data-keyboard-action="bulk-refresh-titles"
+          data-ref="titleRefreshButton"
+        >
+          Refresh Titles
+        </button>
+      </div>
+      <div class="bulk-selection-detail__footer">
+        <p class="bulk-selection-detail__footer-text">
+          Bulk actions operate on the current sibling selection and save once when the command
+          completes.
+        </p>
+      </div>
+    </div>
+  `;
 }

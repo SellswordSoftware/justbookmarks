@@ -289,11 +289,23 @@ export function model(el, sig, options) {
 }
 
 /**
- * Render a keyed list from a template element.
+ * Create an HTMLTemplateElement from a raw HTML string.
+ *
+ * @param {string} html
+ * @returns {HTMLTemplateElement}
+ */
+function createTemplateFromString(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  return template;
+}
+
+/**
+ * Render a keyed list from a template element or HTML string.
  *
  * @template T
  * @param {Element | null} container
- * @param {HTMLTemplateElement | null} templateEl
+ * @param {HTMLTemplateElement | string | null} templateEl
  * @param {() => T[]} items
  * @param {(item: T) => string | number} key
  * @param {(el: Element, item: () => T, index: () => number) => void | (() => void)} setup
@@ -303,6 +315,11 @@ export function list(container, templateEl, items, key, setup) {
   if (!container || !templateEl) {
     return () => {};
   }
+
+  /** @type {HTMLTemplateElement} */
+  const tpl = typeof templateEl === "string"
+    ? createTemplateFromString(templateEl)
+    : templateEl;
 
   /** @type {Map<string | number, { el: Element, item: Signal<T>, index: Signal<number>, cleanup?: () => void }>} */
   const entries = new Map();
@@ -328,7 +345,7 @@ export function list(container, templateEl, items, key, setup) {
       let entry = entries.get(entryKey);
 
       if (!entry) {
-        const el = /** @type {Element} */ (templateEl.content.firstElementChild?.cloneNode(true));
+        const el = /** @type {Element} */ (tpl.content.firstElementChild?.cloneNode(true));
         const itemSig = signal(item);
         const indexSig = signal(i);
         entry = { el, item: itemSig, index: indexSig };

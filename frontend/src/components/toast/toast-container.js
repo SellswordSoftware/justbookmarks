@@ -19,19 +19,13 @@ export function collectToastContainerShell(root) {
   return { container };
 }
 
-/**
- * @returns {HTMLTemplateElement}
- */
-function createToastTemplate() {
-  const template = document.createElement("template");
-  template.innerHTML = `
-    <article class="placeholder-card" data-template="toast">
-      <strong data-part="label">Toast</strong>
-      <span data-part="meta">Toast binding target.</span>
-    </article>
-  `;
-  return template;
-}
+/** @type {string} */
+const TOAST_ROW_HTML = /*html*/ `
+  <article class="placeholder-card" data-template="toast">
+    <strong data-part="label">Toast</strong>
+    <span data-part="meta">Toast binding target.</span>
+  </article>
+`;
 
 /**
  * @param {ToastType} type
@@ -57,13 +51,12 @@ function getToastTypeClass(type) {
  */
 export function mountToastContainer(shell) {
   const stack = document.createElement("div");
-  const template = createToastTemplate();
   stack.className = "toast-stack";
   shell.container.append(stack);
 
   const stopList = list(
     stack,
-    template,
+    TOAST_ROW_HTML,
     () => uiState.selectors.getToasts(),
     (toast) => toast.id,
     (el, toast) => {

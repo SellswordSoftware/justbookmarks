@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, list } from "../../../shared/runtime/naf.js";
+import { effect, list, mount, template } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
 import { createBookmarkTreeDndController } from "../interactions/bookmark-tree-dnd.js";
@@ -79,10 +79,16 @@ export function mountBookmarkTree(shell) {
    * @returns {void}
    */
   function renderEmptyState(message) {
-    const empty = document.createElement("div");
-    empty.className = "tree-empty-state";
-    empty.textContent = message;
-    shell.treeList.replaceChildren(empty);
+    const renderEmptyTreeState = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../../shared/runtime/naf.js").Component>) => import("../../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+      template
+    );
+    const emptyState = renderEmptyTreeState`
+      <div class="tree-empty-state">${message}</div>
+    `;
+    mount(emptyState, shell.treeList);
+    stopList = () => {
+      emptyState.unmount?.();
+    };
   }
 
   /** @returns {void} */
@@ -93,7 +99,6 @@ export function mountBookmarkTree(shell) {
     if (searchState.selectors.isSearching()) {
       if (searchState.selectors.getResults().length === 0) {
         renderEmptyState("No results found");
-        stopList = () => {};
         return;
       }
 
@@ -114,7 +119,6 @@ export function mountBookmarkTree(shell) {
 
     if (treeState.selectors.getVisibleNodeEntries().length === 0) {
       renderEmptyState("No bookmarks or folders yet");
-      stopList = () => {};
       return;
     }
 

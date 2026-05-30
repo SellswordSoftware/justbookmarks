@@ -224,14 +224,12 @@ export function mountKeyboardShortcutsDialog(shell) {
       return;
     }
 
-    const host = document.createElement("div");
     const component = createKeyboardShortcutsDialog();
-    shell.container.append(host);
-    mount(component, host);
+    mount(component, shell.container);
 
     cleanupRendered = () => {
       component.unmount?.();
-      host.remove();
+      shell.container.replaceChildren();
     };
   });
 

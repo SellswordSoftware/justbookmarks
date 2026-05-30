@@ -191,7 +191,6 @@ export function mountImportMergeDialog(shell) {
 
     /** @type {ImportMergeDialogElements | undefined} */
     let elements;
-    const host = document.createElement("div");
     const component = createImportMergeDialog(
       { importPath, preview, previewLoading, applyLoading, error },
       (mountedElements) => {
@@ -199,8 +198,7 @@ export function mountImportMergeDialog(shell) {
       },
     );
 
-    shell.container.append(host);
-    mount(component, host);
+    mount(component, shell.container);
 
     if (!elements) {
       throw new Error("Expected import merge dialog elements after mount");
@@ -217,7 +215,7 @@ export function mountImportMergeDialog(shell) {
       interactionCleanup();
       previewCleanup();
       component.unmount?.();
-      host.remove();
+      shell.container.replaceChildren();
     };
   });
 

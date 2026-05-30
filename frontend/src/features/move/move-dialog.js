@@ -3,7 +3,13 @@
 import { MoveNode, MoveNodes } from "../../shared/api/api.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, list, mount, template } from "../../shared/runtime/naf.js";
+import {
+  cleanupCollector,
+  effect,
+  list,
+  mount,
+  template,
+} from "../../shared/runtime/naf.js";
 import { moveDialogState } from "./move-dialog-state.js";
 import { treeState } from "../tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
@@ -25,20 +31,16 @@ export function collectMoveDialogShell(root) {
   return { container };
 }
 
-/** @returns {HTMLTemplateElement} */
-function createMoveOptionTemplate() {
-  const templateEl = document.createElement("template");
-  templateEl.innerHTML = `
-    <button type="button" class="move-dialog__option" role="option" data-keyboard-action="move-target">
-      <span class="move-dialog__option-icon">📁</span>
-      <span class="move-dialog__option-content">
-        <span class="move-dialog__option-name"></span>
-        <span class="move-dialog__option-path"></span>
-      </span>
-    </button>
-  `;
-  return templateEl;
-}
+/** @type {string} */
+const MOVE_OPTION_HTML = /*html*/ `
+  <button type="button" class="move-dialog__option" role="option" data-keyboard-action="move-target">
+    <span class="move-dialog__option-icon">📁</span>
+    <span class="move-dialog__option-content">
+      <span class="move-dialog__option-name"></span>
+      <span class="move-dialog__option-path"></span>
+    </span>
+  </button>
+`;
 
 /**
  * @param {MoveTarget[]} folders
@@ -70,7 +72,10 @@ async function move() {
     uiState.actions.showToast("Moved successfully", "success");
     await treeState.actions.refresh();
   } catch (caughtError) {
-    uiState.actions.showToast(`Move failed: ${getErrorMessage(caughtError)}`, "error");
+    uiState.actions.showToast(
+      `Move failed: ${getErrorMessage(caughtError)}`,
+      "error",
+    );
   }
 
   moveDialogState.actions.closeMoveDialog();
@@ -94,45 +99,46 @@ async function move() {
 function createMoveDialog(view, onMountElements) {
   const emptyStateHtml = view.hasFolders
     ? ""
-    : '<div class="move-dialog__empty">No eligible folders</div>';
+    : /*html*/ '<div class="move-dialog__empty">No eligible folders</div>';
 
-  const renderDialog = /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
-    template({
-      onMount(_el, _parent, ctx) {
-        const backdrop = ctx.refs.backdrop;
-        const dialog = ctx.refs.dialog;
-        const listbox = ctx.refs.listbox;
-        const cancelButton = ctx.refs.cancelButton;
-        const confirmButton = ctx.refs.confirmButton;
+  const renderDialog =
+    /** @type {(strings: TemplateStringsArray, ...values: Array<string | number | boolean | null | undefined | import("../../shared/runtime/naf.js").Component>) => import("../../shared/runtime/naf.js").Component<HTMLElement>} */ (
+      template({
+        onMount(_el, _parent, ctx) {
+          const backdrop = ctx.refs.backdrop;
+          const dialog = ctx.refs.dialog;
+          const listbox = ctx.refs.listbox;
+          const cancelButton = ctx.refs.cancelButton;
+          const confirmButton = ctx.refs.confirmButton;
 
-        if (!(backdrop instanceof HTMLDivElement)) {
-          throw new Error("Expected move dialog backdrop");
-        }
-        if (!(dialog instanceof HTMLDivElement)) {
-          throw new Error("Expected move dialog");
-        }
-        if (!(listbox instanceof HTMLDivElement)) {
-          throw new Error("Expected move dialog listbox");
-        }
-        if (!(cancelButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected move cancel button");
-        }
-        if (!(confirmButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected move confirm button");
-        }
+          if (!(backdrop instanceof HTMLDivElement)) {
+            throw new Error("Expected move dialog backdrop");
+          }
+          if (!(dialog instanceof HTMLDivElement)) {
+            throw new Error("Expected move dialog");
+          }
+          if (!(listbox instanceof HTMLDivElement)) {
+            throw new Error("Expected move dialog listbox");
+          }
+          if (!(cancelButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected move cancel button");
+          }
+          if (!(confirmButton instanceof HTMLButtonElement)) {
+            throw new Error("Expected move confirm button");
+          }
 
-        onMountElements({
-          backdrop,
-          dialog,
-          listbox,
-          cancelButton,
-          confirmButton,
-        });
-      },
-    })
-  );
+          onMountElements({
+            backdrop,
+            dialog,
+            listbox,
+            cancelButton,
+            confirmButton,
+          });
+        },
+      })
+    );
 
-  return renderDialog`
+  return renderDialog /*html*/ `
     <div class="modal-backdrop" role="presentation" data-ref="backdrop">
       <div
         class="modal move-dialog"
@@ -191,7 +197,6 @@ function createMoveDialog(view, onMountElements) {
  */
 export function mountMoveDialog(shell) {
   let cleanupRendered = () => {};
-  const optionTemplate = createMoveOptionTemplate();
 
   const stop = effect(() => {
     cleanupRendered();
@@ -217,20 +222,20 @@ export function mountMoveDialog(shell) {
      * } | undefined} */
     let mounted;
 
-    const host = document.createElement("div");
     const component = createMoveDialog(
       {
         label: request?.label ?? "",
         hasFolders: folders.length > 0,
-        hasSelectedTarget: Boolean(moveDialogState.selectors.getSelectedTarget()),
+        hasSelectedTarget: Boolean(
+          moveDialogState.selectors.getSelectedTarget(),
+        ),
       },
       (elements) => {
         mounted = elements;
       },
     );
 
-    shell.container.append(host);
-    mount(component, host);
+    mount(component, shell.container);
 
     if (!mounted) {
       throw new Error("Expected move dialog elements after mount");
@@ -271,7 +276,8 @@ export function mountMoveDialog(shell) {
         }
 
         const currentIndex = nextFolders.findIndex(
-          (folder) => folder.id === moveDialogState.selectors.getSelectedTarget(),
+          (folder) =>
+            folder.id === moveDialogState.selectors.getSelectedTarget(),
         );
         const delta = event.key === "ArrowDown" ? 1 : -1;
         const nextIndex = Math.min(
@@ -285,7 +291,10 @@ export function mountMoveDialog(shell) {
         return;
       }
 
-      if (event.key === "Enter" && moveDialogState.selectors.getSelectedTarget()) {
+      if (
+        event.key === "Enter" &&
+        moveDialogState.selectors.getSelectedTarget()
+      ) {
         event.preventDefault();
         void move();
       }
@@ -309,7 +318,7 @@ export function mountMoveDialog(shell) {
       cleanup.add(
         list(
           listbox,
-          optionTemplate,
+          MOVE_OPTION_HTML,
           () => moveDialogState.selectors.getFolders(),
           (folder) => folder.id,
           (el, folder) => {
@@ -327,7 +336,9 @@ export function mountMoveDialog(shell) {
 
             const stopOptionEffect = effect(() => {
               const currentFolder = folder();
-              const selected = moveDialogState.selectors.getSelectedTarget() === currentFolder.id;
+              const selected =
+                moveDialogState.selectors.getSelectedTarget() ===
+                currentFolder.id;
               el.style.paddingLeft = `${currentFolder.depth * 18 + 12}px`;
               el.setAttribute("aria-selected", selected ? "true" : "false");
               el.classList.toggle("is-selected", selected);
@@ -360,7 +371,7 @@ export function mountMoveDialog(shell) {
     cleanupRendered = () => {
       cleanup.run();
       component.unmount?.();
-      host.remove();
+      shell.container.replaceChildren();
     };
   });
 

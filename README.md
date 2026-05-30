@@ -96,6 +96,7 @@ For frontend work, start with:
 - `docs/frontend-architecture.md`
 - `docs/frontend-maintainability-guidelines.md`
 - `docs/naf-html-usage-guidelines.md`
+- `guide.md`
 
 ## Building
 

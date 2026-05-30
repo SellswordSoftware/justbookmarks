@@ -7,6 +7,26 @@ import { cleanupCollector, effect, list } from "../../shared/runtime/naf.js";
  * @typedef {{ title: string, count: number, rows: ImportMergePreviewRow[] }} ImportMergePreviewSection
  */
 
+/** @type {string} */
+const SECTION_ROW_HTML = /*html*/ `
+  <section class="import-merge-dialog__section">
+    <div class="import-merge-dialog__section-header">
+      <h3 class="import-merge-dialog__section-title"></h3>
+      <span class="badge"></span>
+    </div>
+    <p class="import-merge-dialog__empty" hidden>None</p>
+    <div class="import-merge-dialog__rows"></div>
+  </section>
+`;
+
+/** @type {string} */
+const PREVIEW_ROW_HTML = /*html*/ `
+  <div class="import-merge-dialog__row">
+    <div class="import-merge-dialog__row-title"></div>
+    <div class="import-merge-dialog__row-subtitle"></div>
+  </div>
+`;
+
 /**
  * @param {import("../../types.js").MergePreview} preview
  * @returns {ImportMergePreviewSection[]}
@@ -108,29 +128,9 @@ export function mountImportMergePreview(body, preview, previewLoading) {
 
   body.append(stats, sectionList);
 
-  const sectionTemplate = document.createElement("template");
-  sectionTemplate.innerHTML = `
-    <section class="import-merge-dialog__section">
-      <div class="import-merge-dialog__section-header">
-        <h3 class="import-merge-dialog__section-title"></h3>
-        <span class="badge"></span>
-      </div>
-      <p class="import-merge-dialog__empty" hidden>None</p>
-      <div class="import-merge-dialog__rows"></div>
-    </section>
-  `;
-
-  const rowTemplate = document.createElement("template");
-  rowTemplate.innerHTML = `
-    <div class="import-merge-dialog__row">
-      <div class="import-merge-dialog__row-title"></div>
-      <div class="import-merge-dialog__row-subtitle"></div>
-    </div>
-  `;
-
   return list(
     sectionList,
-    sectionTemplate,
+    SECTION_ROW_HTML,
     () => buildImportMergePreviewSections(preview),
     (section) => section.title,
     (el, section) => {
@@ -143,7 +143,9 @@ export function mountImportMergePreview(body, preview, previewLoading) {
       const emptyEl = el.querySelector(".import-merge-dialog__empty");
       const rowsEl = el.querySelector(".import-merge-dialog__rows");
       if (!(rowsEl instanceof HTMLElement)) {
-        throw new Error("Import merge section template must include a rows container");
+        throw new Error(
+          "Import merge section template must include a rows container",
+        );
       }
 
       const cleanup = cleanupCollector(
@@ -162,16 +164,22 @@ export function mountImportMergePreview(body, preview, previewLoading) {
         }),
         list(
           rowsEl,
-          rowTemplate,
+          PREVIEW_ROW_HTML,
           () => section().rows,
           (row) => `${row.title}::${row.subtitle}`,
           (rowEl, row) => {
             if (!(rowEl instanceof HTMLElement)) {
-              throw new Error("Import merge row template must render an element");
+              throw new Error(
+                "Import merge row template must render an element",
+              );
             }
 
-            const rowTitle = rowEl.querySelector(".import-merge-dialog__row-title");
-            const rowSubtitle = rowEl.querySelector(".import-merge-dialog__row-subtitle");
+            const rowTitle = rowEl.querySelector(
+              ".import-merge-dialog__row-title",
+            );
+            const rowSubtitle = rowEl.querySelector(
+              ".import-merge-dialog__row-subtitle",
+            );
             return effect(() => {
               const currentRow = row();
               if (rowTitle instanceof HTMLElement) {
