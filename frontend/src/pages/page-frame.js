@@ -34,6 +34,9 @@ export function showEmptyLibraryFrame(shell) {
 }
 
 /**
+ * Create a dedicated host div appended to mainContent without destroying
+ * existing shell children (tree-pane, detail-pane, pane-resizer).
+ *
  * @param {HTMLElement} mainContent
  * @returns {HTMLDivElement}
  */
