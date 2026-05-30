@@ -56,7 +56,7 @@
 
 .move-dialog__option:hover,
 .move-dialog__option:focus-visible {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-hover-bg);
 }
 
 .move-dialog__option.is-selected {
@@ -88,7 +88,7 @@
 }
 
 .move-dialog__option.is-selected .move-dialog__option-path {
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--color-selected-path-text);
 }
 
 .confirm-modal {
@@ -140,7 +140,7 @@
   overflow: hidden;
   border: var(--border) solid var(--color-border-quiet);
   border-radius: 0.875rem;
-  background: rgba(23, 32, 51, 0.5);
+  background: var(--color-section-bg);
 }
 
 .shortcuts-dialog__section-header {
@@ -174,7 +174,7 @@
   padding: 0.35rem 0.625rem;
   border: var(--border) solid var(--color-border-soft);
   border-radius: var(--radius-selector);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-hover-card);
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -232,7 +232,7 @@
   padding: 0.875rem 1rem;
   border: var(--border) solid var(--color-border-quiet);
   border-radius: 0.875rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-stat-bg);
 }
 
 .import-merge-dialog__file-meta {
@@ -274,7 +274,7 @@
   padding: 0.875rem 1rem;
   border: var(--border) solid var(--color-border-quiet);
   border-radius: 0.875rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-stat-bg);
 }
 
 .import-merge-dialog__stat-label {

@@ -8,6 +8,7 @@ import {
 import {
   loadPersistedUIState,
   setLastOpenedFile,
+  setTheme,
   setWindowState,
 } from "../../shared/infra/persistence.js";
 import { signal } from "../../shared/runtime/naf.js";
@@ -39,6 +40,7 @@ const hasTriedLoad = signal(false);
 const persistenceReady = signal(false);
 const isMaximised = signal(false);
 const keyboardShortcutsOpen = signal(false);
+const theme = signal(loadPersistedUIState().theme ?? "light");
 const persistedState = signal(loadPersistedUIState());
 
 /** @returns {boolean} */
@@ -155,8 +157,16 @@ export const appState = {
     },
   },
   window: {
+    theme,
     hasRuntime: hasWailsRuntime,
     sync: syncWindowState,
+    /**
+     * @param {"light" | "dark"} value
+     */
+    setTheme(value) {
+      theme(value);
+      setTheme(value);
+    },
     /**
      * @returns {Promise<WindowState | null>}
      */

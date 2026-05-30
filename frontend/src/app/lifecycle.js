@@ -48,6 +48,12 @@ export function mountAppLifecycle(options) {
     const nextTreeState = treeState.selectors.getPersistentState();
     setPerFileTreeState(currentFilePath, nextTreeState);
   });
+  const stopThemeSync = effect(() => {
+    const appShell = document.querySelector(".app-shell");
+    if (appShell) {
+      appShell.setAttribute("data-theme", appState.window.theme());
+    }
+  });
   const cleanupFeatures = combineCleanups(options.featureCleanups);
 
   const handleBeforeUnload = () => {
@@ -57,6 +63,7 @@ export function mountAppLifecycle(options) {
     window.removeEventListener("resize", handleWindowResize);
     cleanupFeatures();
     stopTreePersistence();
+    stopThemeSync();
     void appState.window.persistCurrentSize();
   };
 

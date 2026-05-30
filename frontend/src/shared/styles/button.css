@@ -21,7 +21,7 @@
 
 .btn:hover {
   border-color: var(--btn-hover-border, var(--color-border-soft));
-  background: var(--btn-hover-bg, rgba(255, 255, 255, 0.04));
+  background: var(--btn-hover-bg, var(--color-hover-subtle));
 }
 
 .btn:active {
@@ -31,34 +31,34 @@
 .btn-primary {
   --btn-bg: var(--color-primary);
   --btn-fg: var(--color-primary-content);
-  --btn-border: rgba(37, 99, 235, 0.65);
-  --btn-hover-bg: #1d4ed8;
+  --btn-border: var(--color-btn-primary-border);
+  --btn-hover-bg: var(--color-btn-primary-hover);
 }
 
 .btn-secondary {
   --btn-bg: var(--color-secondary);
   --btn-fg: var(--color-secondary-content);
-  --btn-border: rgba(255, 255, 255, 0.08);
-  --btn-hover-bg: #3a4250;
+  --btn-border: var(--color-btn-secondary-border);
+  --btn-hover-bg: var(--color-btn-secondary-hover);
 }
 
 .btn-ghost {
   --btn-bg: transparent;
   --btn-shadow: none;
   --btn-border: transparent;
-  --btn-hover-bg: rgba(255, 255, 255, 0.06);
+  --btn-hover-bg: var(--color-hover-bg);
 }
 
 .btn-outline {
   --btn-bg: transparent;
-  --btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --btn-hover-bg: var(--color-hover-card);
 }
 
 .btn-danger {
-  --btn-fg: #f87171;
-  --btn-border: rgba(239, 68, 68, 0.55);
-  --btn-hover-border: rgba(239, 68, 68, 0.8);
-  --btn-hover-bg: rgba(239, 68, 68, 0.08);
+  --btn-fg: var(--color-danger-text);
+  --btn-border: var(--color-danger-border);
+  --btn-hover-border: var(--color-danger-hover-border);
+  --btn-hover-bg: var(--color-danger-bg);
 }
 
 .btn-sm {

@@ -10,10 +10,10 @@
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--color-hover-subtle);
 }
 
 .menu-item.is-active {
-    background: rgba(37, 99, 235, 0.18);
+    background: var(--color-active-bg);
     color: var(--color-base-content);
 }

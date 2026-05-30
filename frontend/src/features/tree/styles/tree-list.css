@@ -11,15 +11,15 @@
 }
 
 .tree-row.is-selected {
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--color-tree-selected-bg);
     color: var(--color-base-content);
 }
 
 .tree-row.is-primary {
-    border-color: rgba(96, 165, 250, 0.9);
-    background: #2563eb;
-    color: #f8fbff;
-    box-shadow: inset 0 0 0 1px rgba(147, 197, 253, 0.28);
+    border-color: var(--color-tree-selected-border);
+    background: var(--color-tree-primary-bg);
+    color: var(--color-tree-primary-text);
+    box-shadow: inset 0 0 0 1px var(--color-tree-primary-inset);
 }
 
 .tree-row.is-drag-source {
@@ -33,8 +33,8 @@ body.is-tree-dragging * {
 }
 
 .tree-row.is-drop-inside {
-    background: rgba(34, 197, 94, 0.14);
-    border-color: rgba(74, 222, 128, 0.8);
+    background: var(--color-dnd-inside-bg);
+    border-color: var(--color-dnd-inside-border);
 }
 
 .tree-row.is-drop-before::before,
@@ -45,7 +45,7 @@ body.is-tree-dragging * {
     right: 0.35rem;
     height: 2px;
     border-radius: 999px;
-    background: #4ade80;
+    background: var(--color-dnd-line);
 }
 
 .tree-row.is-drop-before::before {
@@ -65,7 +65,7 @@ body.is-tree-dragging * {
     margin-left: -0.3rem;
     min-height: 0.95rem;
     padding: 0;
-    color: #d1d5db;
+    color: var(--color-icon-toggle);
     font-size: 1rem;
 }
 
@@ -105,9 +105,9 @@ body.is-tree-dragging * {
 }
 
 .search-result.is-selected {
-    border-color: rgba(96, 165, 250, 0.9);
-    background: rgba(37, 99, 235, 0.92);
-    color: #f8fbff;
+    border-color: var(--color-tree-selected-border);
+    background: var(--color-tree-primary-bg);
+    color: var(--color-tree-primary-text);
 }
 
 .tree-empty-state {
@@ -132,7 +132,7 @@ body.is-tree-dragging * {
 }
 
 .tree-row__folder-icon {
-    color: #d7dbe2;
+    color: var(--color-icon);
 }
 
 .tree-row__folder-icon::before {
@@ -147,7 +147,7 @@ body.is-tree-dragging * {
 
 .tree-row__bookmark-icon,
 .search-result__icon {
-    color: #d7dbe2;
+    color: var(--color-icon);
 }
 
 .tree-row__bookmark-icon::before,
@@ -158,11 +158,11 @@ body.is-tree-dragging * {
 
 .tree-row.is-primary .tree-row__count,
 .search-result.is-selected .search-result__meta {
-    color: rgba(248, 250, 252, 0.78);
+    color: var(--color-tree-primary-count);
 }
 
 .tree-row.is-primary .tree-row__folder-icon,
 .tree-row.is-primary .tree-row__bookmark-icon,
 .search-result.is-selected .search-result__icon {
-    color: #eef6ff;
+    color: var(--color-tree-primary-icon);
 }

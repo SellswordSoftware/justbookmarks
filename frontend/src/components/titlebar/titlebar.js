@@ -39,31 +39,35 @@ function closeWindow() {
 }
 
 /**
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createTitlebarBrandComponent() {
   const renderBrand = /** @type {TemplateTag} */ (template);
 
-  return renderBrand`
+  return renderBrand /*html*/ `
     <div class="titlebar__brand">
       <h1 class="titlebar__title">JustBookmarks</h1>
-      <p id="titlebar-meta" class="titlebar__meta">Vanilla frontend shell active</p>
+      <p id="titlebar-meta" class="titlebar__meta"></p>
     </div>
   `;
 }
 
 /**
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createTitlebarWindowControlsComponent() {
   const renderControls = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _host, ctx) {
         const { refs, cleanup } = ctx;
+        const themeToggleButton = refs.themeToggleButton;
         const minimizeButton = refs.minimizeButton;
         const maximizeButton = refs.maximizeButton;
         const closeButton = refs.closeButton;
 
+        if(!(themeToggleButton instanceof HTMLButtonElement)) {
+          throw new Error("Expected theme button");
+        }
         if (!(minimizeButton instanceof HTMLButtonElement)) {
           throw new Error("Expected minimize button");
         }
@@ -81,6 +85,12 @@ function createTitlebarWindowControlsComponent() {
           void appState.window.sync();
         };
 
+        themeToggleButton.addEventListener("click", () => {
+          const current = appState.window.theme();
+          appState.window.setTheme(current === "light" ? "dark" : "light");
+          themeToggleButton.innerHTML = current === "light" ? "🌞" : "🌙";
+        });
+        themeToggleButton.innerHTML = appState.window.theme() === "light" ? "🌙" : "🌞";
         minimizeButton.addEventListener("click", minimiseWindow);
         maximizeButton.addEventListener("click", handleMaximiseClick);
         closeButton.addEventListener("click", closeWindow);
@@ -88,7 +98,8 @@ function createTitlebarWindowControlsComponent() {
 
         cleanup.add(
           () => minimizeButton.removeEventListener("click", minimiseWindow),
-          () => maximizeButton.removeEventListener("click", handleMaximiseClick),
+          () =>
+            maximizeButton.removeEventListener("click", handleMaximiseClick),
           () => closeButton.removeEventListener("click", closeWindow),
           () => window.removeEventListener("focus", handleFocus),
           attr(minimizeButton, "disabled", () => !appState.hasWailsRuntime()),
@@ -111,8 +122,15 @@ function createTitlebarWindowControlsComponent() {
     })
   );
 
-  return renderControls`
+  return renderControls/*html*/`
     <div class="titlebar__window-controls" data-wails-no-drag data-ref="windowControls">
+      <button
+        id="theme-toggle"
+        data-ref="themeToggleButton"
+        class="btn btn-ghost btn-sm btn-square"
+      >
+        🌙
+      </button>
       <button
         id="window-minimize"
         data-ref="minimizeButton"
@@ -145,7 +163,7 @@ function createTitlebarWindowControlsComponent() {
 }
 
 /**
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createTitlebarComponent() {
   const brand = createTitlebarBrandComponent();
@@ -157,19 +175,24 @@ function createTitlebarComponent() {
         /** @param {Event} event */
         const handleDoubleClick = (event) => {
           const target = event.target;
-          if (target instanceof HTMLElement && target.closest("[data-wails-no-drag]")) {
+          if (
+            target instanceof HTMLElement &&
+            target.closest("[data-wails-no-drag]")
+          ) {
             return;
           }
           void toggleMaximiseWindow();
         };
 
         host.addEventListener("dblclick", handleDoubleClick);
-        cleanup.add(() => host.removeEventListener("dblclick", handleDoubleClick));
+        cleanup.add(() =>
+          host.removeEventListener("dblclick", handleDoubleClick),
+        );
       },
     })
   );
 
-  return renderTitlebar`
+  return renderTitlebar/*html*/`
     ${brand}
     ${controls}
   `;

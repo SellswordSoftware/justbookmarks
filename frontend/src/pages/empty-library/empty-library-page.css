@@ -6,19 +6,19 @@
 }
 
 .empty-library-page {
-  --empty-library-surface: color-mix(in srgb, var(--surface-2) 84%, #06131d 16%);
-  --empty-library-border: color-mix(in srgb, var(--border-color) 56%, #7fd5ff 44%);
+  --empty-library-surface: var(--color-empty-surface);
+  --empty-library-border: var(--color-empty-border);
   width: min(100%, 42rem);
   padding: clamp(2rem, 5vw, 3.5rem);
   border: 1px solid var(--empty-library-border);
   border-radius: 1.75rem;
   background:
-    radial-gradient(circle at top, rgb(127 213 255 / 0.16), transparent 42%),
-    linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 28%),
+    radial-gradient(circle at top, var(--color-empty-accent), transparent 42%),
+    linear-gradient(180deg, var(--color-empty-highlight), transparent 28%),
     var(--empty-library-surface);
   box-shadow:
-    0 2rem 4rem rgb(0 0 0 / 0.26),
-    inset 0 1px 0 rgb(255 255 255 / 0.08);
+    0 2rem 4rem var(--color-empty-card-shadow),
+    inset 0 1px 0 var(--color-empty-highlight);
   text-align: center;
 }
 
@@ -30,20 +30,20 @@
   margin: 0 auto 1.5rem;
   border-radius: 1.3rem;
   background:
-    linear-gradient(135deg, rgb(127 213 255 / 0.92), rgb(191 241 255 / 0.62));
-  color: #062236;
+    linear-gradient(135deg, var(--color-empty-accent), var(--color-empty-accent-light));
+  color: var(--color-empty-crest-text);
   font-family: "Alegreya Sans SC", "Gill Sans", sans-serif;
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   box-shadow:
-    0 1rem 2rem rgb(18 66 91 / 0.34),
-    inset 0 1px 0 rgb(255 255 255 / 0.55);
+    0 1rem 2rem var(--color-empty-crest-shadow),
+    inset 0 1px 0 var(--color-empty-highlight);
 }
 
 .empty-library-page__eyebrow {
   margin: 0 0 0.75rem;
-  color: var(--muted-text);
+  color: var(--color-muted);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -52,7 +52,7 @@
 
 .empty-library-page__title {
   margin: 0;
-  color: var(--text-color);
+  color: var(--color-base-content);
   font-family: "Alegreya", Georgia, serif;
   font-size: clamp(2.2rem, 4vw, 3.3rem);
   line-height: 0.98;
@@ -62,7 +62,7 @@
 .empty-library-page__copy {
   width: min(100%, 31rem);
   margin: 1rem auto 0;
-  color: var(--muted-text);
+  color: var(--color-muted);
   font-size: 1rem;
   line-height: 1.6;
   text-wrap: pretty;
@@ -82,13 +82,13 @@
 }
 
 .empty-library-page__button--secondary {
-  border-color: rgb(255 255 255 / 0.14);
-  background: rgb(255 255 255 / 0.03);
+  border-color: var(--color-empty-secondary-border);
+  background: var(--color-empty-secondary-bg);
 }
 
 .empty-library-page__hint {
   margin: 1rem 0 0;
-  color: var(--muted-text);
+  color: var(--color-muted);
   font-size: 0.88rem;
 }
 

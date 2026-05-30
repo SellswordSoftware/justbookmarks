@@ -197,6 +197,7 @@
  * @property {number} leftPaneWidth
  * @property {WindowState | null} window
  * @property {Record<string, PerFileTreeState>} files
+ * @property {"light" | "dark"} theme
  */
 
 export {};

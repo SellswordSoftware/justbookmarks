@@ -23,13 +23,13 @@
 
 .input::placeholder,
 .textarea::placeholder {
-  color: #8b9098;
+  color: var(--color-placeholder);
 }
 
 .input:focus,
 .textarea:focus,
 .select:focus {
-  border-color: rgba(59, 130, 246, 0.75);
+  border-color: var(--color-focus-border);
   box-shadow: var(--shadow-glow);
 }
 

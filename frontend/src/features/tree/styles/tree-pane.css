@@ -38,11 +38,11 @@
 
 .tree-pane__action-btn {
     position: relative;
-    color: #d7dbe2;
+    color: var(--color-action-btn);
 }
 
 .tree-pane__action-btn:hover {
-    color: #f3f4f6;
+    color: var(--color-action-btn-hover);
 }
 
 .tree-pane__action-icon {
@@ -75,7 +75,7 @@
     width: 0.52rem;
     height: 0.52rem;
     border-radius: 999px;
-    background: #3b82f6;
+    background: var(--color-icon-badge-bg);
     box-shadow: 0 0 0 1px var(--color-base-100);
 }
 
@@ -96,7 +96,7 @@
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-position: center;
     -webkit-mask-size: 1rem 1rem;
-    background-color: #dbeafe;
+    background-color: var(--color-icon-badge-icon);
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14m7-7H5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14m7-7H5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 }

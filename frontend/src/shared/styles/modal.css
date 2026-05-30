@@ -4,7 +4,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(12, 12, 14, 0.62);
+  background: var(--color-modal-backdrop);
 }
 
 .modal {

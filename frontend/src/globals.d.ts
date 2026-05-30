@@ -206,6 +206,7 @@ declare global {
     leftPaneWidth: number;
     window: WindowState | null;
     files: Record<string, PerFileTreeState>;
+    theme: "light" | "dark";
   }
 }
 

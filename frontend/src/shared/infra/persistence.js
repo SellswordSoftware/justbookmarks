@@ -13,6 +13,7 @@ const defaultState = {
   leftPaneWidth: 360,
   window: null,
   files: {},
+  theme: "light",
 };
 
 /**
@@ -79,6 +80,11 @@ function sanitizeState(raw) {
           }
         : null,
     files,
+    theme:
+      typeof candidate.theme === "string" &&
+      (candidate.theme === "light" || candidate.theme === "dark")
+        ? candidate.theme
+        : defaultState.theme,
   };
 }
 
@@ -177,6 +183,17 @@ export function setPerFileTreeState(path, treeState) {
   }
 
   const nextState = { ...state, files };
+  savePersistedUIState(nextState);
+  return nextState;
+}
+
+/**
+ * @param {"light" | "dark"} theme
+ * @returns {PersistedUIState}
+ */
+export function setTheme(theme) {
+  const state = loadPersistedUIState();
+  const nextState = { ...state, theme };
   savePersistedUIState(nextState);
   return nextState;
 }
