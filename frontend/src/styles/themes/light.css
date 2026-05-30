@@ -132,16 +132,4 @@
 
   /* ── Titlebar ───────────────────────────────────────── */
   --color-titlebar-close-text: #ffffff;
-
-  /* ── Empty library page ─────────────────────────────── */
-  --color-empty-surface: color-mix(in srgb, var(--color-surface-1) 88%, var(--color-primary) 12%);
-  --color-empty-border: color-mix(in srgb, var(--color-border-soft) 60%, var(--color-primary) 40%);
-  --color-empty-accent: var(--color-primary);
-  --color-empty-accent-light: rgba(37, 99, 235, 0.15);
-  --color-empty-crest-text: #ffffff;
-  --color-empty-crest-shadow: rgba(37, 99, 235, 0.25);
-  --color-empty-card-shadow: rgba(0, 0, 0, 0.1);
-  --color-empty-highlight: rgba(0, 0, 0, 0.04);
-  --color-empty-secondary-border: rgba(0, 0, 0, 0.12);
-  --color-empty-secondary-bg: rgba(0, 0, 0, 0.02);
 }

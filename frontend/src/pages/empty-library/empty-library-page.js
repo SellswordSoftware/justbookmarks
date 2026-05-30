@@ -1,6 +1,5 @@
 // @ts-check
 
-import { appState } from "../../shared/state/app-state.js";
 import { searchState } from "../../features/search/state/search-state.js";
 import { treeState } from "../../features/tree/state/tree-state.js";
 import {
@@ -11,7 +10,6 @@ import {
   template,
 } from "../../shared/runtime/naf.js";
 import {
-  collectPageHost,
   showEmptyLibraryFrame,
   showLibraryFrame,
 } from "../page-frame.js";
@@ -19,7 +17,6 @@ import {
 /**
  * @typedef {object} EmptyLibraryPageShell
  * @property {HTMLElement} root
- * @property {HTMLElement} titlebarMeta
  * @property {HTMLElement} appToolbar
  * @property {HTMLElement} mainContent
  * @property {HTMLElement} treePane
@@ -34,23 +31,11 @@ import {
  */
 
 /**
- * @param {HTMLButtonElement} button
- * @param {boolean} busy
- * @param {string} idleLabel
- * @param {string} busyLabel
- * @returns {void}
- */
-function setButtonBusyState(button, busy, idleLabel, busyLabel) {
-  button.textContent = busy ? busyLabel : idleLabel;
-}
-
-/**
- * @param {EmptyLibraryPageShell} shell
  * @param {EmptyLibraryPageActions} actions
  * @returns {Component<HTMLElement>}
  */
-function createEmptyLibrarySplash(shell, actions) {
-  const cleanup = cleanupCollector();
+function createEmptyLibrarySplash(actions) {
+  /** @type {TemplateTag} */
   const renderSplash =
     /** @type {TemplateTag} */ (
       template({
@@ -84,32 +69,6 @@ function createEmptyLibrarySplash(shell, actions) {
             () => createButton.removeEventListener("click", handleCreateClick),
             attr(openButton, "disabled", () => treeState.selectors.isLoading()),
             attr(createButton, "disabled", () => treeState.selectors.isLoading()),
-            effect(() => {
-              const treeError = treeState.selectors.getError();
-              const loading = treeState.selectors.isLoading();
-              const hasAttemptedLoad = appState.hasTriedLoad();
-
-              shell.titlebarMeta.textContent = treeError
-                ? treeError
-                : loading
-                  ? "Loading bookmark library..."
-                  : hasAttemptedLoad
-                    ? "No bookmark file is open"
-                    : "Ready to open a bookmark library";
-
-              setButtonBusyState(
-                openButton,
-                loading,
-                "Open File",
-                "Opening...",
-              );
-              setButtonBusyState(
-                createButton,
-                loading,
-                "Create File",
-                "Creating...",
-              );
-            }),
           );
 
           queueMicrotask(() => {
@@ -122,10 +81,10 @@ function createEmptyLibrarySplash(shell, actions) {
       })
     );
 
+  const cleanup = cleanupCollector();
+
   return renderSplash /*html*/ `
     <section class="empty-library-page" aria-labelledby="empty-library-title">
-      <div class="empty-library-page__crest" aria-hidden="true">JB</div>
-      <p class="empty-library-page__eyebrow">Single-file bookmark library</p>
       <h2 id="empty-library-title" class="empty-library-page__title">
         Open your archive or start a fresh one.
       </h2>
@@ -136,22 +95,19 @@ function createEmptyLibrarySplash(shell, actions) {
       <div class="empty-library-page__actions">
         <button
           type="button"
-          class="empty-library-page__open btn btn-primary empty-library-page__button"
+          class="btn btn-primary"
           data-ref="openButton"
         >
           Open File
         </button>
         <button
           type="button"
-          class="empty-library-page__create btn btn-ghost empty-library-page__button empty-library-page__button--secondary"
+          class="btn btn-ghost"
           data-ref="createButton"
         >
           Create File
         </button>
       </div>
-      <p class="empty-library-page__hint">
-        Shortcuts: Ctrl/Cmd+O to open, Ctrl/Cmd+N to create.
-      </p>
     </section>
   `;
 }
@@ -164,15 +120,39 @@ function createEmptyLibrarySplash(shell, actions) {
 export function mountEmptyLibraryPage(shell, actions) {
   searchState.actions.clearQuery();
   showEmptyLibraryFrame(shell);
-  const pageHost = collectPageHost(shell.root);
 
-  const splash = createEmptyLibrarySplash(shell, actions);
-  mount(splash, pageHost);
+  const emptyLibraryHost =
+    /** @type {HTMLElement|null} */ (document.getElementById("empty-library-host"));
+  if (!(emptyLibraryHost instanceof HTMLElement)) {
+    throw new Error("Expected #empty-library-host element");
+  }
+
+  const splash = createEmptyLibrarySplash(actions);
+  mount(splash, emptyLibraryHost);
+
+  const titlebarMeta =
+    /** @type {HTMLElement|null} */ (document.getElementById("titlebar-meta"));
+  if (!(titlebarMeta instanceof HTMLElement)) {
+    throw new Error("Expected #titlebar-meta element");
+  }
+
+  const stopEffect = effect(() => {
+    const treeError = treeState.selectors.getError();
+    const loading = treeState.selectors.isLoading();
+
+    titlebarMeta.textContent = treeError
+      ? treeError
+      : loading
+        ? "Loading bookmark library..."
+        : "No bookmark file is open";
+  });
 
   return {
     cleanup() {
+      stopEffect();
+      titlebarMeta.textContent = "";
       splash.unmount?.();
-      pageHost.replaceChildren();
+      emptyLibraryHost.replaceChildren();
       showLibraryFrame(shell);
     },
   };
