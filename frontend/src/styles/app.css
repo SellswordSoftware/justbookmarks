@@ -5,24 +5,26 @@
 @import "./base.css";
 @import "./layout.css";
 
-@import "../shared/styles/button.css";
-@import "../shared/styles/icon-mask.css";
-@import "../shared/styles/form.css";
-@import "../shared/styles/card.css";
-@import "../shared/styles/modal.css";
-@import "../shared/styles/alert.css";
-@import "../shared/styles/badge.css";
-@import "../shared/styles/menu.css";
-@import "../shared/styles/spinner.css";
+@import "./primitives/button.css";
+@import "./primitives/icon-mask.css";
+@import "./primitives/form.css";
+@import "./primitives/card.css";
+@import "./primitives/modal.css";
+@import "./primitives/alert.css";
+@import "./primitives/badge.css";
+@import "./primitives/menu.css";
+@import "./primitives/spinner.css";
 
 @import "../components/titlebar/titlebar.css";
 @import "../components/toast/toast.css";
 @import "../components/toolbar/toolbar.css";
 @import "../components/shell-panel/shell-panel.css";
+@import "../components/confirm-modal/confirm-modal.css";
+@import "../components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.css";
 
 @import "../pages/empty-library/empty-library-page.css";
 @import "../features/tree/styles/tree-list.css";
 @import "../features/tree/styles/tree-pane.css";
 @import "../features/detail/styles/detail-surface.css";
-
-@import "../shared/styles/dialogs-extra.css";
+@import "../features/move/move-dialog.css";
+@import "../features/import-merge/import-merge-dialog.css";

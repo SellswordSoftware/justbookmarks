@@ -1,0 +1,14 @@
+.confirm-modal {
+  width: min(24rem, 100%);
+}
+
+.confirm-modal__body {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.confirm-modal__message {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}

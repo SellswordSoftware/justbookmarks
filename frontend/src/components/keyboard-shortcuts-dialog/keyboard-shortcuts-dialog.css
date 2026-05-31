@@ -1,0 +1,85 @@
+
+.shortcuts-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(48rem, 100%);
+  max-height: calc(100vh - 2rem);
+  overflow: hidden;
+}
+
+.shortcuts-dialog__header {
+  align-items: flex-start;
+}
+
+.shortcuts-dialog__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.shortcuts-dialog__subtitle {
+  margin-top: 0.25rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.shortcuts-dialog__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.shortcuts-dialog__section {
+  overflow: hidden;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.875rem;
+  background: var(--color-section-bg);
+}
+
+.shortcuts-dialog__section-header {
+  padding: 0.875rem 1rem;
+  border-bottom: var(--border) solid var(--color-border-faint);
+}
+
+.shortcuts-dialog__section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.shortcuts-dialog__rows {
+  display: grid;
+}
+
+.shortcuts-dialog__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-top: var(--border) solid var(--color-border-faint);
+}
+
+.shortcuts-dialog__row:first-child {
+  border-top: 0;
+}
+
+.shortcuts-dialog__kbd {
+  padding: 0.35rem 0.625rem;
+  border: var(--border) solid var(--color-border-soft);
+  border-radius: var(--radius-selector);
+  background: var(--color-hover-card);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.shortcuts-dialog__action {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .shortcuts-dialog__body {
+    grid-template-columns: 1fr;
+  }
+}

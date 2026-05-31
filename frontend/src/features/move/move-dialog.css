@@ -1,0 +1,93 @@
+.move-dialog {
+  width: min(32rem, 100%);
+}
+
+.move-dialog__header {
+  align-items: flex-start;
+}
+
+.move-dialog__list-shell {
+  overflow: hidden;
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: 0.375rem;
+  background: var(--color-base-100);
+}
+
+.move-dialog__list-header {
+  padding: 0.75rem 0.875rem;
+  border-bottom: var(--border) solid var(--color-border-faint);
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.move-dialog__listbox {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 18rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+.move-dialog__empty {
+  padding: 1.5rem 0.75rem;
+  color: var(--color-muted);
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.move-dialog__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding-top: 0.625rem;
+  padding-right: 0.75rem;
+  padding-bottom: 0.625rem;
+  border: 0;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.move-dialog__option:hover,
+.move-dialog__option:focus-visible {
+  background: var(--color-hover-bg);
+}
+
+.move-dialog__option.is-selected {
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+}
+
+.move-dialog__option-icon {
+  flex: 0 0 auto;
+  margin-top: 0.125rem;
+}
+
+.move-dialog__option-content {
+  display: grid;
+  min-width: 0;
+}
+
+.move-dialog__option-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.move-dialog__option-path {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.move-dialog__option.is-selected .move-dialog__option-path {
+  color: var(--color-selected-path-text);
+}
+

@@ -2,7 +2,6 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
-    "allowArbitraryExtensions": true,
     "maxNodeModuleJsDepth": 0,
     "module": "esnext",
     "moduleResolution": "bundler",
