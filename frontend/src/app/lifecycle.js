@@ -3,6 +3,7 @@
 import { effect } from "../shared/runtime/naf.js";
 import { setPerFileTreeState } from "../shared/infra/persistence.js";
 import { appState } from "../shared/state/app-state.js";
+import { searchState } from "../features/search/state/search-state.js";
 import { treeState } from "../features/tree/state/tree-state.js";
 
 /**
@@ -64,6 +65,7 @@ export function mountAppLifecycle(options) {
     cleanupFeatures();
     stopTreePersistence();
     stopThemeSync();
+    searchState.dispose();
     void appState.window.persistCurrentSize();
   };
 

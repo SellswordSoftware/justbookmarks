@@ -57,11 +57,39 @@ const selectionCount = computed(() => selectedNodeIds().length);
 const hasMultiSelection = computed(() => selectedNodeIds().length > 1);
 
 /**
+ * Flat Map index for O(1) node lookups.
+ * Rebuilt whenever the tree signal changes.
+ * @type {Computed<Map<string, TreeNode>>}
+ */
+const nodeIndex = computed(() => {
+  /** @type {Map<string, TreeNode>} */
+  const map = new Map();
+  /** @param {TreeNode[]} nodes */
+  const index = (nodes) => {
+    for (const node of nodes) {
+      map.set(node.id, node);
+      if (node.type === 0) {
+        index(node.folder.children);
+      }
+    }
+  };
+  index(tree());
+  return map;
+});
+
+/**
+ * Set of selected node IDs for O(1) membership tests.
+ * Rebuilt whenever selectedNodeIds changes.
+ * @type {Computed<Set<string>>}
+ */
+const selectedNodeIdsSet = computed(() => new Set(selectedNodeIds()));
+
+/**
  * @param {string} id
  * @returns {TreeNode | null}
  */
 function getNode(id) {
-  return getNodeById(tree(), id);
+  return nodeIndex().get(id) ?? null;
 }
 
 /**
@@ -102,7 +130,7 @@ function getChildIndex(parentId, childId) {
  * @returns {boolean}
  */
 function isSelected(id) {
-  return selectedNodeIds().includes(id);
+  return selectedNodeIdsSet().has(id);
 }
 
 /** @returns {TreeNode | null} */

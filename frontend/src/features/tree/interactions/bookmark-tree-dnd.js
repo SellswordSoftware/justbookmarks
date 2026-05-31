@@ -41,22 +41,75 @@ export function createBookmarkTreeDndController(options) {
   /** @type {{ entryId: string, startX: number, startY: number } | null} */
   let pendingPointerDrag = null;
   let suppressNextClick = false;
+  /** @type {string | null} */
+  let previousDropTargetId = null;
+  /** @type {string | null} */
+  let previousDragSourceId = null;
+
+  /**
+   * Clear drop-related CSS classes on a single row.
+   * @param {HTMLElement} row
+   * @returns {void}
+   */
+  function clearDropClasses(row) {
+    row.classList.remove("is-drop-before", "is-drop-after", "is-drop-inside", "is-drag-source");
+  }
+
+  /**
+   * Set drop-related CSS classes on a single row.
+   * @param {HTMLElement} row
+   * @param {DropPosition} position
+   * @returns {void}
+   */
+  function setDropClasses(row, position) {
+    row.classList.add(`is-drop-${position}`);
+  }
+
+  /**
+   * Look up a tree row element by its data-node-id attribute.
+   * @param {string} nodeId
+   * @returns {HTMLElement | null}
+   */
+  function findRow(nodeId) {
+    return options.treeList.querySelector(`[data-node-id="${nodeId}"]`);
+  }
 
   /** @returns {void} */
   function syncDropTargetClasses() {
-    const rows = options.treeList.querySelectorAll(".tree-row");
-    for (const row of rows) {
-      if (!(row instanceof HTMLElement)) {
-        continue;
+    // Clear previous drop target
+    if (previousDropTargetId !== null) {
+      const prevRow = findRow(previousDropTargetId);
+      if (prevRow instanceof HTMLElement) {
+        clearDropClasses(prevRow);
       }
-
-      const rowNodeId = row.dataset.nodeId ?? "";
-      const isActiveTarget = dropTarget?.targetId === rowNodeId;
-      row.classList.toggle("is-drop-before", isActiveTarget && dropTarget?.position === "before");
-      row.classList.toggle("is-drop-after", isActiveTarget && dropTarget?.position === "after");
-      row.classList.toggle("is-drop-inside", isActiveTarget && dropTarget?.position === "inside");
-      row.classList.toggle("is-drag-source", draggedNodeId === rowNodeId);
     }
+
+    // Clear previous drag source
+    if (previousDragSourceId !== null && previousDragSourceId !== draggedNodeId) {
+      const prevSrc = findRow(previousDragSourceId);
+      if (prevSrc instanceof HTMLElement) {
+        prevSrc.classList.remove("is-drag-source");
+      }
+    }
+
+    // Set new drop target
+    if (dropTarget !== null) {
+      const row = findRow(dropTarget.targetId);
+      if (row instanceof HTMLElement) {
+        setDropClasses(row, dropTarget.position);
+      }
+    }
+
+    // Set new drag source
+    if (draggedNodeId) {
+      const src = findRow(draggedNodeId);
+      if (src instanceof HTMLElement) {
+        src.classList.add("is-drag-source");
+      }
+    }
+
+    previousDropTargetId = dropTarget?.targetId ?? null;
+    previousDragSourceId = draggedNodeId || null;
   }
 
   /** @returns {void} */
@@ -64,6 +117,8 @@ export function createBookmarkTreeDndController(options) {
     draggedNodeId = "";
     dropTarget = null;
     pendingPointerDrag = null;
+    previousDropTargetId = null;
+    previousDragSourceId = null;
     document.body.classList.remove("is-tree-dragging");
     syncDropTargetClasses();
   }

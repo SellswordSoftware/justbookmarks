@@ -1,6 +1,6 @@
 // @ts-check
 
-import { $, fx } from "../../../shared/runtime/naf.js";
+import { fx } from "../../../shared/runtime/naf.js";
 import { treeState } from "../state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
@@ -30,21 +30,36 @@ function getNodeLabel(node) {
 }
 
 /**
+ * Mount a tree row. Uses direct child access instead of querySelector
+ * for each mount -- the template structure is fixed and controlled by this module.
+ *
+ * Template structure (TREE_NODE_HTML in bookmark-tree.js):
+ *   <article class="tree-node">           <-- el
+ *     <div class="tree-row">              <-- row (el.firstElementChild)
+ *       <button class="tree-row__toggle">  <-- children[0] (toggle)
+ *       <span class="tree-row__folder-icon"> <-- children[1] (folderIcon)
+ *       <img class="tree-row__favicon">    <-- children[2] (favicon)
+ *       <span class="tree-row__bookmark-icon"> <-- children[3] (bookmarkIcon)
+ *       <span class="tree-row__label">     <-- children[4] (label)
+ *       <span class="tree-row__count">     <-- children[5] (count)
+ *     </div>
+ *   </article>
+ *
  * @param {HTMLElement} el
  * @param {() => VisibleTreeNodeEntry} entry
  * @param {TreeNodeMountOptions} options
  * @returns {() => void}
  */
 export function mountBookmarkTreeRow(el, entry, options) {
-  const row = $(".tree-row", el);
-  const toggle = /** @type {HTMLButtonElement | null} */ ($(".tree-row__toggle", el));
-  const folderIcon = $(".tree-row__folder-icon", el);
-  const bookmarkIcon = $(".tree-row__bookmark-icon", el);
-  const favicon = /** @type {HTMLImageElement | null} */ (
-    $(".tree-row__favicon", el)
-  );
-  const label = $(".tree-row__label", el);
-  const count = $(".tree-row__count", el);
+  const row = /** @type {HTMLElement} */ (el.firstElementChild);
+
+  // Direct child access -- see template structure comment above
+  const toggle = /** @type {HTMLElement} */ (row.children[0]);
+  const folderIcon = /** @type {HTMLElement} */ (row.children[1]);
+  const favicon = /** @type {HTMLImageElement} */ (row.children[2]);
+  const bookmarkIcon = /** @type {HTMLElement} */ (row.children[3]);
+  const label = /** @type {HTMLElement} */ (row.children[4]);
+  const count = /** @type {HTMLElement} */ (row.children[5]);
 
   if (!(row instanceof HTMLElement)) {
     throw new Error("Expected .tree-row element");

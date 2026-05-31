@@ -102,33 +102,25 @@ export function mountBookmarkTree(shell) {
   const handleTreeKeydown = createBookmarkTreeKeydownHandler(activateSearchNode);
 
   /**
-   * @param {string} message
-   * @returns {void}
+   * Determine the current rendering mode.
+   * @returns {"search" | "tree"}
    */
-  function renderEmptyState(message) {
-    const renderEmptyTreeState = /** @type {TemplateTag} */ (
-      template
-    );
-    const emptyState = renderEmptyTreeState`
-      <div class="tree-empty-state">${message}</div>
-    `;
-    mount(emptyState, shell.treeList);
-    stopList = () => {
-      emptyState.unmount?.();
-    };
+  function getCurrentMode() {
+    return searchState.selectors.isSearching() ? "search" : "tree";
   }
 
-  /** @returns {void} */
-  function renderMode() {
+  /**
+   * Mount the list for the given mode. Only called when mode changes.
+   * The list() function's internal effect handles item-level updates.
+   * Always mounts the list (even if empty) -- the empty-state effect
+   * manages the "No bookmarks" message independently.
+   * @returns {void}
+   */
+  function mountListForMode() {
     stopList();
     shell.treeList.replaceChildren();
 
-    if (searchState.selectors.isSearching()) {
-      if (searchState.selectors.getResults().length === 0) {
-        renderEmptyState("No results found");
-        return;
-      }
-
+    if (getCurrentMode() === "search") {
       stopList = list(
         shell.treeList,
         SEARCH_RESULT_HTML,
@@ -144,32 +136,69 @@ export function mountBookmarkTree(shell) {
       return;
     }
 
-    if (treeState.selectors.getVisibleNodeEntries().length === 0) {
-      renderEmptyState("No bookmarks or folders yet");
-      return;
-    }
-
+    // Tree mode
     stopList = list(
       shell.treeList,
       TREE_NODE_HTML,
       () => treeState.selectors.getVisibleNodeEntries(),
       (item) => item.id,
-        (el, item) => {
-          if (!(el instanceof HTMLElement)) {
-            throw new Error("Expected tree row element");
-          }
-          return mountBookmarkTreeRow(el, item, {
-            onPointerDown: dnd.handleNodePointerDown,
-            shouldIgnoreClick: dnd.shouldIgnoreClick,
-          });
-        },
+      (el, item) => {
+        if (!(el instanceof HTMLElement)) {
+          throw new Error("Expected tree row element");
+        }
+        return mountBookmarkTreeRow(el, item, {
+          onPointerDown: dnd.handleNodePointerDown,
+          shouldIgnoreClick: dnd.shouldIgnoreClick,
+        });
+      },
     );
   }
 
-  const stopModeEffect = effect(() => {
-    renderMode();
-    dnd.syncDropTargetClasses();
+  // Effect 1: Recreate the list only when switching between search and tree modes.
+  // The list() function's internal effect handles item-level updates reactively,
+  // so we don't need to tear it down on every tree/selection/expansion change.
+  /** @type {string | undefined} */
+  let currentMode;
 
+  const stopListEffect = effect(() => {
+    const nextMode = getCurrentMode();
+    if (nextMode !== currentMode) {
+      currentMode = nextMode;
+      mountListForMode();
+    }
+  });
+
+  // Effect 2: Show/hide the empty state message based on whether the list has children.
+  // This runs reactively whenever the underlying data changes (tree items, search results).
+  // Key: we check children.length AFTER the list effect has run. The empty-state component
+  // itself is a child, so we use a flag to distinguish "has real list items" from
+  // "only has the empty-state message".
+  /** @type {Component<HTMLElement> | null} */
+  let emptyStateComponent = null;
+
+  const stopEmptyStateEffect = effect(() => {
+    // Read the signals to determine if data is empty (drives reactivity).
+    // The list() effect has already run by this point and added/removed DOM items.
+    const isSearching = searchState.selectors.isSearching();
+    const dataIsEmpty = isSearching
+      ? searchState.selectors.getResults().length === 0
+      : treeState.selectors.getVisibleNodeEntries().length === 0;
+
+    if (dataIsEmpty && emptyStateComponent === null) {
+      const renderEmptyTreeState = /** @type {TemplateTag} */ (template);
+      const message = isSearching ? "No results found" : "No bookmarks or folders yet";
+      emptyStateComponent = renderEmptyTreeState`
+        <div class="tree-empty-state">${message}</div>
+      `;
+      mount(emptyStateComponent, shell.treeList);
+    } else if (!dataIsEmpty && emptyStateComponent !== null) {
+      emptyStateComponent.unmount?.();
+      emptyStateComponent = null;
+    }
+  });
+
+  // Effect 3: Update the pane meta text independently.
+  const stopMetaEffect = effect(() => {
     if (searchState.selectors.isSearching()) {
       const count = searchState.selectors.getResults().length;
       const query = searchState.selectors.getQuery();
@@ -198,7 +227,9 @@ export function mountBookmarkTree(shell) {
       document.removeEventListener("mousemove", dnd.handleDocumentMouseMove);
       document.removeEventListener("mouseup", dnd.handleDocumentMouseUp);
       document.removeEventListener("mouseleave", dnd.handleDocumentMouseLeave);
-      stopModeEffect();
+      stopListEffect();
+      stopEmptyStateEffect();
+      stopMetaEffect();
       stopList();
       dnd.clearDragState();
     },

@@ -3,7 +3,7 @@
 import { createBookmarkDetail } from "./bookmark-detail.js";
 import { createBulkSelectionDetail } from "./bulk-selection-detail.js";
 import { createFolderDetail } from "./folder-detail.js";
-import { effect, mount, template } from "../../../shared/runtime/naf.js";
+import { effect, mount, template, when } from "../../../shared/runtime/naf.js";
 import { treeState } from "../../tree/state/tree-state.js";
 
 /**
@@ -74,41 +74,50 @@ function createDetailEmptyState() {
  * @returns {{ cleanup: () => void }}
  */
 export function mountDetailPanel(shell) {
-  /** @type {Component<HTMLElement> | undefined} */
-  let currentComponent;
+  // Build a component that uses when() for conditional rendering.
+  // The when() primitive handles unmount/mount lifecycle automatically.
+  const renderDetail = /** @type {TemplateTag} */ (template);
 
-  const stop = effect(() => {
-    currentComponent?.unmount?.();
-    currentComponent = undefined;
-    shell.content.replaceChildren();
+  const detailComponent = renderDetail/*html*/`
+    ${when(
+      () => treeState.computed.selectionCount() > 1,
+      () => createBulkSelectionDetail(),
+      () => when(
+        () => {
+          const selectedNodeId = treeState.selectors.getSelectedNodeId();
+          return selectedNodeId ? treeState.selectors.getNode(selectedNodeId) : null;
+        },
+        (node) => renderSingleSelection(/** @type {TreeNode} */ (node)),
+        () => createDetailEmptyState(),
+      ),
+    )}
+  `;
 
+  mount(detailComponent, shell.content);
+
+  // Separate effect for the meta text -- doesn't participate in component lifecycle.
+  const stopMetaEffect = effect(() => {
     const selectionCount = treeState.computed.selectionCount();
     const selectedNodeId = treeState.selectors.getSelectedNodeId();
     const selectedNode = selectedNodeId ? treeState.selectors.getNode(selectedNodeId) : null;
 
     if (selectionCount > 1) {
       shell.meta.textContent = `${selectionCount} items selected`;
-      currentComponent = createBulkSelectionDetail();
-      mount(currentComponent, shell.content);
       return;
     }
 
     if (!selectedNode) {
       shell.meta.textContent = "No selection yet";
-      currentComponent = createDetailEmptyState();
-      mount(currentComponent, shell.content);
       return;
     }
 
     shell.meta.textContent = isFolderNode(selectedNode) ? "Folder selected" : "Bookmark selected";
-    currentComponent = renderSingleSelection(selectedNode);
-    mount(currentComponent, shell.content);
   });
 
   return {
     cleanup() {
-      currentComponent?.unmount?.();
-      stop();
+      detailComponent.unmount?.();
+      stopMetaEffect();
     },
   };
 }
