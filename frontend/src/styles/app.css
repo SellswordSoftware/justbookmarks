@@ -25,6 +25,7 @@
 @import "../pages/empty-library/empty-library-page.css";
 @import "../features/tree/styles/tree-list.css";
 @import "../features/tree/styles/tree-pane.css";
+@import "../features/search/styles/search-shell.css";
 @import "../features/detail/styles/detail-surface.css";
 @import "../features/move/move-dialog.css";
 @import "../features/import-merge/import-merge-dialog.css";

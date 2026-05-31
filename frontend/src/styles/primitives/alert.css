@@ -7,25 +7,25 @@
 }
 
 .alert-info {
-    background: var(--color-info);
+    background: var(--color-alert-info-bg);
     border-color: var(--color-alert-info-border);
     color: var(--color-info-content);
 }
 
 .alert-success {
-    background: var(--color-success);
+    background: var(--color-alert-success-bg);
     border-color: var(--color-alert-success-border);
     color: var(--color-success-content);
 }
 
 .alert-warning {
-    background: var(--color-warning);
+    background: var(--color-alert-warning-bg);
     border-color: var(--color-alert-warning-border);
     color: var(--color-warning-content);
 }
 
 .alert-error {
-    background: var(--color-error);
+    background: var(--color-alert-error-bg);
     border-color: var(--color-alert-error-border);
     color: var(--color-error-content);
 }

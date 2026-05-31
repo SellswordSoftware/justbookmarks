@@ -35,7 +35,6 @@
   /* ── Base palette ───────────────────────────────────── */
   --color-base-100: #1f1f1f;
   --color-base-200: #252526;
-  --color-base-300: #34363a;
   --color-base-content: #e7e9ee;
 
   /* ── Brand colors ───────────────────────────────────── */
@@ -65,7 +64,6 @@
   --color-surface-1: #202225;
   --color-surface-2: #1b1c1f;
   --color-surface-3: #2a2c31;
-  --color-overlay: rgba(12, 12, 14, 0.76);
 
   /* ── Borders ────────────────────────────────────────── */
   --color-border-soft: rgba(255, 255, 255, 0.12);
@@ -75,7 +73,6 @@
 
   /* ── Gradients ──────────────────────────────────────── */
   --shell-gradient: var(--color-base-200);
-  --panel-gradient: var(--color-surface-1);
 
   /* ── Interactive states ─────────────────────────────── */
   --color-hover-subtle: rgba(255, 255, 255, 0.04);
@@ -87,12 +84,6 @@
 
   /* ── Focus ──────────────────────────────────────────── */
   --color-focus-border: rgba(59, 130, 246, 0.75);
-
-  /* ── Buttons ────────────────────────────────────────── */
-  --color-btn-primary-border: rgba(37, 99, 235, 0.65);
-  --color-btn-primary-hover: #1d4ed8;
-  --color-btn-secondary-border: rgba(255, 255, 255, 0.08);
-  --color-btn-secondary-hover: #3a4250;
 
   /* ── Danger ─────────────────────────────────────────── */
   --color-danger-text: #f87171;
@@ -120,16 +111,9 @@
   --color-icon: #d7dbe2;
   --color-icon-toggle: #d1d5db;
   --color-icon-selected: #eef6ff;
-  --color-icon-badge-bg: #3b82f6;
-  --color-icon-badge-icon: #dbeafe;
-
-  /* ── Tree / list helpers ────────────────────────────── */
-  --color-tree-primary-inset: rgba(147, 197, 253, 0.28);
-  --color-tree-primary-count: rgba(248, 250, 252, 0.78);
 
   /* ── Tree pane actions ──────────────────────────────── */
-  --color-action-btn: var(--color-icon);
-  --color-action-btn-hover: #f3f4f6;
+  /* (moved to tree-pane.css as local values) */
 
   /* ── Form ───────────────────────────────────────────── */
   --color-placeholder: #8b9098;
@@ -144,7 +128,6 @@
   --color-section-bg: rgba(23, 32, 51, 0.5);
   --color-icon-fallback-bg: rgba(255, 255, 255, 0.04);
   --color-stat-bg: rgba(255, 255, 255, 0.03);
-  --color-selected-path-text: rgba(255, 255, 255, 0.78);
 
   /* ── Icon masks ─────────────────────────────────────── */
   --mask-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M128 512L512 512C547.3 512 576 483.3 576 448L576 208C576 172.7 547.3 144 512 144L362.7 144C355.8 144 349 141.8 343.5 137.6L305.1 108.8C294 100.5 280.5 96 266.7 96L128 96C92.7 96 64 124.7 64 160L64 448C64 483.3 92.7 512 128 512z'/%3E%3C/svg%3E");
@@ -153,5 +136,4 @@
   --mask-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14m7-7H5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 
   /* ── Titlebar ───────────────────────────────────────── */
-  --color-titlebar-close-text: #ffffff;
 }

@@ -1,0 +1,22 @@
+.search-shell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.search-shell__label {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.search-shell__input {
+  flex: 1;
+  min-width: 0;
+}
+
+#search-clear[hidden] {
+  display: none;
+}

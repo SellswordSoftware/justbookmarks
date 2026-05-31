@@ -4,7 +4,6 @@
   /* ── Base palette ───────────────────────────────────── */
   --color-base-100: #f3f7fb;
   --color-base-200: #ffffff;
-  --color-base-300: #d5deea;
   --color-base-content: oklch(22.389% 0.031 278.072);
 
   /* ── Brand colors ───────────────────────────────────── */
@@ -34,7 +33,6 @@
   --color-surface-1: rgba(255, 255, 255, 0.92);
   --color-surface-2: rgba(241, 246, 252, 0.96);
   --color-surface-3: rgba(23, 32, 51, 0.03);
-  --color-overlay: rgba(243, 247, 251, 0.82);
 
   /* ── Borders ────────────────────────────────────────── */
   --color-border-soft: rgba(90, 106, 130, 0.22);
@@ -50,11 +48,6 @@
       transparent 30%
     ),
     linear-gradient(180deg, #edf4fb 0%, #f7fafc 100%);
-  --panel-gradient: linear-gradient(
-    180deg,
-    var(--color-surface-1),
-    var(--color-surface-2)
-  );
 
   /* ── Interactive states ─────────────────────────────── */
   --color-hover-subtle: rgba(0, 0, 0, 0.04);
@@ -66,12 +59,6 @@
 
   /* ── Focus ──────────────────────────────────────────── */
   --color-focus-border: rgba(37, 99, 235, 0.8);
-
-  /* ── Buttons ────────────────────────────────────────── */
-  --color-btn-primary-border: rgba(37, 99, 235, 0.5);
-  --color-btn-primary-hover: #1d4ed8;
-  --color-btn-secondary-border: rgba(0, 0, 0, 0.12);
-  --color-btn-secondary-hover: #e2e8f0;
 
   /* ── Danger ─────────────────────────────────────────── */
   --color-danger-text: #dc2626;
@@ -99,21 +86,12 @@
   --color-icon: #475569;
   --color-icon-toggle: #64748b;
   --color-icon-selected: #1e3a5f;
-  --color-icon-badge-bg: #3b82f6;
-  --color-icon-badge-icon: #ffffff;
 
   /* ── Tree / list helpers ────────────────────────────── */
-  --color-tree-selected-bg: var(--color-selection-bg);
-  --color-tree-selected-border: rgba(37, 99, 235, 0.8);
-  --color-tree-primary-bg: #2563eb;
-  --color-tree-primary-text: #ffffff;
-  --color-tree-primary-inset: rgba(147, 197, 253, 0.2);
-  --color-tree-primary-icon: #ffffff;
-  --color-tree-primary-count: rgba(255, 255, 255, 0.78);
+  /* (moved to tree-list.css as local values) */
 
   /* ── Tree pane actions ──────────────────────────────── */
-  --color-action-btn: var(--color-icon);
-  --color-action-btn-hover: #1e293b;
+  /* (moved to tree-pane.css as local values) */
 
   /* ── Form ───────────────────────────────────────────── */
   --color-placeholder: #94a3b8;
@@ -128,8 +106,6 @@
   --color-section-bg: rgba(241, 245, 249, 0.8);
   --color-icon-fallback-bg: rgba(0, 0, 0, 0.04);
   --color-stat-bg: rgba(241, 245, 249, 0.6);
-  --color-selected-path-text: rgba(255, 255, 255, 0.78);
 
   /* ── Titlebar ───────────────────────────────────────── */
-  --color-titlebar-close-text: #ffffff;
 }

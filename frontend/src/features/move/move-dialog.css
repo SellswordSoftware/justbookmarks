@@ -88,6 +88,6 @@
 }
 
 .move-dialog__option.is-selected .move-dialog__option-path {
-  color: var(--color-selected-path-text);
+  color: rgba(255, 255, 255, 0.78);
 }
 

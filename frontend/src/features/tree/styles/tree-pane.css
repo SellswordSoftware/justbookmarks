@@ -38,15 +38,15 @@
 
 .tree-pane__action-btn {
     position: relative;
-    color: var(--color-action-btn);
+    color: var(--color-icon);
 }
 
 .tree-pane__action-btn:hover {
-    color: var(--color-action-btn-hover);
+    color: #f3f4f6;
 }
 
 .tree-pane__action-icon {
-    color: var(--color-action-btn);
+    color: var(--color-icon);
 }
 
 .tree-pane__action-icon--bookmark::before {
@@ -67,7 +67,7 @@
     width: 0.52rem;
     height: 0.52rem;
     border-radius: 999px;
-    background: var(--color-icon-badge-bg);
+    background: #3b82f6;
     box-shadow: 0 0 0 1px var(--color-base-100);
     mask-repeat: no-repeat;
     mask-position: center;
@@ -75,7 +75,7 @@
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-position: center;
     -webkit-mask-size: 1rem 1rem;
-    background-color: var(--color-icon-badge-icon);
+    background-color: #dbeafe;
     mask-image: var(--mask-plus);
     -webkit-mask-image: var(--mask-plus);
 }
@@ -87,4 +87,12 @@
 
 .tree-pane .shell-panel__body {
     padding: 0.45rem 0.35rem 0.75rem;
+}
+
+[data-theme="light"] .tree-pane__action-btn:hover {
+    color: #1e293b;
+}
+
+[data-theme="light"] .tree-pane__action-icon::after {
+    background-color: #ffffff;
 }
