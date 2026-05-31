@@ -55,6 +55,17 @@ export function createBookmarkTreeDndController(options) {
     row.classList.remove("is-drop-before", "is-drop-after", "is-drop-inside", "is-drag-source");
   }
 
+  /** @returns {void} */
+  function clearAllDragClasses() {
+    options.treeList
+      .querySelectorAll(".is-drop-before, .is-drop-after, .is-drop-inside, .is-drag-source")
+      .forEach((row) => {
+        if (row instanceof HTMLElement) {
+          clearDropClasses(row);
+        }
+      });
+  }
+
   /**
    * Set drop-related CSS classes on a single row.
    * @param {HTMLElement} row
@@ -117,10 +128,10 @@ export function createBookmarkTreeDndController(options) {
     draggedNodeId = "";
     dropTarget = null;
     pendingPointerDrag = null;
+    document.body.classList.remove("is-tree-dragging");
+    clearAllDragClasses();
     previousDropTargetId = null;
     previousDragSourceId = null;
-    document.body.classList.remove("is-tree-dragging");
-    syncDropTargetClasses();
   }
 
   /**
@@ -192,16 +203,17 @@ export function createBookmarkTreeDndController(options) {
   }
 
   /**
+   * @param {string} nodeId
    * @param {DropTarget} target
    * @returns {Promise<MoveResult | null>}
    */
-  async function applyDropTarget(target) {
-    if (!draggedNodeId || draggedNodeId === target.targetId) {
+  async function applyDropTarget(nodeId, target) {
+    if (!nodeId || nodeId === target.targetId) {
       return null;
     }
 
     if (target.position === "inside") {
-      return MoveNode(draggedNodeId, target.targetId, -1);
+      return MoveNode(nodeId, target.targetId, -1);
     }
 
     const targetNode = treeState.selectors.getNode(target.targetId);
@@ -218,7 +230,7 @@ export function createBookmarkTreeDndController(options) {
     }
 
     const insertIndex = target.position === "before" ? targetIndex : targetIndex + 1;
-    return MoveNode(draggedNodeId, parentId, insertIndex);
+    return MoveNode(nodeId, parentId, insertIndex);
   }
 
   /**
@@ -299,15 +311,12 @@ export function createBookmarkTreeDndController(options) {
       }
 
       try {
-        draggedNodeId = draggedId;
-        const result = await applyDropTarget(finalDropTarget);
+        const result = await applyDropTarget(draggedId, finalDropTarget);
         if (result && !treeState.actions.applyMoveResult(result)) {
           await treeState.actions.refresh();
         }
       } catch (caughtError) {
         uiState.actions.showToast(`Move failed: ${getErrorMessage(caughtError)}`, "error");
-      } finally {
-        draggedNodeId = "";
       }
     })();
   }

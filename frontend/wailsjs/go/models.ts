@@ -328,11 +328,11 @@ export namespace wailsapi {
 	    oldParentId: string;
 	    newParentId: string;
 	    newIndex: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MoveResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.movedNodes = this.convertValues(source["movedNodes"], bookmarks.FlatNode);
@@ -340,7 +340,7 @@ export namespace wailsapi {
 	        this.newParentId = source["newParentId"];
 	        this.newIndex = source["newIndex"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -361,3 +361,4 @@ export namespace wailsapi {
 	}
 
 }
+
