@@ -103,7 +103,7 @@ function renderGroup(group) {
 }
 
 /**
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createKeyboardShortcutsDialog() {
   let cleanupRendered = () => {};

@@ -49,7 +49,7 @@ function canFetchMetadata(value) {
 
 /**
  * @param {AddBookmarkFormOptions} options
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 export function createAddBookmarkForm(options) {
   const open = signal(false);

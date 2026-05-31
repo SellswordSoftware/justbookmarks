@@ -22,7 +22,7 @@ import { createAddFolderForm } from "../../features/editing/add-folder-form.js";
  *   createFile: () => Promise<void>,
  *   importFile: () => Promise<void>
  * }} actions
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createToolbarActionsComponent(actions) {
   const cleanup = cleanupCollector();

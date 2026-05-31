@@ -33,8 +33,6 @@ import {
  * signals/actions without changing the import surface.
  */
 
-/** @typedef {import("../../types.js").PersistedUIState} PersistedUIState */
-/** @typedef {import("../../types.js").WindowState} WindowState */
 const currentFilePath = signal("");
 const hasTriedLoad = signal(false);
 const persistenceReady = signal(false);

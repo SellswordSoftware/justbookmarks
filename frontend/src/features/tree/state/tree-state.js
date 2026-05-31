@@ -266,7 +266,7 @@ function isExpanded(id) {
 
 /**
  * @param {TreeNode[]=} nodes
- * @returns {import("../../../types.js").VisibleTreeNodeEntry[]}
+ * @returns {VisibleTreeNodeEntry[]}
  */
 function getVisibleNodeEntries(nodes = tree()) {
   return getVisibleNodeEntriesFromState(nodes, expandedNodeIds());

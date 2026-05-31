@@ -1,9 +1,5 @@
 // @ts-check
 
-/** @typedef {import("../../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../../types.js").FolderNode} FolderNode */
-/** @typedef {import("../../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry */
-
 /**
  * @param {TreeNode} node
  * @returns {node is FolderNode}

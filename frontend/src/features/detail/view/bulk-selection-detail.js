@@ -21,29 +21,29 @@ import { uiState } from "../../../shared/state/ui-state.js";
  */
 
 /**
- * @param {import("../../../types.js").TreeNode} node
- * @returns {node is import("../../../types.js").FolderNode}
+ * @param {TreeNode} node
+ * @returns {node is FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;
 }
 
 /**
- * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 export function createBulkSelectionDetail() {
   const runningAction = signal(/** @type {RunningAction} */ (""));
   const cleanup = cleanupCollector();
 
   /**
-   * @returns {import("../../../types.js").TreeNode[]}
+   * @returns {TreeNode[]}
    */
   function getSelectedNodes() {
     return treeState.selectors.getSelectedNodes();
   }
 
   /**
-   * @returns {import("../../../types.js").TreeNode | null}
+   * @returns {TreeNode | null}
    */
   function getFirstNode() {
     return getSelectedNodes()[0] ?? null;

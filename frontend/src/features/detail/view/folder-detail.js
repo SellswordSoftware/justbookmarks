@@ -16,10 +16,6 @@ import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
- * @typedef {import("../../../types.js").FolderNode} FolderNode
- */
-
-/**
  * @param {string} value
  * @returns {boolean}
  */
@@ -29,7 +25,7 @@ function hasRealDate(value) {
 
 /**
  * @param {FolderNode} folder
- * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 export function createFolderDetail(folder) {
   const editing = signal(false);

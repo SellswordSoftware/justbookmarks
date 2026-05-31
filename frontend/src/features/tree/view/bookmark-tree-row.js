@@ -5,10 +5,6 @@ import { treeState } from "../state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
- * @typedef {import("../../../types.js").VisibleTreeNodeEntry} VisibleTreeNodeEntry
- */
-
-/**
  * @typedef {object} TreeNodeMountOptions
  * @property {(entry: VisibleTreeNodeEntry, event: MouseEvent) => void} onPointerDown
  * @property {() => boolean} shouldIgnoreClick
@@ -16,7 +12,7 @@ import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
  * @param {VisibleTreeNodeEntry["node"]} node
- * @returns {node is import("../../../types.js").FolderNode}
+ * @returns {node is FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;

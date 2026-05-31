@@ -1,9 +1,5 @@
 // @ts-check
 
-/** @typedef {import("../../types.js").PerFileTreeState} PerFileTreeState */
-/** @typedef {import("../../types.js").WindowState} WindowState */
-/** @typedef {import("../../types.js").PersistedUIState} PersistedUIState */
-
 const STORAGE_KEY = "justbookmarks.ui-state.v1";
 const MAX_FILE_STATES = 10;
 

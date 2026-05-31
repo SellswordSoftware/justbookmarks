@@ -5,7 +5,7 @@ import { treeState } from "../state/tree-state.js";
 
 /**
  * @param {HTMLElement} el
- * @param {() => import("../../../types.js").BookmarkIndexEntry} item
+ * @param {() => BookmarkIndexEntry} item
  * @returns {() => void}
  */
 export function mountBookmarkSearchResultRow(el, item) {

@@ -7,12 +7,8 @@ import { effect, mount, template } from "../../../shared/runtime/naf.js";
 import { treeState } from "../../tree/state/tree-state.js";
 
 /**
- * @typedef {import("../../../types.js").TreeNode} TreeNode
- */
-
-/**
  * @param {TreeNode} node
- * @returns {node is import("../../../types.js").FolderNode}
+ * @returns {node is FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;
@@ -47,7 +43,7 @@ export function collectDetailPanelShell(root) {
 
 /**
  * @param {TreeNode} node
- * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function renderSingleSelection(node) {
   if (isFolderNode(node)) {
@@ -58,7 +54,7 @@ function renderSingleSelection(node) {
 }
 
 /**
- * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createDetailEmptyState() {
   const renderEmptyState = /** @type {TemplateTag} */ (
@@ -78,7 +74,7 @@ function createDetailEmptyState() {
  * @returns {{ cleanup: () => void }}
  */
 export function mountDetailPanel(shell) {
-  /** @type {import("../../../shared/runtime/naf.js").Component<HTMLElement> | undefined} */
+  /** @type {Component<HTMLElement> | undefined} */
   let currentComponent;
 
   const stop = effect(() => {

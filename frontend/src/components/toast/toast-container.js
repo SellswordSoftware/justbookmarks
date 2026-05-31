@@ -3,8 +3,6 @@
 import { effect, list } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
-/** @typedef {import("../../types.js").ToastType} ToastType */
-
 /**
  * @param {ParentNode} root
  * @returns {{ container: HTMLElement }}

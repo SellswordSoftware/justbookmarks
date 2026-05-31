@@ -17,10 +17,6 @@ import { treeState } from "../tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /**
- * @typedef {import("../../types.js").MoveTarget} MoveTarget
- */
-
-/**
  * @param {ParentNode} root
  * @returns {{ container: HTMLElement }}
  */
@@ -96,7 +92,7 @@ async function move() {
  *   cancelButton: HTMLButtonElement,
  *   confirmButton: HTMLButtonElement,
  * }) => void} onMountElements
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createMoveDialog(view, onMountElements) {
   const renderDialog =

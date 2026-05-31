@@ -27,7 +27,7 @@ import { uiState } from "../../../shared/state/ui-state.js";
  *   shouldIgnoreClick: () => boolean,
  *   syncDropTargetClasses: () => void,
  *   clearDragState: () => void,
- *   handleNodePointerDown: (entry: import("../../../types.js").VisibleTreeNodeEntry, event: MouseEvent) => void,
+ *   handleNodePointerDown: (entry: VisibleTreeNodeEntry, event: MouseEvent) => void,
  *   handleDocumentMouseMove: (event: MouseEvent) => void,
  *   handleDocumentMouseUp: (event: MouseEvent) => void,
  *   handleDocumentMouseLeave: () => void
@@ -169,7 +169,7 @@ export function createBookmarkTreeDndController(options) {
   }
 
   /**
-   * @param {import("../../../types.js").VisibleTreeNodeEntry} entry
+   * @param {VisibleTreeNodeEntry} entry
    * @param {MouseEvent} event
    * @returns {void}
    */

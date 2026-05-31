@@ -38,13 +38,13 @@ export function collectImportMergeDialogShell(root) {
 /**
  * @param {{
  *   importPath: string,
- *   preview: import("../../types.js").MergePreview | null,
+ *   preview: MergePreview | null,
  *   previewLoading: boolean,
  *   applyLoading: boolean,
  *   error: string
  * }} view
  * @param {(elements: ImportMergeDialogElements) => void} onMountElements
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createImportMergeDialog(view, onMountElements) {
   const applyLabel = view.applyLoading ? "Applying..." : "Apply Merge";

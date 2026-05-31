@@ -7,8 +7,6 @@ import {
   getSiblingIds,
 } from "./structure.js";
 
-/** @typedef {import("../../../types.js").TreeNode} TreeNode */
-
 /**
  * @typedef {object} SelectionSnapshot
  * @property {string[]} selectedNodeIds

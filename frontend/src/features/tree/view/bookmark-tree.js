@@ -8,10 +8,6 @@ import { createBookmarkTreeKeydownHandler } from "../interactions/bookmark-tree-
 import { mountBookmarkSearchResultRow } from "./bookmark-search-result-row.js";
 import { mountBookmarkTreeRow } from "./bookmark-tree-row.js";
 
-/**
- * @typedef {import("../../../types.js").BookmarkIndexEntry} BookmarkIndexEntry
- */
-
 /** @type {string} */
 const TREE_NODE_HTML = /*html*/ `
   <article class="tree-node">

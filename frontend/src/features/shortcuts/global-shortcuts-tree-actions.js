@@ -22,8 +22,8 @@ import {
  */
 
 /**
- * @param {import("../../types.js").TreeNode} node
- * @returns {node is import("../../types.js").FolderNode}
+ * @param {TreeNode} node
+ * @returns {node is FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;

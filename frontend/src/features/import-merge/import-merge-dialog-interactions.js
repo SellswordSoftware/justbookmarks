@@ -13,7 +13,7 @@ import { importMergeState } from "./import-merge-state.js";
  *   cancelButton: HTMLButtonElement,
  *   applyButton: HTMLButtonElement,
  * }} elements
- * @param {{ preview: import("../../types.js").MergePreview | null, previewLoading: boolean, applyLoading: boolean }} view
+ * @param {{ preview: MergePreview | null, previewLoading: boolean, applyLoading: boolean }} view
  * @returns {() => void}
  */
 export function bindImportMergeDialogInteractions(elements, view) {

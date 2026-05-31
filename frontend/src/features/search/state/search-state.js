@@ -11,8 +11,6 @@ import { computed, signal } from "../../../shared/runtime/naf.js";
  * - derived filtered results
  */
 
-/** @typedef {import("../../../types.js").BookmarkIndexEntry} BookmarkIndexEntry */
-
 const query = signal("");
 const flatIndex = signal(/** @type {BookmarkIndexEntry[]} */ ([]));
 

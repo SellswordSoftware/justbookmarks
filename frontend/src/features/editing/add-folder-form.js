@@ -32,7 +32,7 @@ import { uiState } from "../../shared/state/ui-state.js";
 
 /**
  * @param {AddFolderFormOptions} options
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 export function createAddFolderForm(options) {
   const open = signal(false);

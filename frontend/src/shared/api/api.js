@@ -1,15 +1,5 @@
 // @ts-check
 
-/** @typedef {import("../../types.js").BookmarkCreate} BookmarkCreate */
-/** @typedef {import("../../types.js").BookmarkPatch} BookmarkPatch */
-/** @typedef {import("../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../types.js").BookmarkIndexEntry} BookmarkIndexEntry */
-/** @typedef {import("../../types.js").FolderMergeItem} FolderMergeItem */
-/** @typedef {import("../../types.js").BookmarkMergeItem} BookmarkMergeItem */
-/** @typedef {import("../../types.js").BookmarkConflictItem} BookmarkConflictItem */
-/** @typedef {import("../../types.js").MergePreview} MergePreview */
-/** @typedef {import("../../types.js").MergeApplyResult} MergeApplyResult */
-/** @typedef {import("../../types.js").HistoryState} HistoryState */
 /** @typedef {typeof import("../../../wailsjs/go/main/App")} WailsAppBindings */
 /** @typedef {typeof import("../../../wailsjs/go/wailsapi/Handler")} WailsHandlerBindings */
 /** @typedef {import("../../../wailsjs/go/models").wailsapi.NodeDTO} NodeDTO */

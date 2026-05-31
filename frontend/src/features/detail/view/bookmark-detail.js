@@ -11,10 +11,6 @@ import { createBookmarkDetailActions } from "../actions/bookmark-detail-actions.
 import { createBookmarkMetadataWorkflow } from "../actions/bookmark-detail-metadata.js";
 
 /**
- * @typedef {import("../../../types.js").BookmarkNode} BookmarkNode
- */
-
-/**
  * @param {string} value
  * @returns {boolean}
  */
@@ -24,7 +20,7 @@ function hasRealDate(value) {
 
 /**
  * @param {BookmarkNode} bookmark
- * @returns {import("../../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 export function createBookmarkDetail(bookmark) {
   const editing = signal(false);

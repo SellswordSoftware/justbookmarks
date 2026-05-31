@@ -12,10 +12,6 @@ import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
- * @typedef {import("../../../types.js").BookmarkNode} BookmarkNode
- */
-
-/**
  * @param {object} options
  * @param {BookmarkNode} options.bookmark
  * @param {() => string} options.getCurrentTitle

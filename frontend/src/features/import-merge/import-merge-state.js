@@ -7,8 +7,6 @@ import { treeState } from "../tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
 import { appState } from "../../shared/state/app-state.js";
 
-/** @typedef {import("../../types.js").MergePreview} MergePreview */
-
 const importMergeOpen = signal(false);
 const importMergePath = signal("");
 const importMergePreview = signal(/** @type {MergePreview | null} */ (null));

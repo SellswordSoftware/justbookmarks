@@ -17,8 +17,6 @@ import { collectToastContainerShell, mountToastContainer } from "../components/t
 import { collectTitlebarShell, mountTitlebar } from "../components/titlebar/titlebar.js";
 import { mountPageHost } from "./page-host.js";
 
-/** @typedef {import("../types.js").TreeNode} TreeNode */
-
 /**
  * @typedef {object} AppShell
  * @property {HTMLElement} root

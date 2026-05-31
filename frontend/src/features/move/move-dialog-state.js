@@ -12,10 +12,6 @@ import { computed, signal } from "../../shared/runtime/naf.js";
  * - excluded-descendant logic for folder moves
  */
 
-/** @typedef {import("../../types.js").TreeNode} TreeNode */
-/** @typedef {import("../../types.js").MoveDialogRequest} MoveDialogRequest */
-/** @typedef {import("../../types.js").MoveTarget} MoveTarget */
-
 const open = signal(false);
 const request = signal(/** @type {MoveDialogRequest | null} */ (null));
 const selectedTarget = signal("");
@@ -23,7 +19,7 @@ const treeNodes = signal(/** @type {TreeNode[]} */ ([]));
 
 /**
  * @param {TreeNode} node
- * @returns {node is import("../../types.js").FolderNode}
+ * @returns {node is FolderNode}
  */
 function isFolderNode(node) {
   return node.type === 0;

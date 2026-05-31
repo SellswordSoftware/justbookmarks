@@ -1,7 +1,5 @@
 // @ts-check
 
-/** @typedef {import("../../../types.js").TreeNode} TreeNode */
-
 /**
  * @typedef {object} RawBookmarkNode
  * @property {1} type

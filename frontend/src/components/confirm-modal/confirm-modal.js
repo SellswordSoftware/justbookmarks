@@ -19,7 +19,7 @@ export function collectConfirmModalShell(root) {
 
 /**
  * @param {ReturnType<typeof uiState.selectors.getModal>} modal
- * @returns {import("../../shared/runtime/naf.js").Component<HTMLElement>}
+ * @returns {Component<HTMLElement>}
  */
 function createConfirmModal(modal) {
   const renderConfirmModal =

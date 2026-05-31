@@ -28,7 +28,7 @@ const PREVIEW_ROW_HTML = /*html*/ `
 `;
 
 /**
- * @param {import("../../types.js").MergePreview} preview
+ * @param {MergePreview} preview
  * @returns {ImportMergePreviewSection[]}
  */
 export function buildImportMergePreviewSections(preview) {
@@ -70,7 +70,7 @@ export function buildImportMergePreviewSections(preview) {
 
 /**
  * @param {HTMLElement} body
- * @param {import("../../types.js").MergePreview | null} preview
+ * @param {MergePreview | null} preview
  * @param {boolean} previewLoading
  * @returns {() => void}
  */

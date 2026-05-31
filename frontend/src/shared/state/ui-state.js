@@ -12,11 +12,6 @@ import { signal } from "../../shared/runtime/naf.js";
  * - async confirm execution flow
  */
 
-/** @typedef {import("../../types.js").Toast} Toast */
-/** @typedef {import("../../types.js").ToastType} ToastType */
-/** @typedef {import("../../types.js").ConfirmCallback} ConfirmCallback */
-/** @typedef {import("../../types.js").ConfirmModalState} ConfirmModalState */
-
 const DEFAULT_CONFIRM_LABEL = "OK";
 
 const toasts = signal(/** @type {Toast[]} */ ([]));
