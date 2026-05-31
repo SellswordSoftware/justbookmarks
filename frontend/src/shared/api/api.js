@@ -153,10 +153,13 @@ export async function LoadFile(path) {
   await handler.LoadFile(path);
 }
 
-/** @returns {Promise<TreeNode[]>} */
-export async function GetTree() {
+/** @returns {Promise<FlatNode[]>} */
+export async function GetFlatTree() {
   const handler = getHandlerBindings();
-  return handler ? (await handler.GetTree()).map(normalizeTreeNode) : [];
+  if (!handler) {
+    return [];
+  }
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetFlatTree()));
 }
 
 /** @returns {Promise<BookmarkIndexEntry[]>} */

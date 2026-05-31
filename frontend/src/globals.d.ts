@@ -105,6 +105,20 @@ declare global {
 
   type TreeNode = FolderNode | BookmarkNode;
 
+  interface FlatNode {
+    id: string;
+    type: NodeType;
+    parentId: string;
+    name: string;
+    url: string;
+    icon: string;
+    iconURI: string;
+    addDate: TimestampValue;
+    lastModified: TimestampValue;
+    meta: string;
+    childCount: number;
+  }
+
   interface BookmarkIndexEntry {
     nodeId: string;
     title: string;

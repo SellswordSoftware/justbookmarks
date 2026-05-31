@@ -184,9 +184,27 @@ func TestApplyImportMergeSavesOnceAndUpdatesTree(t *testing.T) {
 		t.Fatalf("expected saved file to contain merged bookmark, got %s", string(savedData))
 	}
 
-	workFolder := handler.GetTree()[0].Folder
-	if len(workFolder.Children) != 1 || workFolder.Children[0].Bookmark == nil || workFolder.Children[0].Bookmark.Title != "GitHub" {
-		t.Fatalf("expected in-memory tree to include merged bookmark, got %+v", handler.GetTree())
+	// Verify the in-memory tree includes the merged bookmark.
+	flatTree := handler.GetFlatTree()
+	var workFolder *bookmarks.FlatNode
+	for i := range flatTree {
+		if flatTree[i].Name == "Work" && flatTree[i].Type == bookmarks.TypeFolder {
+			workFolder = &flatTree[i]
+			break
+		}
+	}
+	if workFolder == nil {
+		t.Fatalf("expected Work folder in flat tree, got %+v", flatTree)
+	}
+	var githubBookmark *bookmarks.FlatNode
+	for i := range flatTree {
+		if flatTree[i].ParentID == workFolder.ID && flatTree[i].Name == "GitHub" {
+			githubBookmark = &flatTree[i]
+			break
+		}
+	}
+	if githubBookmark == nil {
+		t.Fatalf("expected GitHub bookmark as child of Work folder, got %+v", flatTree)
 	}
 }
 
@@ -248,7 +266,7 @@ func TestUndoRedoTracksHistoryForRename(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID
+	folderID := findFlatNode(t, handler.GetFlatTree(), "Work").ID
 
 	if err := handler.UpdateFolderName(folderID, "Projects"); err != nil {
 		t.Fatalf("UpdateFolderName returned error: %v", err)
@@ -258,14 +276,14 @@ func TestUndoRedoTracksHistoryForRename(t *testing.T) {
 	if !state.CanUndo || state.UndoLabel != "Rename Folder" || state.CanRedo {
 		t.Fatalf("unexpected history state after rename: %+v", state)
 	}
-	if got := handler.GetTree()[0].Folder.Name; got != "Projects" {
+	if got := findFlatNode(t, handler.GetFlatTree(), "Projects").Name; got != "Projects" {
 		t.Fatalf("expected renamed folder, got %q", got)
 	}
 
 	if _, err := handler.Undo(); err != nil {
 		t.Fatalf("Undo returned error: %v", err)
 	}
-	if got := handler.GetTree()[0].Folder.Name; got != "Work" {
+	if got := findFlatNode(t, handler.GetFlatTree(), "Work").Name; got != "Work" {
 		t.Fatalf("expected original folder name after undo, got %q", got)
 	}
 
@@ -285,7 +303,7 @@ func TestUndoRedoTracksHistoryForRename(t *testing.T) {
 	if _, err := handler.Redo(); err != nil {
 		t.Fatalf("Redo returned error: %v", err)
 	}
-	if got := handler.GetTree()[0].Folder.Name; got != "Projects" {
+	if got := findFlatNode(t, handler.GetFlatTree(), "Projects").Name; got != "Projects" {
 		t.Fatalf("expected renamed folder after redo, got %q", got)
 	}
 }
@@ -300,7 +318,7 @@ func TestNewCommandClearsRedoStack(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID
+	folderID := findFlatNode(t, handler.GetFlatTree(), "Work").ID
 
 	if err := handler.UpdateFolderName(folderID, "Projects"); err != nil {
 		t.Fatalf("UpdateFolderName returned error: %v", err)
@@ -328,7 +346,7 @@ func TestLoadFileClearsHistory(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID
+	folderID := findFlatNode(t, handler.GetFlatTree(), "Work").ID
 
 	if err := handler.UpdateFolderName(folderID, "Projects"); err != nil {
 		t.Fatalf("UpdateFolderName returned error: %v", err)
@@ -372,7 +390,7 @@ func TestFailedSaveDoesNotMutateTreeOrHistory(t *testing.T) {
 			},
 		},
 	})
-	folderID := handler.GetTree()[0].ID
+	folderID := findFlatNode(t, handler.GetFlatTree(), "Work").ID
 
 	handler.filePath = t.TempDir()
 
@@ -381,7 +399,7 @@ func TestFailedSaveDoesNotMutateTreeOrHistory(t *testing.T) {
 		t.Fatal("expected save failure from UpdateFolderName")
 	}
 
-	if got := handler.GetTree()[0].Folder.Name; got != "Work" {
+	if got := findFlatNode(t, handler.GetFlatTree(), "Work").Name; got != "Work" {
 		t.Fatalf("expected tree to remain unchanged after failed save, got %q", got)
 	}
 
@@ -444,9 +462,18 @@ func TestUndoRestoresTreeAfterImportMerge(t *testing.T) {
 		t.Fatalf("Undo returned error: %v", err)
 	}
 
-	workFolder := handler.GetTree()[0].Folder
-	if len(workFolder.Children) != 0 {
-		t.Fatalf("expected merge undo to restore pre-merge tree, got %+v", handler.GetTree())
+	// Verify the merge was undone -- Work folder should have no children.
+	flatTree := handler.GetFlatTree()
+	workFolder := findFlatNode(t, flatTree, "Work")
+	var hasChildren bool
+	for i := range flatTree {
+		if flatTree[i].ParentID == workFolder.ID {
+			hasChildren = true
+			break
+		}
+	}
+	if hasChildren {
+		t.Fatalf("expected merge undo to restore pre-merge tree (no children), got %+v", flatTree)
 	}
 }
 
@@ -464,4 +491,16 @@ func loadHandlerWithTree(t *testing.T, tree []bookmarks.Node) (*Handler, string)
 	}
 
 	return handler, path
+}
+
+// findFlatNode finds a node by name in a flat tree.
+func findFlatNode(t *testing.T, flat []bookmarks.FlatNode, name string) *bookmarks.FlatNode {
+	t.Helper()
+	for i := range flat {
+		if flat[i].Name == name {
+			return &flat[i]
+		}
+	}
+	t.Fatalf("flat tree: node %q not found", name)
+	return nil
 }

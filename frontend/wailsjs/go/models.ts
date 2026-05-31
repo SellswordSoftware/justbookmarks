@@ -56,6 +56,38 @@ export namespace bookmarks {
 	        this.url = source["url"];
 	    }
 	}
+	export class FlatNode {
+	    id: string;
+	    type: number;
+	    parentId: string;
+	    name: string;
+	    url: string;
+	    icon: string;
+	    iconURI: string;
+	    addDate: string;
+	    lastModified: string;
+	    meta: string;
+	    childCount: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new FlatNode(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.type = source["type"];
+	        this.parentId = source["parentId"];
+	        this.name = source["name"];
+	        this.url = source["url"];
+	        this.icon = source["icon"];
+	        this.iconURI = source["iconURI"];
+	        this.addDate = source["addDate"];
+	        this.lastModified = source["lastModified"];
+	        this.meta = source["meta"];
+	        this.childCount = source["childCount"];
+	    }
+	}
 	export class FolderMergeItem {
 	    path: string;
 	    name: string;

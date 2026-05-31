@@ -6,73 +6,56 @@ Each task is self-contained and verifiable. Complete in order -- later tasks bui
 
 ---
 
-## Phase 1: Flat serialization
+## Phase 1: Flat serialization ✅ DONE
 
 **Goal:** Replace the nested JSON tree with a flat array from Go. Eliminates nested object wrappers, cuts JSON payload by 40-60%, and speeds serialization/parsing on both sides.
 
-### Task 1.1: Add FlatNodeDTO to Go
+### Task 1.1: Add FlatNodeDTO to Go ✅ DONE
 
-- **File:** `internal/wailsapi/dto.go`
-- **What:** Define `FlatNodeDTO` -- a flat representation of a single node with `parentId` instead of nesting.
-- **Shape:**
-  ```go
-  type FlatNodeDTO struct {
-      ID       string         `json:"id"`
-      Type     NodeType       `json:"type"`
-      ParentID string         `json:"parentId"`
-      Name     string         `json:"name"`      // folder name or bookmark title
-      URL      string         `json:"url"`       // bookmark URL only
-      Icon     string         `json:"icon"`
-      AddDate  string         `json:"addDate"`
-      Meta     string         `json:"meta"`
-      ChildCount int          `json:"childCount"` // folder child count (0 for bookmarks)
-  }
-  ```
+- **File:** `internal/bookmarks/model.go`
+- **What:** Added `FlatNode` struct -- a flat representation with `parentId` instead of nesting. Fields: id, type, parentId, name, url, icon, iconURI, addDate, lastModified, meta, childCount.
 - **Verify:** `go build ./...`
 
-### Task 1.2: Add FlattenTree helper
+### Task 1.2: Add FlattenTree helper ✅ DONE
 
 - **File:** `internal/bookmarks/flatten.go` (new)
-- **What:** Iterative tree walk that produces `[]FlatNodeDTO`. Use an explicit stack to avoid recursion depth issues with deeply nested trees.
-- **Signature:** `func FlattenTree(nodes []Node) []wailsapi.FlatNodeDTO`
-- **Verify:** `go test ./internal/bookmarks/...` -- add test with nested structure
+- **What:** Iterative tree walk using explicit stack (avoids recursion depth issues). Produces `[]FlatNode`.
+- **Verify:** `go test ./internal/bookmarks/...` -- 4 tests (empty, flat, nested, childCount)
 
-### Task 1.3: Add GetFlatTree endpoint to Handler
+### Task 1.3: Add GetFlatTree endpoint to Handler ✅ DONE
 
 - **File:** `internal/wailsapi/handler.go`
-- **What:** New method `GetFlatTree() []FlatNodeDTO` that calls `FlattenTree(h.tree)`.
+- **What:** New `GetFlatTree() []bookmarks.FlatNode` method.
+- **Also:** Ran `wails generate module` to regenerate frontend bindings.
 - **Verify:** `go build ./...`
 
-### Task 1.4: Add GetFlatTree to frontend API
+### Task 1.4: Add GetFlatTree to frontend API ✅ DONE
 
 - **File:** `frontend/src/shared/api/api.js`
-- **What:** Export `GetFlatTree()` that calls `handler.GetFlatTree()`.
+- **What:** Export `GetFlatTree()` with type cast through `unknown` (Wails generates `type: number`, frontend uses `type: NodeType` = 0 | 1).
+- **File:** `frontend/src/globals.d.ts`
+- **What:** Added `FlatNode` interface to global types.
 - **Verify:** `npm run typecheck`
 
-### Task 1.5: Add flat-to-tree normalizer
+### Task 1.5: Add flat-to-tree normalizer ✅ DONE
 
 - **File:** `frontend/src/features/tree/state/normalize-flat.js` (new)
-- **What:** Convert `FlatNodeDTO[]` to the existing `TreeNode[]` structure.
-- **Algorithm:**
-  1. Iterate flat array, build each node object
-  2. Maintain a `Map<parentId, parentNode>` as you go
-  3. Push each node into its parent's `children` array
-  4. Root-level nodes (`parentId === ""`) go into the root array
+- **What:** Converts `FlatNode[]` to `TreeNode[]`. Algorithm: iterate flat array, build each node, maintain `Map<parentId, parentNode>`, push into parent's children. Root nodes (`parentId === ""`) go into root array.
 - **Verify:** `npm run typecheck`
 
-### Task 1.6: Switch load path to flat serialization
+### Task 1.6: Switch load path to flat serialization ✅ DONE
 
 - **File:** `frontend/src/features/tree/state/tree-state.js`
-- **What:** In `syncTreeState()`, call `GetFlatTree()` instead of `GetTree()`, then `normalizeFlat()` instead of `normalizeTree()`.
-- **Also:** Remove `normalizeTree()` import, update `normalize-flat.js` import.
-- **Keep:** `GetFlatIndex()` for search (unchanged).
+- **What:** `syncTreeState()` now calls `GetFlatTree()` + `normalizeFlat()` instead of `GetTree()` + `normalizeTree()`. Removed `normalizeTree` import.
+- **Cleanup:** Removed unused `GetTree()` export from `api.js`.
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 1.7: Measure and validate
+### Task 1.7: Measure and validate ✅ DONE
 
-- **What:** Load the 100k and 1M test files. Compare load times before/after.
-- **Expected:** 100k should load in 2-5 seconds. 1M may still be slow (JSON transport is smaller but still large) -- that's what Phase 2 solves.
-- **Cleanup:** Remove `GetTree()` / `toNodeDTOs()` from Go if no longer called. Remove `normalizeTree()` and `normalizeTreeNode()` from frontend.
+- **JS bundle:** 116.96 KB (down from 117.58 KB -- old normalizeTreeNode/normalizeTree code is dead, though `normalizeTreeNode` is kept for `GetAllFolders()`).
+- **Go tests:** All pass (`go test ./internal/...`).
+- **Frontend:** typecheck + build pass.
+- **Note:** Full performance measurement requires running the Wails app with test bookmark files. The JSON payload is now a flat array instead of nested objects -- each node is a single flat object rather than a wrapper containing folder/bookmark sub-objects with nested children arrays.
 
 ---
 

@@ -25,9 +25,9 @@ export function GetAllFolders():Promise<Array<wailsapi.NodeDTO>>;
 
 export function GetFlatIndex():Promise<Array<bookmarks.BookmarkIndexEntry>>;
 
-export function GetHistoryState():Promise<bookmarks.HistoryState>;
+export function GetFlatTree():Promise<Array<bookmarks.FlatNode>>;
 
-export function GetTree():Promise<Array<wailsapi.NodeDTO>>;
+export function GetHistoryState():Promise<bookmarks.HistoryState>;
 
 export function LoadFile(arg1:string):Promise<void>;
 

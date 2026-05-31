@@ -1,6 +1,6 @@
 // @ts-check
 
-import { GetFlatIndex, GetTree, LoadFile } from "../../../shared/api/api.js";
+import { GetFlatIndex, GetFlatTree, LoadFile } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { computed, signal } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
@@ -13,7 +13,7 @@ import {
   isExpandedId,
   toggleExpandedId,
 } from "./expansion.js";
-import { normalizeTree } from "./normalize.js";
+import { normalizeFlat } from "./normalize-flat.js";
 import {
   getPersistentTreeState,
   pruneSelectionState,
@@ -320,8 +320,8 @@ function pruneSelection() {
 
 /** @returns {Promise<void>} */
 async function syncTreeState() {
-  const [treeData, flatIndex] = await Promise.all([GetTree(), GetFlatIndex()]);
-  tree(normalizeTree(treeData));
+  const [flatData, flatIndex] = await Promise.all([GetFlatTree(), GetFlatIndex()]);
+  tree(normalizeFlat(flatData));
   searchState.actions.setIndex(flatIndex);
   pruneSelection();
 }

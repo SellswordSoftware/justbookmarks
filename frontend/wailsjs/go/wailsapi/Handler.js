@@ -46,12 +46,12 @@ export function GetFlatIndex() {
   return window['go']['wailsapi']['Handler']['GetFlatIndex']();
 }
 
-export function GetHistoryState() {
-  return window['go']['wailsapi']['Handler']['GetHistoryState']();
+export function GetFlatTree() {
+  return window['go']['wailsapi']['Handler']['GetFlatTree']();
 }
 
-export function GetTree() {
-  return window['go']['wailsapi']['Handler']['GetTree']();
+export function GetHistoryState() {
+  return window['go']['wailsapi']['Handler']['GetHistoryState']();
 }
 
 export function LoadFile(arg1) {

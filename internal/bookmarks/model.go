@@ -5,6 +5,23 @@ import (
 	"time"
 )
 
+// FlatNodeDTO is a flat representation of a single node.
+// Used for efficient serialization of large trees -- no nested objects,
+// parentId references replace the tree hierarchy.
+type FlatNode struct {
+	ID           string `json:"id"`
+	Type         NodeType `json:"type"`
+	ParentID     string `json:"parentId"`
+	Name         string `json:"name"`
+	URL          string `json:"url"`
+	Icon         string `json:"icon"`
+	IconURI      string `json:"iconURI"`
+	AddDate      string `json:"addDate"`
+	LastModified string `json:"lastModified"`
+	Meta         string `json:"meta"`
+	ChildCount   int    `json:"childCount"`
+}
+
 // NodeType distinguishes folders from bookmarks.
 type NodeType int
 

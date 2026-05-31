@@ -48,9 +48,10 @@ func (h *Handler) LoadFile(path string) error {
 	return nil
 }
 
-// GetTree returns the current bookmark tree.
-func (h *Handler) GetTree() []NodeDTO {
-	return toNodeDTOs(h.tree)
+// GetFlatTree returns the current bookmark tree as a flat list of nodes.
+// Each node has a parentId reference instead of nested children.
+func (h *Handler) GetFlatTree() []bookmarks.FlatNode {
+	return bookmarks.FlattenTree(h.tree)
 }
 
 // GetFlatIndex returns a flat index of all bookmarks for search.
