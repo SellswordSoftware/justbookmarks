@@ -242,7 +242,7 @@ export function createBulkSelectionDetail() {
     })
   );
 
-  return renderBulkSelectionDetail`
+  return renderBulkSelectionDetail/*html*/`
     <div class="bulk-selection-detail">
       <div class="bulk-selection-detail__header">
         <div>
