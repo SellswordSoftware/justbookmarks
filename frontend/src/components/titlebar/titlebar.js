@@ -2,6 +2,7 @@
 
 import { attr, effect, mount, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
+import { saving } from "../../shared/state/save-state.js";
 import {
   Quit,
   WindowMinimise,
@@ -42,11 +43,39 @@ function closeWindow() {
  * @returns {Component<HTMLElement>}
  */
 function createTitlebarBrandComponent() {
-  const renderBrand = /** @type {TemplateTag} */ (template);
+  const renderBrand = /** @type {TemplateTag} */ (
+    template({
+      onMount(_el, _host, ctx) {
+        const { cleanup } = ctx;
+        cleanup.add(
+          effect(() => {
+            const isSaving = saving();
+            const spinner = document.querySelector(".titlebar__save-spinner");
+            if (spinner instanceof HTMLElement) {
+              if (isSaving) {
+                spinner.hidden = false;
+                spinner.removeAttribute("aria-hidden");
+              } else {
+                spinner.hidden = true;
+                spinner.setAttribute("aria-hidden", "true");
+              }
+            }
+          }),
+        );
+      },
+    })
+  );
 
   return renderBrand /*html*/ `
     <div class="titlebar__brand">
-      <h1 class="titlebar__title">JustBookmarks</h1>
+      <div class="titlebar__title-row">
+        <h1 class="titlebar__title">JustBookmarks</h1>
+        <span
+          class="spinner spinner-sm titlebar__save-spinner"
+          hidden
+          aria-hidden="true"
+        ></span>
+      </div>
       <p id="titlebar-meta" class="titlebar__meta"></p>
     </div>
   `;

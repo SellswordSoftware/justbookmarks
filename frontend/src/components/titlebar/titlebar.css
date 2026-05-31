@@ -21,6 +21,12 @@
     font-weight: 700;
 }
 
+.titlebar__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .titlebar__meta {
     margin-top: 0.05rem;
     color: var(--color-muted);

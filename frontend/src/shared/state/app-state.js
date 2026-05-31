@@ -19,6 +19,7 @@ import {
   WindowIsNormal,
   WindowSetSize,
 } from "../../../wailsjs/runtime/runtime.js";
+import { saving } from "./save-state.js";
 
 /**
  * App/session state owner.
@@ -94,6 +95,7 @@ export const appState = {
   persistenceReady,
   isMaximised,
   keyboardShortcutsOpen,
+  saving,
   persistedState,
   hasWailsRuntime,
   session: {

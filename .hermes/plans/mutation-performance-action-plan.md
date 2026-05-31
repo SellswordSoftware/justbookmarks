@@ -201,8 +201,8 @@ Acceptance criteria:
 
 ### Task E1: Add Save State Signal
 
-- [ ] Add frontend-visible state for `saving`, `saved`, and `saveError`.
-- [ ] Surface it in the titlebar or subtle status area.
+- [x] Add frontend-visible state for `saving`, `saved`, and `saveError`.
+- [x] Surface it in the titlebar or subtle status area.
 
 Acceptance criteria:
 

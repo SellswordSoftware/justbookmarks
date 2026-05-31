@@ -1,5 +1,7 @@
 // @ts-check
 
+import { saving } from "../state/save-state.js";
+
 /** @typedef {typeof import("../../../wailsjs/go/main/App")} WailsAppBindings */
 /** @typedef {typeof import("../../../wailsjs/go/wailsapi/Handler")} WailsHandlerBindings */
 /** @typedef {import("../../../wailsjs/go/models").wailsapi.NodeDTO} NodeDTO */
@@ -16,6 +18,21 @@ function getAppBindings() {
  */
 function getHandlerBindings() {
   return window.go?.wailsapi?.Handler ?? window.go?.main?.Handler ?? null;
+}
+
+/**
+ * Wrap a mutation promise with save state tracking.
+ * Sets saving=true before the call and saving=false when it settles.
+ *
+ * @template T
+ * @param {Promise<T>} promise
+ * @returns {Promise<T>}
+ */
+function wrapMutation(promise) {
+  saving(true);
+  return promise.finally(() => {
+    saving(false);
+  });
 }
 
 /**
@@ -117,7 +134,7 @@ export async function CreateBookmarkFile() {
   if (!app) {
     throw new Error("Wails bridge not ready");
   }
-  return app.CreateBookmarkFile();
+  return wrapMutation(app.CreateBookmarkFile());
 }
 
 export async function OpenFilePicker() {
@@ -207,13 +224,13 @@ export async function AddBookmark(parentFolderId, bookmark) {
     throw new Error("Wails bridge not ready");
   }
   return /** @type {FlatNode} */ (/** @type {unknown} */ (
-    await handler.AddBookmark(parentFolderId, {
+    await wrapMutation(handler.AddBookmark(parentFolderId, {
       title: bookmark.title,
       url: bookmark.url,
       icon: bookmark.icon ?? "",
       iconURI: bookmark.iconURI ?? "",
       meta: bookmark.meta ?? "",
-    })
+    }))
   ));
 }
 
@@ -228,7 +245,7 @@ export async function AddFolder(parentFolderId, name) {
     throw new Error("Wails bridge not ready");
   }
   return /** @type {FlatNode} */ (/** @type {unknown} */ (
-    await handler.AddFolder(parentFolderId, name)
+    await wrapMutation(handler.AddFolder(parentFolderId, name))
   ));
 }
 
@@ -242,7 +259,7 @@ export async function UpdateBookmark(id, patch) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.UpdateBookmark(id, patch);
+  await wrapMutation(handler.UpdateBookmark(id, patch));
 }
 
 /**
@@ -255,7 +272,7 @@ export async function UpdateFolderName(id, name) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.UpdateFolderName(id, name);
+  await wrapMutation(handler.UpdateFolderName(id, name));
 }
 
 /** @param {string} id */
@@ -264,7 +281,7 @@ export async function DeleteNode(id) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.DeleteNode(id);
+  await wrapMutation(handler.DeleteNode(id));
 }
 
 /** @param {string[]} ids */
@@ -273,7 +290,7 @@ export async function DeleteNodes(ids) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.DeleteNodes(ids);
+  await wrapMutation(handler.DeleteNodes(ids));
 }
 
 /**
@@ -288,7 +305,7 @@ export async function MoveNode(draggedId, targetFolderId, index) {
     throw new Error("Wails bridge not ready");
   }
   return /** @type {MoveResult} */ (/** @type {unknown} */ (
-    await handler.MoveNode(draggedId, targetFolderId, index)
+    await wrapMutation(handler.MoveNode(draggedId, targetFolderId, index))
   ));
 }
 
@@ -303,7 +320,7 @@ export async function MoveNodes(nodeIds, targetFolderId) {
     throw new Error("Wails bridge not ready");
   }
   return /** @type {MoveResult} */ (/** @type {unknown} */ (
-    await handler.MoveNodes(nodeIds, targetFolderId)
+    await wrapMutation(handler.MoveNodes(nodeIds, targetFolderId))
   ));
 }
 
@@ -313,7 +330,7 @@ export async function FetchPageTitle(url) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return handler.FetchPageTitle(url);
+  return wrapMutation(handler.FetchPageTitle(url));
 }
 
 /** @param {string} url */
@@ -322,7 +339,7 @@ export async function FetchFavicon(url) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return handler.FetchFavicon(url);
+  return wrapMutation(handler.FetchFavicon(url));
 }
 
 /**
@@ -334,7 +351,7 @@ export async function FetchFaviconsForNodes(ids) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.FetchFaviconsForNodes(ids)));
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await wrapMutation(handler.FetchFaviconsForNodes(ids))));
 }
 
 /**
@@ -346,7 +363,7 @@ export async function RefreshTitlesForNodes(ids) {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.RefreshTitlesForNodes(ids)));
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await wrapMutation(handler.RefreshTitlesForNodes(ids))));
 }
 
 /** @param {string} url */
@@ -393,7 +410,7 @@ export async function ApplyImportMerge(path) {
     throw new Error("Wails bridge not ready");
   }
 
-  const result = await handler.ApplyImportMerge(path);
+  const result = await wrapMutation(handler.ApplyImportMerge(path));
   return {
     foldersAdded: result?.foldersAdded ?? 0,
     bookmarksAdded: result?.bookmarksAdded ?? 0,
@@ -417,7 +434,7 @@ export async function Undo() {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return normalizeHistoryState(await handler.Undo());
+  return normalizeHistoryState(await wrapMutation(handler.Undo()));
 }
 
 /** @returns {Promise<HistoryState>} */
@@ -426,5 +443,5 @@ export async function Redo() {
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return normalizeHistoryState(await handler.Redo());
+  return normalizeHistoryState(await wrapMutation(handler.Redo()));
 }
