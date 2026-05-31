@@ -561,9 +561,9 @@ function removeNodeFromChildren(nodes, nodeId) {
 
 /**
  * @param {MoveResult} result
- * @returns {boolean}
+ * @returns {Promise<boolean>}
  */
-function applyMoveResult(result) {
+async function applyMoveResult(result) {
   if (!result || !Array.isArray(result.movedNodes) || result.movedNodes.length === 0) {
     return false;
   }
@@ -573,8 +573,12 @@ function applyMoveResult(result) {
   /** @type {TreeNode[]} */
   const movedNodes = [];
   let touchedLoadedTree = false;
+  let hasFolderMove = false;
 
   for (const flatNode of result.movedNodes) {
+    if (flatNode.type === 0) {
+      hasFolderMove = true;
+    }
     let movedNode = oldChildren ? removeNodeFromChildren(oldChildren, flatNode.id) : null;
     if (movedNode) {
       touchedLoadedTree = true;
@@ -599,10 +603,18 @@ function applyMoveResult(result) {
     return false;
   }
 
-  const nextFolderPath = getLoadedFolderPath(result.newParentId);
-  for (const movedNode of movedNodes) {
-    if (movedNode.type === 1 && nextFolderPath !== null) {
-      searchState.actions.patchBookmarkFolderPath(movedNode.id, nextFolderPath);
+  if (hasFolderMove) {
+    // Folder move: descendants' folderPath changed in search index.
+    // Fetch a fresh search index from Go instead of trying to patch
+    // every descendant bookmark individually.
+    await syncSearchIndex();
+  } else {
+    // Pure bookmark move: patch search index entries for the moved bookmarks.
+    const nextFolderPath = getLoadedFolderPath(result.newParentId);
+    for (const movedNode of movedNodes) {
+      if (movedNode.type === 1 && nextFolderPath !== null) {
+        searchState.actions.patchBookmarkFolderPath(movedNode.id, nextFolderPath);
+      }
     }
   }
 
@@ -655,6 +667,17 @@ async function syncRootNodes() {
   tree(await normalizeFlatInWorker(rootNodes));
   searchState.actions.setIndex(flatIndex);
   pruneSelection();
+}
+
+/**
+ * Refresh only the search index from Go without reloading the tree.
+ * Used after folder moves to keep search metadata correct without
+ * the cost of a full tree refresh.
+ * @returns {Promise<void>}
+ */
+async function syncSearchIndex() {
+  const flatIndex = await GetFlatIndex();
+  searchState.actions.setIndex(flatIndex);
 }
 
 /**

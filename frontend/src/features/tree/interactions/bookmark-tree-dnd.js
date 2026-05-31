@@ -312,7 +312,7 @@ export function createBookmarkTreeDndController(options) {
 
       try {
         const result = await applyDropTarget(draggedId, finalDropTarget);
-        if (result && !treeState.actions.applyMoveResult(result)) {
+        if (result && !await treeState.actions.applyMoveResult(result)) {
           await treeState.actions.refresh();
         }
       } catch (caughtError) {

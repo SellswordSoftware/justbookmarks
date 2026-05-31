@@ -69,7 +69,7 @@ async function move() {
     } else {
       result = await MoveNodes(request.nodeIds, targetId);
     }
-    if (!treeState.actions.applyMoveResult(result)) {
+    if (!await treeState.actions.applyMoveResult(result)) {
       await treeState.actions.refresh();
     }
     uiState.actions.showToast("Moved successfully", "success");

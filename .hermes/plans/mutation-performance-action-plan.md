@@ -153,9 +153,9 @@ Acceptance criteria:
 
 ### Task C2: Handle Folder Moves Conservatively
 
-- [ ] Decide whether folder moves should trigger `GetFlatIndex()` instead of full tree refresh.
-- [ ] For moved folders, rebuild only the search index from Go unless the moved descendants are loaded and can be patched confidently.
-- [ ] Avoid full tree refresh unless visible tree correctness requires it.
+- [x] Decide whether folder moves should trigger `GetFlatIndex()` instead of full tree refresh.
+- [x] For moved folders, rebuild only the search index from Go unless the moved descendants are loaded and can be patched confidently.
+- [x] Avoid full tree refresh unless visible tree correctness requires it.
 
 Acceptance criteria:
 
