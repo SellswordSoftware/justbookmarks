@@ -124,6 +124,7 @@
   font-size: 1rem;
   font-weight: 700;
   overflow-wrap: anywhere;
+  color: var(--color-base-content);
 }
 
 .bookmark-detail__url-row {

@@ -382,7 +382,7 @@ export function createBookmarkDetail(bookmark) {
     })
   );
 
-  return renderBookmarkDetail`
+  return renderBookmarkDetail/*html*/`
     <div class="bookmark-detail">
       <div class="bookmark-detail__header">
         <div class="bookmark-detail__top-row">
