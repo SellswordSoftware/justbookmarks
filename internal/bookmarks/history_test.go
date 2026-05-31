@@ -407,3 +407,159 @@ func TestMultiMoveCommandLabel(t *testing.T) {
 		t.Fatalf("expected label 'Move 3 Items', got %q", cmd.Label())
 	}
 }
+
+func TestUpdateBookmarkCommandUndoAndRedo(t *testing.T) {
+	oldBM := Bookmark{ID: "b-1", Title: "Old", URL: "https://old.example", Icon: "old-icon", IconURI: "", Meta: "old-meta"}
+	newBM := Bookmark{ID: "b-1", Title: "New", URL: "https://new.example", Icon: "new-icon", IconURI: "new-uri", Meta: "new-meta"}
+
+	tree := []Node{
+		bookmarkNode("b-1", "Old", "https://old.example", "old-meta", "old-icon"),
+	}
+
+	cmd := NewUpdateBookmarkCommand("Edit Bookmark", "b-1", oldBM, newBM)
+
+	// Apply sets new values
+	applied, err := cmd.Apply(tree)
+	if err != nil {
+		t.Fatalf("Apply returned error: %v", err)
+	}
+	node := FindNode(applied, "b-1")
+	if node == nil {
+		t.Fatal("expected node b-1 to exist")
+	}
+	if node.Bookmark.Title != "New" {
+		t.Fatalf("expected title 'New', got %q", node.Bookmark.Title)
+	}
+	if node.Bookmark.URL != "https://new.example" {
+		t.Fatalf("expected url 'https://new.example', got %q", node.Bookmark.URL)
+	}
+	if node.Bookmark.Icon != "new-icon" {
+		t.Fatalf("expected icon 'new-icon', got %q", node.Bookmark.Icon)
+	}
+	if node.Bookmark.IconURI != "new-uri" {
+		t.Fatalf("expected iconURI 'new-uri', got %q", node.Bookmark.IconURI)
+	}
+	if node.Bookmark.Meta != "new-meta" {
+		t.Fatalf("expected meta 'new-meta', got %q", node.Bookmark.Meta)
+	}
+
+	// Undo restores old values
+	undone, err := cmd.Undo(applied)
+	if err != nil {
+		t.Fatalf("Undo returned error: %v", err)
+	}
+	node = FindNode(undone, "b-1")
+	if node == nil {
+		t.Fatal("expected node b-1 to exist")
+	}
+	if node.Bookmark.Title != "Old" {
+		t.Fatalf("expected title 'Old' after undo, got %q", node.Bookmark.Title)
+	}
+	if node.Bookmark.URL != "https://old.example" {
+		t.Fatalf("expected url 'https://old.example' after undo, got %q", node.Bookmark.URL)
+	}
+	if node.Bookmark.Icon != "old-icon" {
+		t.Fatalf("expected icon 'old-icon' after undo, got %q", node.Bookmark.Icon)
+	}
+	if node.Bookmark.Meta != "old-meta" {
+		t.Fatalf("expected meta 'old-meta' after undo, got %q", node.Bookmark.Meta)
+	}
+
+	// Redo re-applies new values
+	reapplied, err := cmd.Apply(undone)
+	if err != nil {
+		t.Fatalf("Redo Apply returned error: %v", err)
+	}
+	node = FindNode(reapplied, "b-1")
+	if node == nil {
+		t.Fatal("expected node b-1 to exist")
+	}
+	if node.Bookmark.Title != "New" {
+		t.Fatalf("expected title 'New' after redo, got %q", node.Bookmark.Title)
+	}
+}
+
+func TestUpdateBookmarkCommandNotFound(t *testing.T) {
+	tree := []Node{bookmarkNode("b-1", "Test", "https://test.example", "", "")}
+	cmd := NewUpdateBookmarkCommand("Edit Bookmark", "b-missing", Bookmark{ID: "b-1", Title: "Old"}, Bookmark{ID: "b-1", Title: "New"})
+
+	if _, err := cmd.Apply(tree); err != ErrNotFound {
+		t.Fatalf("expected ErrNotFound from Apply, got %v", err)
+	}
+	if _, err := cmd.Undo(tree); err != ErrNotFound {
+		t.Fatalf("expected ErrNotFound from Undo, got %v", err)
+	}
+}
+
+func TestUpdateBookmarkCommandLabel(t *testing.T) {
+	cmd := NewUpdateBookmarkCommand("Edit Bookmark", "b-1", Bookmark{ID: "b-1"}, Bookmark{ID: "b-1"})
+	if cmd.Label() != "Edit Bookmark" {
+		t.Fatalf("expected label 'Edit Bookmark', got %q", cmd.Label())
+	}
+}
+
+func TestUpdateFolderNameCommandUndoAndRedo(t *testing.T) {
+	tree := []Node{
+		folderNode("f-work", "Work"),
+	}
+
+	cmd := NewUpdateFolderNameCommand("Rename Folder", "f-work", "Work", "Projects")
+
+	// Apply sets new name
+	applied, err := cmd.Apply(tree)
+	if err != nil {
+		t.Fatalf("Apply returned error: %v", err)
+	}
+	node := FindNode(applied, "f-work")
+	if node == nil {
+		t.Fatal("expected node f-work to exist")
+	}
+	if node.Folder.Name != "Projects" {
+		t.Fatalf("expected name 'Projects', got %q", node.Folder.Name)
+	}
+
+	// Undo restores old name
+	undone, err := cmd.Undo(applied)
+	if err != nil {
+		t.Fatalf("Undo returned error: %v", err)
+	}
+	node = FindNode(undone, "f-work")
+	if node == nil {
+		t.Fatal("expected node f-work to exist")
+	}
+	if node.Folder.Name != "Work" {
+		t.Fatalf("expected name 'Work' after undo, got %q", node.Folder.Name)
+	}
+
+	// Redo re-applies new name
+	reapplied, err := cmd.Apply(undone)
+	if err != nil {
+		t.Fatalf("Redo Apply returned error: %v", err)
+	}
+	node = FindNode(reapplied, "f-work")
+	if node == nil {
+		t.Fatal("expected node f-work to exist")
+	}
+	if node.Folder.Name != "Projects" {
+		t.Fatalf("expected name 'Projects' after redo, got %q", node.Folder.Name)
+	}
+}
+
+func TestUpdateFolderNameCommandNotFound(t *testing.T) {
+	tree := []Node{folderNode("f-work", "Work")}
+	cmd := NewUpdateFolderNameCommand("Rename Folder", "f-missing", "Old", "New")
+
+	if _, err := cmd.Apply(tree); err != ErrNotFound {
+		t.Fatalf("expected ErrNotFound from Apply, got %v", err)
+	}
+	if _, err := cmd.Undo(tree); err != ErrNotFound {
+		t.Fatalf("expected ErrNotFound from Undo, got %v", err)
+	}
+}
+
+func TestUpdateFolderNameCommandLabel(t *testing.T) {
+	cmd := NewUpdateFolderNameCommand("Rename Folder", "f-1", "Old", "New")
+	if cmd.Label() != "Rename Folder" {
+		t.Fatalf("expected label 'Rename Folder', got %q", cmd.Label())
+	}
+}

@@ -188,9 +188,9 @@ Acceptance criteria:
 
 ### Task D3: Replace Update Snapshot History With Field-Level Undo
 
-- [ ] Capture old bookmark/folder fields before update.
-- [ ] Add update undo commands that restore only changed fields.
-- [ ] Use for bookmark edit, folder rename, favicon refresh, and title refresh.
+- [x] Capture old bookmark/folder fields before update.
+- [x] Add update undo commands that restore only changed fields.
+- [x] Use for bookmark edit, folder rename, favicon refresh, and title refresh.
 
 Acceptance criteria:
 

@@ -139,23 +139,68 @@ func (h *Handler) AddFolder(parentID string, name string) (bookmarks.FlatNode, e
 }
 
 // UpdateBookmark updates a bookmark and auto-saves.
+// Uses UpdateBookmarkCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) UpdateBookmark(id string, patch BookmarkPatchDTO) error {
-	return h.executeSnapshotCommand("Edit Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		if err := bookmarks.UpdateBookmark(nodes, id, toBookmarkPatch(patch)); err != nil {
-			return nil, err
-		}
-		return nodes, nil
-	})
+	node := bookmarks.FindNode(h.tree, id)
+	if node == nil {
+		return bookmarks.ErrNotFound
+	}
+	if node.Type != bookmarks.TypeBookmark {
+		return fmt.Errorf("node is not a bookmark")
+	}
+
+	// Capture old values before mutation
+	oldBookmark := *node.Bookmark
+
+	if err := bookmarks.UpdateBookmark(h.tree, id, toBookmarkPatch(patch)); err != nil {
+		return err
+	}
+
+	// Capture new values after mutation
+	newBookmark := *node.Bookmark
+
+	if err := h.saveTree(h.tree); err != nil {
+		// Rollback on save failure
+		bookmarks.UpdateBookmark(h.tree, id, bookmarks.BookmarkPatch{
+			Title:   &oldBookmark.Title,
+			URL:     &oldBookmark.URL,
+			Icon:    &oldBookmark.Icon,
+			IconURI: &oldBookmark.IconURI,
+			Meta:    &oldBookmark.Meta,
+		})
+		return err
+	}
+
+	h.undoStack = append(h.undoStack, bookmarks.NewUpdateBookmarkCommand("Edit Bookmark", id, oldBookmark, newBookmark))
+	h.redoStack = nil
+	return nil
 }
 
 // UpdateFolderName renames a folder and auto-saves.
+// Uses UpdateFolderNameCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) UpdateFolderName(id string, name string) error {
-	return h.executeSnapshotCommand("Rename Folder", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		if err := bookmarks.UpdateFolderName(nodes, id, name); err != nil {
-			return nil, err
-		}
-		return nodes, nil
-	})
+	node := bookmarks.FindNode(h.tree, id)
+	if node == nil {
+		return bookmarks.ErrNotFound
+	}
+	if node.Type != bookmarks.TypeFolder {
+		return fmt.Errorf("node is not a folder")
+	}
+
+	// Capture old name before mutation
+	oldName := node.Folder.Name
+	node.Folder.Name = name
+	node.Folder.LastModified = time.Now()
+
+	if err := h.saveTree(h.tree); err != nil {
+		// Rollback on save failure
+		node.Folder.Name = oldName
+		return err
+	}
+
+	h.undoStack = append(h.undoStack, bookmarks.NewUpdateFolderNameCommand("Rename Folder", id, oldName, name))
+	h.redoStack = nil
+	return nil
 }
 
 // DeleteNode deletes a node and auto-saves.
@@ -345,66 +390,114 @@ func (h *Handler) FetchFavicon(pageURL string) (string, error) {
 
 // FetchFaviconsForNodes refreshes bookmark favicons, saves once at the end,
 // and returns the updated nodes for targeted frontend patching.
+// Uses UpdateBookmarkCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) FetchFaviconsForNodes(ids []string) ([]bookmarks.FlatNode, error) {
 	client := &http.Client{Timeout: 5 * time.Second}
+
+	bookmarksToUpdate, err := collectBookmarksFromTree(h.tree, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	// Capture old values before mutation
+	olds := make([]bookmarks.Bookmark, len(bookmarksToUpdate))
+	for i, node := range bookmarksToUpdate {
+		olds[i] = *node.Bookmark
+	}
+
 	var updated []bookmarks.FlatNode
-	err := h.executeSnapshotCommand("Refresh Favicons", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		successes := 0
-		bookmarksToUpdate, err := collectBookmarksFromTree(nodes, ids)
-		if err != nil {
-			return nil, err
+	successes := 0
+	for _, node := range bookmarksToUpdate {
+		icon, fetchErr := fetchFaviconWithClient(client, node.Bookmark.URL)
+		if fetchErr != nil || icon == "" || icon == node.Bookmark.Icon {
+			continue
 		}
+		node.Bookmark.Icon = icon
+		node.Bookmark.LastModified = time.Now()
+		updated = append(updated, bookmarks.NewFlatNode(*node, ""))
+		successes++
+	}
 
-		for _, node := range bookmarksToUpdate {
-			icon, fetchErr := fetchFaviconWithClient(client, node.Bookmark.URL)
-			if fetchErr != nil || icon == "" || icon == node.Bookmark.Icon {
-				continue
+	if successes == 0 {
+		return nil, fmt.Errorf("failed to fetch favicons for selected bookmarks")
+	}
+
+	if err := h.saveTree(h.tree); err != nil {
+		// Rollback on save failure
+		for i, node := range bookmarksToUpdate {
+			if node.Bookmark.Icon != olds[i].Icon {
+				node.Bookmark.Icon = olds[i].Icon
 			}
-			node.Bookmark.Icon = icon
-			node.Bookmark.LastModified = time.Now()
-			updated = append(updated, bookmarks.NewFlatNode(*node, ""))
-			successes++
 		}
+		return updated, err
+	}
 
-		if successes == 0 {
-			return nil, fmt.Errorf("failed to fetch favicons for selected bookmarks")
+	// Push one undo command per changed bookmark
+	h.redoStack = nil
+	for i, node := range bookmarksToUpdate {
+		if node.Bookmark.Icon != olds[i].Icon {
+			h.undoStack = append(h.undoStack, bookmarks.NewUpdateBookmarkCommand(
+				"Refresh Favicons", node.ID(), olds[i], *node.Bookmark))
 		}
+	}
 
-		return nodes, nil
-	})
-	return updated, err
+	return updated, nil
 }
 
 // RefreshTitlesForNodes refreshes bookmark titles, saves once at the end,
 // and returns the updated nodes for targeted frontend patching.
+// Uses UpdateBookmarkCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) RefreshTitlesForNodes(ids []string) ([]bookmarks.FlatNode, error) {
 	client := &http.Client{Timeout: 3 * time.Second}
+
+	bookmarksToUpdate, err := collectBookmarksFromTree(h.tree, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	// Capture old values before mutation
+	olds := make([]bookmarks.Bookmark, len(bookmarksToUpdate))
+	for i, node := range bookmarksToUpdate {
+		olds[i] = *node.Bookmark
+	}
+
 	var updated []bookmarks.FlatNode
-	err := h.executeSnapshotCommand("Refresh Titles", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		successes := 0
-		bookmarksToUpdate, err := collectBookmarksFromTree(nodes, ids)
-		if err != nil {
-			return nil, err
+	successes := 0
+	for _, node := range bookmarksToUpdate {
+		title, fetchErr := fetchPageTitleWithClient(client, node.Bookmark.URL)
+		if fetchErr != nil || title == "" || title == node.Bookmark.Title {
+			continue
 		}
+		node.Bookmark.Title = title
+		node.Bookmark.LastModified = time.Now()
+		updated = append(updated, bookmarks.NewFlatNode(*node, ""))
+		successes++
+	}
 
-		for _, node := range bookmarksToUpdate {
-			title, fetchErr := fetchPageTitleWithClient(client, node.Bookmark.URL)
-			if fetchErr != nil || title == "" || title == node.Bookmark.Title {
-				continue
+	if successes == 0 {
+		return nil, fmt.Errorf("failed to refresh titles for selected bookmarks")
+	}
+
+	if err := h.saveTree(h.tree); err != nil {
+		// Rollback on save failure
+		for i, node := range bookmarksToUpdate {
+			if node.Bookmark.Title != olds[i].Title {
+				node.Bookmark.Title = olds[i].Title
 			}
-			node.Bookmark.Title = title
-			node.Bookmark.LastModified = time.Now()
-			updated = append(updated, bookmarks.NewFlatNode(*node, ""))
-			successes++
 		}
+		return updated, err
+	}
 
-		if successes == 0 {
-			return nil, fmt.Errorf("failed to refresh titles for selected bookmarks")
+	// Push one undo command per changed bookmark
+	h.redoStack = nil
+	for i, node := range bookmarksToUpdate {
+		if node.Bookmark.Title != olds[i].Title {
+			h.undoStack = append(h.undoStack, bookmarks.NewUpdateBookmarkCommand(
+				"Refresh Titles", node.ID(), olds[i], *node.Bookmark))
 		}
+	}
 
-		return nodes, nil
-	})
-	return updated, err
+	return updated, nil
 }
 
 func (h *Handler) collectBookmarks(ids []string) ([]*bookmarks.Node, error) {

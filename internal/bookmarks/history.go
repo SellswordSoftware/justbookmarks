@@ -206,3 +206,111 @@ func (c MultiMoveCommand) Apply(tree []Node) ([]Node, error) {
 func (c MultiMoveCommand) Undo(tree []Node) ([]Node, error) {
 	return MoveNodes(tree, c.nodeIDs, c.oldParentID)
 }
+
+// UpdateBookmarkCommand is a lightweight undoable command for bookmark field updates.
+// Stores only the node ID and the old/new bookmark values instead of full-tree snapshots.
+type UpdateBookmarkCommand struct {
+	label  string
+	nodeID string
+	old    Bookmark
+	new    Bookmark
+}
+
+// NewUpdateBookmarkCommand creates an update command that restores old fields
+// on undo and re-applies the new fields on redo.
+func NewUpdateBookmarkCommand(label, nodeID string, oldBookmark, newBookmark Bookmark) UpdateBookmarkCommand {
+	return UpdateBookmarkCommand{
+		label:  label,
+		nodeID: nodeID,
+		old:    oldBookmark,
+		new:    newBookmark,
+	}
+}
+
+func (c UpdateBookmarkCommand) Label() string {
+	return c.label
+}
+
+// Apply sets the bookmark fields to the new values.
+func (c UpdateBookmarkCommand) Apply(tree []Node) ([]Node, error) {
+	node := FindNode(tree, c.nodeID)
+	if node == nil {
+		return tree, ErrNotFound
+	}
+	if node.Type != TypeBookmark {
+		return tree, ErrNotFound
+	}
+	node.Bookmark.Title = c.new.Title
+	node.Bookmark.URL = c.new.URL
+	node.Bookmark.Icon = c.new.Icon
+	node.Bookmark.IconURI = c.new.IconURI
+	node.Bookmark.Meta = c.new.Meta
+	return tree, nil
+}
+
+// Undo restores the bookmark fields to their old values.
+func (c UpdateBookmarkCommand) Undo(tree []Node) ([]Node, error) {
+	node := FindNode(tree, c.nodeID)
+	if node == nil {
+		return tree, ErrNotFound
+	}
+	if node.Type != TypeBookmark {
+		return tree, ErrNotFound
+	}
+	node.Bookmark.Title = c.old.Title
+	node.Bookmark.URL = c.old.URL
+	node.Bookmark.Icon = c.old.Icon
+	node.Bookmark.IconURI = c.old.IconURI
+	node.Bookmark.Meta = c.old.Meta
+	return tree, nil
+}
+
+// UpdateFolderNameCommand is a lightweight undoable command for folder renames.
+// Stores only the folder ID and the old/new names instead of full-tree snapshots.
+type UpdateFolderNameCommand struct {
+	label string
+	id    string
+	old   string
+	new   string
+}
+
+// NewUpdateFolderNameCommand creates a rename command that restores the old name
+// on undo and re-applies the new name on redo.
+func NewUpdateFolderNameCommand(label, id, oldName, newName string) UpdateFolderNameCommand {
+	return UpdateFolderNameCommand{
+		label: label,
+		id:    id,
+		old:   oldName,
+		new:   newName,
+	}
+}
+
+func (c UpdateFolderNameCommand) Label() string {
+	return c.label
+}
+
+// Apply sets the folder name to the new value.
+func (c UpdateFolderNameCommand) Apply(tree []Node) ([]Node, error) {
+	node := FindNode(tree, c.id)
+	if node == nil {
+		return tree, ErrNotFound
+	}
+	if node.Type != TypeFolder {
+		return tree, ErrNotFound
+	}
+	node.Folder.Name = c.new
+	return tree, nil
+}
+
+// Undo restores the folder name to its old value.
+func (c UpdateFolderNameCommand) Undo(tree []Node) ([]Node, error) {
+	node := FindNode(tree, c.id)
+	if node == nil {
+		return tree, ErrNotFound
+	}
+	if node.Type != TypeFolder {
+		return tree, ErrNotFound
+	}
+	node.Folder.Name = c.old
+	return tree, nil
+}
