@@ -65,7 +65,7 @@ function createDetailEmptyState() {
     template
   );
 
-  return renderEmptyState`
+  return renderEmptyState/*html*/`
     <div class="detail-empty-state">
       <p class="detail-empty-state__title">Select a bookmark or folder</p>
       <p class="detail-empty-state__subtitle">from the tree on the left</p>

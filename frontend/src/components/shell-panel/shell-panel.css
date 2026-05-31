@@ -93,6 +93,7 @@
 
 .detail-empty-state {
   display: grid;
+  align-content: center;
   place-items: center;
   min-height: 100%;
   text-align: center;

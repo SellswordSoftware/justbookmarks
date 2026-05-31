@@ -269,7 +269,7 @@ export function createFolderDetail(folder) {
     })
   );
 
-  return renderFolderDetail`
+  return renderFolderDetail/*html*/`
     <div class="folder-detail">
       <div class="folder-detail__header" data-ref="header">
         <div class="folder-detail__title-block">
