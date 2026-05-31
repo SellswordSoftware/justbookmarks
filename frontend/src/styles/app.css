@@ -6,6 +6,7 @@
 @import "./layout.css";
 
 @import "../shared/styles/button.css";
+@import "../shared/styles/icon-mask.css";
 @import "../shared/styles/form.css";
 @import "../shared/styles/card.css";
 @import "../shared/styles/modal.css";

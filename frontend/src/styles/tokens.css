@@ -124,12 +124,7 @@
   --color-icon-badge-icon: #dbeafe;
 
   /* ── Tree / list helpers ────────────────────────────── */
-  --color-tree-selected-bg: var(--color-selection-bg);
-  --color-tree-selected-border: rgba(96, 165, 250, 0.9);
-  --color-tree-primary-bg: #2563eb;
-  --color-tree-primary-text: #f8fbff;
   --color-tree-primary-inset: rgba(147, 197, 253, 0.28);
-  --color-tree-primary-icon: var(--color-icon-selected);
   --color-tree-primary-count: rgba(248, 250, 252, 0.78);
 
   /* ── Tree pane actions ──────────────────────────────── */
@@ -150,6 +145,12 @@
   --color-icon-fallback-bg: rgba(255, 255, 255, 0.04);
   --color-stat-bg: rgba(255, 255, 255, 0.03);
   --color-selected-path-text: rgba(255, 255, 255, 0.78);
+
+  /* ── Icon masks ─────────────────────────────────────── */
+  --mask-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M128 512L512 512C547.3 512 576 483.3 576 448L576 208C576 172.7 547.3 144 512 144L362.7 144C355.8 144 349 141.8 343.5 137.6L305.1 108.8C294 100.5 280.5 96 266.7 96L128 96C92.7 96 64 124.7 64 160L64 448C64 483.3 92.7 512 128 512z'/%3E%3C/svg%3E");
+  --mask-folder-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M88 289.6L64.4 360.2L64.4 160C64.4 124.7 93.1 96 128.4 96L267.1 96C280.9 96 294.4 100.5 305.5 108.8L343.9 137.6C349.4 141.8 356.2 144 363.1 144L480.4 144C515.7 144 544.4 172.7 544.4 208L544.4 224L179 224C137.7 224 101 250.4 87.9 289.6zM509.8 512L131 512C98.2 512 75.1 479.9 85.5 448.8L133.5 304.8C140 285.2 158.4 272 179 272L557.8 272C590.6 272 613.7 304.1 603.3 335.2L555.3 479.2C548.8 498.8 530.4 512 509.8 512z'/%3E%3C/svg%3E");
+  --mask-bookmark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M192 64C156.7 64 128 92.7 128 128L128 544C128 555.5 134.2 566.2 144.2 571.8C154.2 577.4 166.5 577.3 176.4 571.4L320 485.3L463.5 571.4C473.4 577.3 485.7 577.5 495.7 571.8C505.7 566.1 512 555.5 512 544L512 128C512 92.7 483.3 64 448 64L192 64z'/%3E%3C/svg%3E");
+  --mask-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14m7-7H5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 
   /* ── Titlebar ───────────────────────────────────────── */
   --color-titlebar-close-text: #ffffff;

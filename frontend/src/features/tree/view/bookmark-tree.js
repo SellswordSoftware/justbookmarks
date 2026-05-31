@@ -27,12 +27,12 @@ const TREE_NODE_HTML = /*html*/ `
         aria-label="Toggle folder"
       ></button>
       <span
-        class="tree-row__folder-icon"
+        class="tree-row__folder-icon icon-mask"
         aria-hidden="true"
       ></span>
       <img class="tree-row__favicon" alt="" hidden />
       <span
-        class="tree-row__bookmark-icon"
+        class="tree-row__bookmark-icon icon-mask"
         aria-hidden="true"
       ></span>
       <span class="tree-row__label"></span>
@@ -49,7 +49,7 @@ const SEARCH_RESULT_HTML = /*html*/ `
     tabindex="0"
     aria-selected="false"
   >
-    <span class="search-result__icon" aria-hidden="true"></span>
+    <span class="search-result__icon icon-mask" aria-hidden="true"></span>
     <span class="search-result__label"></span>
     <span class="search-result__meta"></span>
   </article>

@@ -141,7 +141,7 @@ export function mountRootTreeActions(shell) {
     triggerAriaLabel: "New bookmark",
     triggerTitle: "New bookmark",
     triggerIconClassName:
-      "tree-pane__action-icon tree-pane__action-icon--bookmark",
+      "tree-pane__action-icon icon-mask tree-pane__action-icon--bookmark",
     getParentFolderId: () => "",
   });
   const rootAddFolder = createAddFolderForm({
@@ -153,7 +153,7 @@ export function mountRootTreeActions(shell) {
     triggerAriaLabel: "New folder",
     triggerTitle: "New folder",
     triggerIconClassName:
-      "tree-pane__action-icon tree-pane__action-icon--folder",
+      "tree-pane__action-icon icon-mask tree-pane__action-icon--folder",
     getParentFolderId: () => "",
   });
   const renderRootActions =

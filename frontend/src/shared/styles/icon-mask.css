@@ -1,0 +1,19 @@
+.icon-mask {
+  position: relative;
+  display: block;
+  width: var(--icon-size, 0.95rem);
+  height: var(--icon-size, 0.95rem);
+}
+
+.icon-mask::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}

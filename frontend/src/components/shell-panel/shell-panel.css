@@ -97,7 +97,6 @@
   place-items: center;
   min-height: 100%;
   text-align: center;
-  color: var(--color-muted);
 }
 
 .detail-empty-state__title {
