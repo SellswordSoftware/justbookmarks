@@ -60,6 +60,8 @@
 
 .btn-outline {
   --btn-bg: transparent;
+  --btn-fg: var(--color-primary);
+  --btn-border: var(--color-primary);
   --btn-hover-bg: var(--color-hover-card);
 }
 
