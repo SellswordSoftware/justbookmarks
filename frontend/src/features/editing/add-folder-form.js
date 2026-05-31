@@ -104,10 +104,16 @@ export function createAddFolderForm(options) {
           busy(true);
 
           try {
-            const folderId = await AddFolder(options.getParentFolderId(), nextName);
-            await treeState.actions.refresh();
-            if (folderId) {
-              treeState.actions.selectSingle(folderId);
+            const createdFolder = await AddFolder(options.getParentFolderId(), nextName);
+            const inserted = treeState.actions.insertFlatNode(
+              createdFolder.parentId,
+              createdFolder,
+            );
+            if (!inserted) {
+              await treeState.actions.refresh();
+            }
+            if (treeState.selectors.getNode(createdFolder.id)) {
+              treeState.actions.selectSingle(createdFolder.id);
             }
             uiState.actions.showToast("Folder created", "success");
             setOpen(false);

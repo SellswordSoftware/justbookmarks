@@ -104,44 +104,38 @@ func collectFolders(nodes []bookmarks.Node) []bookmarks.Node {
 	return folders
 }
 
-// AddBookmark adds a bookmark to a folder and auto-saves.
-func (h *Handler) AddBookmark(parentID string, bm BookmarkCreateDTO) (string, error) {
-	beforeIDs := collectNodeIDs(h.tree)
-	var createdID string
+// AddBookmark adds a bookmark to a folder, auto-saves, and returns the created node.
+func (h *Handler) AddBookmark(parentID string, bm BookmarkCreateDTO) (bookmarks.FlatNode, error) {
+	var created bookmarks.FlatNode
 	err := h.executeSnapshotCommand("Add Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		nextTree, err := bookmarks.AddBookmark(nodes, parentID, toBookmarkCreate(bm))
+		nextTree, createdNode, err := bookmarks.AddBookmarkWithCreated(nodes, parentID, toBookmarkCreate(bm))
 		if err != nil {
 			return nil, err
 		}
-		if created := findNewNodeID(nextTree, beforeIDs); created != "" {
-			createdID = created
-		}
+		created = bookmarks.NewFlatNode(createdNode, parentID)
 		return nextTree, nil
 	})
 	if err != nil {
-		return "", err
+		return bookmarks.FlatNode{}, err
 	}
-	return createdID, nil
+	return created, nil
 }
 
-// AddFolder adds a folder and auto-saves.
-func (h *Handler) AddFolder(parentID string, name string) (string, error) {
-	beforeIDs := collectNodeIDs(h.tree)
-	var createdID string
+// AddFolder adds a folder, auto-saves, and returns the created node.
+func (h *Handler) AddFolder(parentID string, name string) (bookmarks.FlatNode, error) {
+	var created bookmarks.FlatNode
 	err := h.executeSnapshotCommand("Add Folder", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		nextTree, err := bookmarks.AddFolder(nodes, parentID, name)
+		nextTree, createdNode, err := bookmarks.AddFolderWithCreated(nodes, parentID, name)
 		if err != nil {
 			return nil, err
 		}
-		if created := findNewNodeID(nextTree, beforeIDs); created != "" {
-			createdID = created
-		}
+		created = bookmarks.NewFlatNode(createdNode, parentID)
 		return nextTree, nil
 	})
 	if err != nil {
-		return "", err
+		return bookmarks.FlatNode{}, err
 	}
-	return createdID, nil
+	return created, nil
 }
 
 // UpdateBookmark updates a bookmark and auto-saves.
@@ -194,20 +188,28 @@ func (h *Handler) DeleteNodes(ids []string) error {
 	})
 }
 
-// MoveNode moves a node and auto-saves.
-func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) error {
+// MoveNode moves a node, auto-saves, and returns metadata for targeted frontend patching.
+func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) (MoveResult, error) {
 	label := "Move Bookmark"
 	if node := bookmarks.FindNode(h.tree, nodeID); node != nil && node.Type == bookmarks.TypeFolder {
 		label = "Move Folder"
 	}
 
-	return h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+	oldParentID := parentIDForNode(h.tree, nodeID)
+	var result MoveResult
+	err := h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
 		return bookmarks.MoveNode(nodes, nodeID, newParentID, newIndex)
 	})
+	if err != nil {
+		return MoveResult{}, err
+	}
+
+	result = buildMoveResult(h.tree, []string{nodeID}, oldParentID, newParentID)
+	return result, nil
 }
 
-// MoveNodes moves multiple nodes and auto-saves once.
-func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) error {
+// MoveNodes moves multiple nodes, auto-saves once, and returns metadata for targeted frontend patching.
+func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) (MoveResult, error) {
 	label := fmt.Sprintf("Move %d Items", len(nodeIDs))
 	if len(nodeIDs) > 0 {
 		if node := bookmarks.FindNode(h.tree, nodeIDs[0]); node != nil {
@@ -219,9 +221,20 @@ func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) error {
 		}
 	}
 
-	return h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+	oldParentID := ""
+	if len(nodeIDs) > 0 {
+		oldParentID = parentIDForNode(h.tree, nodeIDs[0])
+	}
+	var result MoveResult
+	err := h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
 		return bookmarks.MoveNodes(nodes, nodeIDs, targetFolderID)
 	})
+	if err != nil {
+		return MoveResult{}, err
+	}
+
+	result = buildMoveResult(h.tree, nodeIDs, oldParentID, targetFolderID)
+	return result, nil
 }
 
 // PreviewImportMerge loads another bookmark file and reports what would be merged.
@@ -315,10 +328,12 @@ func (h *Handler) FetchFavicon(pageURL string) (string, error) {
 	return fetchFaviconWithClient(client, pageURL)
 }
 
-// FetchFaviconsForNodes refreshes bookmark favicons and saves once at the end.
-func (h *Handler) FetchFaviconsForNodes(ids []string) error {
+// FetchFaviconsForNodes refreshes bookmark favicons, saves once at the end,
+// and returns the updated nodes for targeted frontend patching.
+func (h *Handler) FetchFaviconsForNodes(ids []string) ([]bookmarks.FlatNode, error) {
 	client := &http.Client{Timeout: 5 * time.Second}
-	return h.executeSnapshotCommand("Refresh Favicons", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+	var updated []bookmarks.FlatNode
+	err := h.executeSnapshotCommand("Refresh Favicons", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
 		successes := 0
 		bookmarksToUpdate, err := collectBookmarksFromTree(nodes, ids)
 		if err != nil {
@@ -332,6 +347,7 @@ func (h *Handler) FetchFaviconsForNodes(ids []string) error {
 			}
 			node.Bookmark.Icon = icon
 			node.Bookmark.LastModified = time.Now()
+			updated = append(updated, bookmarks.NewFlatNode(*node, ""))
 			successes++
 		}
 
@@ -341,12 +357,15 @@ func (h *Handler) FetchFaviconsForNodes(ids []string) error {
 
 		return nodes, nil
 	})
+	return updated, err
 }
 
-// RefreshTitlesForNodes refreshes bookmark titles and saves once at the end.
-func (h *Handler) RefreshTitlesForNodes(ids []string) error {
+// RefreshTitlesForNodes refreshes bookmark titles, saves once at the end,
+// and returns the updated nodes for targeted frontend patching.
+func (h *Handler) RefreshTitlesForNodes(ids []string) ([]bookmarks.FlatNode, error) {
 	client := &http.Client{Timeout: 3 * time.Second}
-	return h.executeSnapshotCommand("Refresh Titles", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
+	var updated []bookmarks.FlatNode
+	err := h.executeSnapshotCommand("Refresh Titles", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
 		successes := 0
 		bookmarksToUpdate, err := collectBookmarksFromTree(nodes, ids)
 		if err != nil {
@@ -360,6 +379,7 @@ func (h *Handler) RefreshTitlesForNodes(ids []string) error {
 			}
 			node.Bookmark.Title = title
 			node.Bookmark.LastModified = time.Now()
+			updated = append(updated, bookmarks.NewFlatNode(*node, ""))
 			successes++
 		}
 
@@ -369,6 +389,7 @@ func (h *Handler) RefreshTitlesForNodes(ids []string) error {
 
 		return nodes, nil
 	})
+	return updated, err
 }
 
 func (h *Handler) collectBookmarks(ids []string) ([]*bookmarks.Node, error) {
@@ -661,36 +682,52 @@ func (h *Handler) clearHistory() {
 	h.redoStack = nil
 }
 
-func collectNodeIDs(nodes []bookmarks.Node) map[string]struct{} {
-	ids := make(map[string]struct{})
-	var visit func([]bookmarks.Node)
-	visit = func(tree []bookmarks.Node) {
-		for _, node := range tree {
-			ids[node.ID()] = struct{}{}
-			if node.Type == bookmarks.TypeFolder && node.Folder != nil {
-				visit(node.Folder.Children)
-			}
-		}
-	}
-	visit(nodes)
-	return ids
-}
-
-func findNewNodeID(nodes []bookmarks.Node, existingIDs map[string]struct{}) string {
-	var visit func([]bookmarks.Node) string
-	visit = func(tree []bookmarks.Node) string {
-		for _, node := range tree {
-			if _, exists := existingIDs[node.ID()]; !exists {
-				return node.ID()
-			}
-			if node.Type == bookmarks.TypeFolder && node.Folder != nil {
-				if childID := visit(node.Folder.Children); childID != "" {
-					return childID
-				}
-			}
-		}
+func parentIDForNode(nodes []bookmarks.Node, nodeID string) string {
+	parent := bookmarks.FindParent(nodes, nodeID)
+	if parent == nil {
 		return ""
 	}
+	return parent.ID()
+}
 
-	return visit(nodes)
+func childIndexInParent(nodes []bookmarks.Node, parentID string, nodeID string) int {
+	children := nodes
+	if parentID != "" {
+		parent := bookmarks.FindFolder(nodes, parentID)
+		if parent == nil {
+			return -1
+		}
+		children = parent.Folder.Children
+	}
+
+	for index := range children {
+		if children[index].ID() == nodeID {
+			return index
+		}
+	}
+	return -1
+}
+
+func buildMoveResult(nodes []bookmarks.Node, nodeIDs []string, oldParentID string, fallbackNewParentID string) MoveResult {
+	result := MoveResult{
+		OldParentID: oldParentID,
+		NewParentID: fallbackNewParentID,
+		NewIndex:    -1,
+	}
+
+	for _, nodeID := range nodeIDs {
+		node := bookmarks.FindNode(nodes, nodeID)
+		if node == nil {
+			continue
+		}
+
+		parentID := parentIDForNode(nodes, nodeID)
+		if len(result.MovedNodes) == 0 {
+			result.NewParentID = parentID
+			result.NewIndex = childIndexInParent(nodes, parentID, nodeID)
+		}
+		result.MovedNodes = append(result.MovedNodes, bookmarks.NewFlatNode(*node, parentID))
+	}
+
+	return result
 }

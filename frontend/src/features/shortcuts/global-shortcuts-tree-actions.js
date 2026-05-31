@@ -153,14 +153,18 @@ export async function triggerBulkRefreshShortcut(kind) {
   }
 
   try {
+    /** @type {FlatNode[]} */
+    let updatedNodes;
     if (kind === "favicons") {
-      await FetchFaviconsForNodes(treeState.selectors.getSelectedNodeIds());
+      updatedNodes = await FetchFaviconsForNodes(treeState.selectors.getSelectedNodeIds());
       uiState.actions.showToast("Favicons refreshed", "success");
     } else {
-      await RefreshTitlesForNodes(treeState.selectors.getSelectedNodeIds());
+      updatedNodes = await RefreshTitlesForNodes(treeState.selectors.getSelectedNodeIds());
       uiState.actions.showToast("Titles refreshed", "success");
     }
-    await treeState.actions.refresh();
+    if (treeState.actions.patchFlatNodes(updatedNodes) === 0) {
+      await treeState.actions.refresh();
+    }
   } catch (caughtError) {
     uiState.actions.showToast(
       getErrorMessage(

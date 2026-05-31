@@ -112,8 +112,11 @@ export function createBulkSelectionDetail() {
   async function fetchFavicons() {
     runningAction("favicons");
     try {
-      await FetchFaviconsForNodes(treeState.selectors.getSelectedNodeIds());
-      await refreshAfterAction("Favicons refreshed");
+      const updatedNodes = await FetchFaviconsForNodes(treeState.selectors.getSelectedNodeIds());
+      if (treeState.actions.patchFlatNodes(updatedNodes) === 0) {
+        await treeState.actions.refresh();
+      }
+      uiState.actions.showToast("Favicons refreshed", "success");
     } catch (caughtError) {
       uiState.actions.showToast(
         getErrorMessage(caughtError, "Bulk favicon refresh failed"),
@@ -127,8 +130,11 @@ export function createBulkSelectionDetail() {
   async function refreshTitles() {
     runningAction("titles");
     try {
-      await RefreshTitlesForNodes(treeState.selectors.getSelectedNodeIds());
-      await refreshAfterAction("Titles refreshed");
+      const updatedNodes = await RefreshTitlesForNodes(treeState.selectors.getSelectedNodeIds());
+      if (treeState.actions.patchFlatNodes(updatedNodes) === 0) {
+        await treeState.actions.refresh();
+      }
+      uiState.actions.showToast("Titles refreshed", "success");
     } catch (caughtError) {
       uiState.actions.showToast(
         getErrorMessage(caughtError, "Bulk title refresh failed"),

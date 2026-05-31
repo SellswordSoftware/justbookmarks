@@ -217,7 +217,7 @@ export function createAddBookmarkForm(options) {
             busy(true);
 
             try {
-              const bookmarkId = await AddBookmark(
+              const createdBookmark = await AddBookmark(
                 options.getParentFolderId(),
                 {
                   title: titleValue().trim(),
@@ -225,9 +225,15 @@ export function createAddBookmarkForm(options) {
                   icon,
                 },
               );
-              await treeState.actions.refresh();
-              if (bookmarkId) {
-                treeState.actions.selectSingle(bookmarkId);
+              const inserted = treeState.actions.insertFlatNode(
+                createdBookmark.parentId,
+                createdBookmark,
+              );
+              if (!inserted) {
+                await treeState.actions.refresh();
+              }
+              if (treeState.selectors.getNode(createdBookmark.id)) {
+                treeState.actions.selectSingle(createdBookmark.id);
               }
               uiState.actions.showToast("Bookmark added", "success");
               setOpen(false);

@@ -50,6 +50,13 @@ type NodeDTO struct {
 	Bookmark *BookmarkDTO       `json:"bookmark"`
 }
 
+type MoveResult struct {
+	MovedNodes  []bookmarks.FlatNode `json:"movedNodes"`
+	OldParentID string               `json:"oldParentId"`
+	NewParentID string               `json:"newParentId"`
+	NewIndex    int                  `json:"newIndex"`
+}
+
 func toNodeDTOs(nodes []bookmarks.Node) []NodeDTO {
 	result := make([]NodeDTO, 0, len(nodes))
 	for _, node := range nodes {

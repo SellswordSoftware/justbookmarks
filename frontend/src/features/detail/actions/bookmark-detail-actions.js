@@ -44,15 +44,23 @@ export function createBookmarkDetailActions(options) {
     }
 
     try {
-      await UpdateBookmark(bookmark.id, {
+      const patch = {
         title: options.getCurrentTitle().trim(),
         url: options.getCurrentURL().trim(),
         icon: options.getCurrentIcon(),
         meta: options.getCurrentMeta().trim(),
+      };
+      await UpdateBookmark(bookmark.id, {
+        title: patch.title,
+        url: patch.url,
+        icon: patch.icon,
+        meta: patch.meta,
       });
       options.resetMetadataTracking(options.getCurrentTitle(), options.getCurrentIcon());
       options.setEditing(false);
-      await treeState.actions.refresh();
+      if (!treeState.actions.patchBookmark(bookmark.id, patch)) {
+        await treeState.actions.refresh();
+      }
       treeState.actions.selectSingle(bookmark.id);
       uiState.actions.showToast("Bookmark updated", "success");
     } catch (caughtError) {
@@ -74,7 +82,9 @@ export function createBookmarkDetailActions(options) {
         options.setCurrentIcon(dataUri);
         options.resetMetadataTracking(options.getCurrentTitle(), dataUri);
         await UpdateBookmark(bookmark.id, { icon: dataUri });
-        await treeState.actions.refresh();
+        if (!treeState.actions.patchBookmark(bookmark.id, { icon: dataUri })) {
+          await treeState.actions.refresh();
+        }
         treeState.actions.selectSingle(bookmark.id);
         uiState.actions.showToast("Favicon fetched", "success");
       }

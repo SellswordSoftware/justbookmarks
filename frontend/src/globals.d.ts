@@ -127,6 +127,13 @@ declare global {
     folderPath: string;
   }
 
+  interface MoveResult {
+    movedNodes: FlatNode[];
+    oldParentId: string;
+    newParentId: string;
+    newIndex: number;
+  }
+
   interface FolderMergeItem {
     path: string;
     name: string;

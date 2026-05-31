@@ -3,9 +3,9 @@
 import {wailsapi} from '../models';
 import {bookmarks} from '../models';
 
-export function AddBookmark(arg1:string,arg2:wailsapi.BookmarkCreateDTO):Promise<string>;
+export function AddBookmark(arg1:string,arg2:wailsapi.BookmarkCreateDTO):Promise<bookmarks.FlatNode>;
 
-export function AddFolder(arg1:string,arg2:string):Promise<string>;
+export function AddFolder(arg1:string,arg2:string):Promise<bookmarks.FlatNode>;
 
 export function ApplyImportMerge(arg1:string):Promise<bookmarks.MergeApplyResult>;
 
@@ -15,7 +15,7 @@ export function DeleteNodes(arg1:Array<string>):Promise<void>;
 
 export function FetchFavicon(arg1:string):Promise<string>;
 
-export function FetchFaviconsForNodes(arg1:Array<string>):Promise<void>;
+export function FetchFaviconsForNodes(arg1:Array<string>):Promise<Array<bookmarks.FlatNode>>;
 
 export function FetchPageTitle(arg1:string):Promise<string>;
 
@@ -35,9 +35,9 @@ export function GetRootNodes():Promise<Array<bookmarks.FlatNode>>;
 
 export function LoadFile(arg1:string):Promise<void>;
 
-export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<void>;
+export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<wailsapi.MoveResult>;
 
-export function MoveNodes(arg1:Array<string>,arg2:string):Promise<void>;
+export function MoveNodes(arg1:Array<string>,arg2:string):Promise<wailsapi.MoveResult>;
 
 export function OpenURL(arg1:string):Promise<void>;
 
@@ -45,7 +45,7 @@ export function PreviewImportMerge(arg1:string):Promise<bookmarks.MergePreview>;
 
 export function Redo():Promise<bookmarks.HistoryState>;
 
-export function RefreshTitlesForNodes(arg1:Array<string>):Promise<void>;
+export function RefreshTitlesForNodes(arg1:Array<string>):Promise<Array<bookmarks.FlatNode>>;
 
 export function Undo():Promise<bookmarks.HistoryState>;
 

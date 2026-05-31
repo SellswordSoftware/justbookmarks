@@ -62,13 +62,17 @@ async function move() {
   }
 
   try {
+    /** @type {MoveResult} */
+    let result;
     if (request.nodeIds.length === 1) {
-      await MoveNode(request.nodeIds[0], targetId, -1);
+      result = await MoveNode(request.nodeIds[0], targetId, -1);
     } else {
-      await MoveNodes(request.nodeIds, targetId);
+      result = await MoveNodes(request.nodeIds, targetId);
+    }
+    if (!treeState.actions.applyMoveResult(result)) {
+      await treeState.actions.refresh();
     }
     uiState.actions.showToast("Moved successfully", "success");
-    await treeState.actions.refresh();
   } catch (caughtError) {
     uiState.actions.showToast(
       `Move failed: ${getErrorMessage(caughtError)}`,

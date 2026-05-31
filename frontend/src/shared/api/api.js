@@ -199,33 +199,37 @@ export async function GetAllFolders() {
 /**
  * @param {string} parentFolderId
  * @param {BookmarkCreate} bookmark
- * @returns {Promise<string>}
+ * @returns {Promise<FlatNode>}
  */
 export async function AddBookmark(parentFolderId, bookmark) {
   const handler = getHandlerBindings();
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return handler.AddBookmark(parentFolderId, {
-    title: bookmark.title,
-    url: bookmark.url,
-    icon: bookmark.icon ?? "",
-    iconURI: bookmark.iconURI ?? "",
-    meta: bookmark.meta ?? "",
-  });
+  return /** @type {FlatNode} */ (/** @type {unknown} */ (
+    await handler.AddBookmark(parentFolderId, {
+      title: bookmark.title,
+      url: bookmark.url,
+      icon: bookmark.icon ?? "",
+      iconURI: bookmark.iconURI ?? "",
+      meta: bookmark.meta ?? "",
+    })
+  ));
 }
 
 /**
  * @param {string} parentFolderId
  * @param {string} name
- * @returns {Promise<string>}
+ * @returns {Promise<FlatNode>}
  */
 export async function AddFolder(parentFolderId, name) {
   const handler = getHandlerBindings();
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  return handler.AddFolder(parentFolderId, name);
+  return /** @type {FlatNode} */ (/** @type {unknown} */ (
+    await handler.AddFolder(parentFolderId, name)
+  ));
 }
 
 /**
@@ -276,25 +280,31 @@ export async function DeleteNodes(ids) {
  * @param {string} draggedId
  * @param {string} targetFolderId
  * @param {number} index
+ * @returns {Promise<MoveResult>}
  */
 export async function MoveNode(draggedId, targetFolderId, index) {
   const handler = getHandlerBindings();
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.MoveNode(draggedId, targetFolderId, index);
+  return /** @type {MoveResult} */ (/** @type {unknown} */ (
+    await handler.MoveNode(draggedId, targetFolderId, index)
+  ));
 }
 
 /**
  * @param {string[]} nodeIds
  * @param {string} targetFolderId
+ * @returns {Promise<MoveResult>}
  */
 export async function MoveNodes(nodeIds, targetFolderId) {
   const handler = getHandlerBindings();
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.MoveNodes(nodeIds, targetFolderId);
+  return /** @type {MoveResult} */ (/** @type {unknown} */ (
+    await handler.MoveNodes(nodeIds, targetFolderId)
+  ));
 }
 
 /** @param {string} url */
@@ -315,22 +325,28 @@ export async function FetchFavicon(url) {
   return handler.FetchFavicon(url);
 }
 
-/** @param {string[]} ids */
+/**
+ * @param {string[]} ids
+ * @returns {Promise<FlatNode[]>}
+ */
 export async function FetchFaviconsForNodes(ids) {
   const handler = getHandlerBindings();
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.FetchFaviconsForNodes(ids);
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.FetchFaviconsForNodes(ids)));
 }
 
-/** @param {string[]} ids */
+/**
+ * @param {string[]} ids
+ * @returns {Promise<FlatNode[]>}
+ */
 export async function RefreshTitlesForNodes(ids) {
   const handler = getHandlerBindings();
   if (!handler) {
     throw new Error("Wails bridge not ready");
   }
-  await handler.RefreshTitlesForNodes(ids);
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.RefreshTitlesForNodes(ids)));
 }
 
 /** @param {string} url */

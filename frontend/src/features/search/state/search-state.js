@@ -56,6 +56,75 @@ const results = computed(() => {
 });
 
 /**
+ * @param {string} nodeId
+ * @param {BookmarkPatch} patch
+ * @returns {void}
+ */
+function patchBookmarkIndexEntry(nodeId, patch) {
+  if (patch.title === undefined && patch.url === undefined) {
+    return;
+  }
+
+  let changed = false;
+  const nextIndex = flatIndex().map((entry) => {
+    if (entry.nodeId !== nodeId) {
+      return entry;
+    }
+    changed = true;
+    return {
+      ...entry,
+      title: patch.title ?? entry.title,
+      url: patch.url ?? entry.url,
+    };
+  });
+
+  if (changed) {
+    flatIndex(nextIndex);
+  }
+}
+
+/**
+ * @param {BookmarkIndexEntry} entry
+ * @returns {void}
+ */
+function addBookmarkIndexEntry(entry) {
+  if (!entry.nodeId) {
+    return;
+  }
+  const existingIndex = flatIndex().findIndex((current) => current.nodeId === entry.nodeId);
+  if (existingIndex >= 0) {
+    const nextIndex = [...flatIndex()];
+    nextIndex[existingIndex] = entry;
+    flatIndex(nextIndex);
+    return;
+  }
+  flatIndex([...flatIndex(), entry]);
+}
+
+/**
+ * @param {string} nodeId
+ * @param {string} folderPath
+ * @returns {void}
+ */
+function patchBookmarkFolderPathEntry(nodeId, folderPath) {
+  let changed = false;
+  const nextIndex = flatIndex().map((entry) => {
+    if (entry.nodeId !== nodeId) {
+      return entry;
+    }
+    changed = true;
+    return {
+      ...entry,
+      folderPath,
+    };
+  });
+
+  if (changed) {
+    flatIndex(nextIndex);
+  }
+}
+
+/**
  * Effect that drives the debounced query. Subscribes to `query`
  * and schedules `_debouncedQuery` updates.
  */
@@ -86,6 +155,29 @@ export const searchState = {
      */
     setIndex(index) {
       return flatIndex(index);
+    },
+    /**
+     * @param {string} nodeId
+     * @param {BookmarkPatch} patch
+     * @returns {void}
+     */
+    patchBookmark(nodeId, patch) {
+      patchBookmarkIndexEntry(nodeId, patch);
+    },
+    /**
+     * @param {BookmarkIndexEntry} entry
+     * @returns {void}
+     */
+    addBookmark(entry) {
+      addBookmarkIndexEntry(entry);
+    },
+    /**
+     * @param {string} nodeId
+     * @param {string} folderPath
+     * @returns {void}
+     */
+    patchBookmarkFolderPath(nodeId, folderPath) {
+      patchBookmarkFolderPathEntry(nodeId, folderPath);
     },
     /**
      * @returns {string}

@@ -56,60 +56,47 @@ func FindParent(nodes []Node, childID string) *Node {
 
 // AddBookmark appends a bookmark to a folder.
 func AddBookmark(nodes []Node, parentID string, bm Bookmark) ([]Node, error) {
-	if parentID == "" {
-		bm.ID = GenerateID()
-		if bm.AddDate.IsZero() {
-			bm.AddDate = time.Now()
-		}
-		bm.LastModified = time.Now()
-		return append(nodes, Node{
-			Type:     TypeBookmark,
-			Bookmark: &bm,
-		}), nil
-	}
+	nextNodes, _, err := AddBookmarkWithCreated(nodes, parentID, bm)
+	return nextNodes, err
+}
 
-	parent := FindNode(nodes, parentID)
-	if parent == nil {
-		return nodes, ErrNotFound
+// AddBookmarkWithCreated appends a bookmark to a folder and returns the created node.
+func AddBookmarkWithCreated(nodes []Node, parentID string, bm Bookmark) ([]Node, Node, error) {
+	if bm.ID == "" {
+		bm.ID = GenerateID()
 	}
-	if parent.Type != TypeFolder {
-		return nodes, ErrInvalidTarget
-	}
-	bm.ID = GenerateID()
 	if bm.AddDate.IsZero() {
 		bm.AddDate = time.Now()
 	}
 	bm.LastModified = time.Now()
-	parent.Folder.Children = append(parent.Folder.Children, Node{
+	created := Node{
 		Type:     TypeBookmark,
 		Bookmark: &bm,
-	})
-	return nodes, nil
-}
+	}
 
-// AddFolder creates a new empty folder inside a parent folder.
-func AddFolder(nodes []Node, parentID string, name string) ([]Node, error) {
 	if parentID == "" {
-		folder := &Folder{
-			ID:           GenerateID(),
-			Name:         name,
-			AddDate:      time.Now(),
-			LastModified: time.Now(),
-			Children:     []Node{},
-		}
-		return append(nodes, Node{
-			Type:   TypeFolder,
-			Folder: folder,
-		}), nil
+		return append(nodes, created), created, nil
 	}
 
 	parent := FindNode(nodes, parentID)
 	if parent == nil {
-		return nodes, ErrNotFound
+		return nodes, Node{}, ErrNotFound
 	}
 	if parent.Type != TypeFolder {
-		return nodes, ErrInvalidTarget
+		return nodes, Node{}, ErrInvalidTarget
 	}
+	parent.Folder.Children = append(parent.Folder.Children, created)
+	return nodes, created, nil
+}
+
+// AddFolder creates a new empty folder inside a parent folder.
+func AddFolder(nodes []Node, parentID string, name string) ([]Node, error) {
+	nextNodes, _, err := AddFolderWithCreated(nodes, parentID, name)
+	return nextNodes, err
+}
+
+// AddFolderWithCreated creates a new empty folder and returns the created node.
+func AddFolderWithCreated(nodes []Node, parentID string, name string) ([]Node, Node, error) {
 	folder := &Folder{
 		ID:           GenerateID(),
 		Name:         name,
@@ -117,11 +104,24 @@ func AddFolder(nodes []Node, parentID string, name string) ([]Node, error) {
 		LastModified: time.Now(),
 		Children:     []Node{},
 	}
-	parent.Folder.Children = append(parent.Folder.Children, Node{
+	created := Node{
 		Type:   TypeFolder,
 		Folder: folder,
-	})
-	return nodes, nil
+	}
+
+	if parentID == "" {
+		return append(nodes, created), created, nil
+	}
+
+	parent := FindNode(nodes, parentID)
+	if parent == nil {
+		return nodes, Node{}, ErrNotFound
+	}
+	if parent.Type != TypeFolder {
+		return nodes, Node{}, ErrInvalidTarget
+	}
+	parent.Folder.Children = append(parent.Folder.Children, created)
+	return nodes, created, nil
 }
 
 // UpdateBookmark modifies an existing bookmark's fields.

@@ -193,21 +193,20 @@ export function createBookmarkTreeDndController(options) {
 
   /**
    * @param {DropTarget} target
-   * @returns {Promise<boolean>}
+   * @returns {Promise<MoveResult | null>}
    */
   async function applyDropTarget(target) {
     if (!draggedNodeId || draggedNodeId === target.targetId) {
-      return false;
+      return null;
     }
 
     if (target.position === "inside") {
-      await MoveNode(draggedNodeId, target.targetId, -1);
-      return true;
+      return MoveNode(draggedNodeId, target.targetId, -1);
     }
 
     const targetNode = treeState.selectors.getNode(target.targetId);
     if (!targetNode) {
-      return false;
+      return null;
     }
 
     const parentId = treeState.selectors.getParentId(target.targetId);
@@ -215,12 +214,11 @@ export function createBookmarkTreeDndController(options) {
       ? treeState.selectors.getChildIndex(parentId, targetNode.id)
       : treeState.selectors.getTree().findIndex((node) => node.id === targetNode.id);
     if (targetIndex < 0) {
-      return false;
+      return null;
     }
 
     const insertIndex = target.position === "before" ? targetIndex : targetIndex + 1;
-    await MoveNode(draggedNodeId, parentId, insertIndex);
-    return true;
+    return MoveNode(draggedNodeId, parentId, insertIndex);
   }
 
   /**
@@ -302,8 +300,8 @@ export function createBookmarkTreeDndController(options) {
 
       try {
         draggedNodeId = draggedId;
-        const moved = await applyDropTarget(finalDropTarget);
-        if (moved) {
+        const result = await applyDropTarget(finalDropTarget);
+        if (result && !treeState.actions.applyMoveResult(result)) {
           await treeState.actions.refresh();
         }
       } catch (caughtError) {
