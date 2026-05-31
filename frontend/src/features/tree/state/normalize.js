@@ -66,6 +66,7 @@ function normalizeNode(node) {
         lastModified: node.folder.lastModified ?? "",
         meta: node.folder.meta ?? "",
         children: normalizeTree(node.folder.children),
+        childrenLoaded: true,
       },
     };
   }

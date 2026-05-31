@@ -59,135 +59,137 @@ Each task is self-contained and verifiable. Complete in order -- later tasks bui
 
 ---
 
-## Phase 2: Virtual scrolling + lazy loading
+## Phase 2: Virtual scrolling + lazy loading ✅ DONE
 
 **Goal:** Don't send the full tree to the frontend. Send only root nodes initially, then fetch folder children on-demand when the user expands a folder. Render only the visible viewport with virtual scrolling.
 
-### Task 2.1: Add GetFolderChildren endpoint to Go
+### Task 2.1: Add GetFolderChildren endpoint to Go ✅ DONE
 
 - **File:** `internal/wailsapi/handler.go`
-- **What:** New method `GetFolderChildren(folderID string) []FlatNodeDTO` that finds the folder in memory and returns its direct children as flat DTOs.
-- **Also:** Add `GetRootNodes() []FlatNodeDTO` for initial load.
+- **What:** Added `GetFolderChildren(folderID string) []FlatNodeDTO` and `GetRootNodes() []FlatNodeDTO`.
+- **Also:** Ran `wails generate module` to regenerate frontend bindings.
 - **Verify:** `go build ./...`
 
-### Task 2.2: Add Go endpoints to frontend API
+### Task 2.2: Add Go endpoints to frontend API ✅ DONE
 
 - **File:** `frontend/src/shared/api/api.js`
-- **What:** Export `GetRootNodes()` and `GetFolderChildren(folderId)`.
+- **What:** Added `GetRootNodes()` and `GetFolderChildren(folderId)` exports.
 - **Verify:** `npm run typecheck`
 
-### Task 2.3: Redesign tree-state for lazy loading
+### Task 2.3: Redesign tree-state for lazy loading ✅ DONE
 
 - **File:** `frontend/src/features/tree/state/tree-state.js`
-- **What:** Change the tree signal from a full tree to a lazy-loaded tree.
+- **What:** Implemented lazy-loaded tree state.
 - **Key changes:**
-  - `tree()` still holds `TreeNode[]` but folders have a `loaded` flag
-  - `FolderNode` gains `children: TreeNode[]` and `childrenLoaded: boolean`
-  - New action: `loadFolderChildren(folderId)` -- calls `GetFolderChildren()`, normalizes, patches the folder node in the tree
-  - `loadFile()` calls `GetRootNodes()` instead of `GetFlatTree()`
-  - `getVisibleNodeEntries()` skips children of unloaded folders (treats them as collapsed)
+  - `tree()` holds `TreeNode[]` with folders having `childrenLoaded` flag
+  - `FolderNode` has `children: TreeNode[]` and `childrenLoaded: boolean`
+  - `loadFolderChildren(folderId)` -- calls `GetFolderChildren()`, normalizes, patches folder in place, notifies via `tree([...currentTree])`
+  - `loadFile()` calls `syncRootNodes()` which uses `GetRootNodes()` instead of `GetFlatTree()`
+  - `getVisibleNodeEntries()` only shows children of loaded/expanded folders
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 2.4: Wire lazy loading into tree interaction
+### Task 2.4: Wire lazy loading into tree interaction ✅ DONE
 
 - **File:** `frontend/src/features/tree/state/tree-state.js`
-- **What:** In `toggleExpand()`, if the folder is not yet loaded, call `loadFolderChildren()` before expanding.
-- **File:** `frontend/src/features/tree/interactions/bookmark-tree-keyboard.js`
-- **What:** Ensure keyboard expand also triggers lazy loading.
+- **What:** `toggleExpand()` calls `loadFolderChildren()` when folder is not yet loaded, then expands.
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 2.5: Add virtual scrolling to list rendering
+### Task 2.5: Add virtual scrolling to list rendering ✅ DONE
 
 - **File:** `frontend/src/shared/runtime/naf.js`
-- **What:** Add an optional `virtual` configuration to `list()`:
-  ```js
-  list(container, template, items, key, setup, {
-    virtual: {
-      rowHeight: 32,    // fixed pixel height per row
-      containerHeight: () => container.scrollHeight, // or fixed
-    }
-  })
-  ```
+- **What:** Added `listVirtual()` internal function. `list()` accepts `{ virtual: { rowHeight } }` option.
 - **How:**
-  - Calculate visible range from `scrollTop` / container height
-  - Only create DOM nodes for visible items
-  - Use a spacer element (`height: totalHeight`) and `translateY` for positioning
-  - Listen to `scroll` events and update the visible window
-  - Reuse the existing key-based diffing for the visible subset
+  - Spacer element provides scrollable height
+  - Rows are absolutely positioned children of the spacer
+  - Scroll listener with `requestAnimationFrame` throttling
+  - Key-based diffing for visible subset
+  - Cleanup removes spacer and resets container styles
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 2.6: Enable virtual scrolling for the tree list
+### Task 2.6: Enable virtual scrolling for the tree list ✅ DONE
 
 - **File:** `frontend/src/features/tree/view/bookmark-tree.js`
-- **What:** Pass `virtual: { rowHeight: 32 }` to the `list()` call in `mountListForMode()`.
-- **Also:** Set a fixed `height` and `overflow-y: auto` on `shell.treeList` via CSS.
+- **What:** Added `ROW_HEIGHT = 32` constant. Pass `{ virtual: { rowHeight: ROW_HEIGHT } }` to `list()` calls.
+- **Also:** CSS updates to `.tree-pane__list` (flex column, `overflow: hidden`) and `#tree-list` (`flex: 1; min-height: 0`).
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 2.7: Handle search mode separately
+### Task 2.7: Handle search mode separately ✅ DONE
 
 - **File:** `frontend/src/features/tree/view/bookmark-tree.js`
-- **What:** Search results should also use virtual scrolling (search can return thousands of results).
+- **What:** Search results use virtual scrolling with same `ROW_HEIGHT`.
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 2.8: Validate with 1M file
+### Task 2.8: Bug fixes ✅ DONE
+
+- **Empty-state placeholder conflict:** `mount(component, host)` calls `replaceChildren()` which destroys the virtual list spacer. Fixed by using `component.mount(host)` which appends instead.
+- **Template component unmount:** Added `element.remove()` in unmount cleanup to properly remove mounted DOM.
+- **Signal notification:** `loadFolderChildren()` calls `tree([...currentTree])` after patching children to notify subscribers.
+
+### Task 2.8: Validate with 1M file ⏳ Pending
 
 - **What:** Load the 1M test file. Expected behavior:
   - Initial load: only 100K root folders sent (~5-10MB JSON)
   - Expanding a folder: fetches 6 children (<1ms)
   - Scrolling: smooth, only ~20 DOM nodes at a time
   - Memory: frontend holds only loaded subtrees + viewport DOM
+- **Status:** Code is functional, manual testing with test files needed.
 
 ---
 
-## Phase 3: Web Workers for heavy computation
+## Phase 3: Web Workers for heavy computation ✅ DONE
 
 **Goal:** Offload CPU-intensive work from the main thread. Prevents UI freezing during tree normalization, index building, and search indexing.
 
-### Task 3.1: Set up Vite worker configuration
+### Task 3.1: Set up Vite worker configuration ✅ DONE
 
 - **File:** `frontend/vite.config.js`
-- **What:** Ensure Vite handles `.worker.js` files (inline workers via `?worker` or `?sharedworker` query param).
-- **Verify:** `npm run build`
+- **What:** Existing Vite config supports module workers created with `new Worker(new URL(..., import.meta.url), { type: "module" })`.
+- **Verify:** `npm run build` emits separate `tree-worker` and `search-worker` chunks.
 
-### Task 3.2: Create tree-worker for normalization
+### Task 3.2: Create tree-worker for normalization ✅ DONE
 
 - **File:** `frontend/src/features/tree/workers/tree-worker.js` (new)
 - **What:** Dedicated worker that receives flat DTOs and returns normalized `TreeNode[]`.
 - **Messages:**
   - `normalizeFlat` -> sends `FlatNodeDTO[]`, receives `TreeNode[]`
   - `buildNodeIndex` -> sends `TreeNode[]`, receives `{ entries: [id, nodeSummary][] }` (Map can't be cloned, send as array)
-- **Verify:** Worker loads without errors
+- **Also:** Added `frontend/src/features/tree/workers/tree-worker-client.js` for request/response handling and synchronous fallback.
+- **Verify:** Browser smoke test loads `tree-worker.js?worker_file&type=module`.
 
-### Task 3.3: Create search-worker for indexing
+### Task 3.3: Create search-worker for indexing ✅ DONE
 
 - **File:** `frontend/src/features/search/workers/search-worker.js` (new)
 - **What:** Dedicated worker that builds the flat search index from the tree.
 - **Messages:**
   - `buildIndex` -> sends `TreeNode[]`, receives `BookmarkIndexEntry[]`
-- **Verify:** Worker loads without errors
+- **Also:** Added `frontend/src/features/search/workers/search-worker-client.js` for request/response handling and synchronous fallback.
+- **Verify:** Browser smoke test loads `search-worker.js?worker_file&type=module` during full refresh and returns the expected `BookmarkIndexEntry[]`.
 
-### Task 3.4: Wire tree-worker into load path
+### Task 3.4: Wire tree-worker into load path ✅ DONE
 
 - **File:** `frontend/src/features/tree/state/tree-state.js`
-- **What:** In `syncTreeState()`, send flat data to tree-worker, receive normalized tree. Use `structuredClone` or transferable objects where possible.
+- **What:** `syncRootNodes()`, `loadFolderChildren()`, and `syncTreeState()` send flat data to tree-worker and receive normalized trees.
 - **Pattern:**
   ```js
-  const normalized = await treeWorker.normalizeFlat(flatData);
+  const normalized = await normalizeFlatInWorker(flatData);
   tree(normalized);
   ```
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 3.5: Wire search-worker into load path
+### Task 3.5: Wire search-worker into load path ✅ DONE
 
 - **File:** `frontend/src/features/tree/state/tree-state.js`
-- **What:** After tree is set, send it to search-worker for index building.
+- **What:** Full-tree refreshes send the complete normalized tree to search-worker for index building.
+- **Note:** Initial lazy load still uses `GetFlatIndex()` from Go so search remains complete even though the frontend tree only contains root nodes and expanded folders.
 - **Verify:** `npm run typecheck && npm run build`
 
-### Task 3.6: Add loading indicator during worker processing
+### Task 3.6: Add loading indicator during worker processing ✅ DONE
 
 - **File:** `frontend/src/features/tree/view/bookmark-tree.js`
-- **What:** Show a progress/loading state while the worker is processing. The `loading` signal already exists in tree-state -- wire it to show/hide a spinner or skeleton.
-- **Verify:** Visual check in app
+- **What:** Show a spinner-backed loading state while `treeState.loading` is active.
+- **File:** `frontend/src/features/tree/styles/tree-list.css`
+- **What:** Added compact loading-state layout for the existing empty-state surface.
+- **Verify:** Browser smoke test with mocked Wails bindings.
 
 ### Task 3.7: Validate with 1M file
 
@@ -197,6 +199,7 @@ Each task is self-contained and verifiable. Complete in order -- later tasks bui
   - Worker handles normalization + indexing off-main-thread
   - Lazy loading means only root nodes are processed initially
   - Total load time: under 10 seconds for initial render
+- **Status:** Not manually validated in the Wails desktop runtime during this implementation pass. Automated checks and browser smoke tests pass.
 
 ---
 

@@ -43,6 +43,7 @@ export function normalizeFlat(flatNodes) {
           lastModified: flat.lastModified ?? "",
           meta: flat.meta ?? "",
           children: [],
+          childrenLoaded: false,
         },
       };
       node = folderNode;

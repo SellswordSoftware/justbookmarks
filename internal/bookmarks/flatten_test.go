@@ -104,3 +104,115 @@ func TestFlattenTree_ChildCount(t *testing.T) {
 		}
 	}
 }
+
+func TestNewFlatNode_Folder(t *testing.T) {
+	node := Node{
+		Type: TypeFolder,
+		Folder: &Folder{
+			ID:       "f1",
+			Name:     "Test Folder",
+			Children: []Node{
+				{Type: TypeBookmark, Bookmark: &Bookmark{ID: "b1"}},
+				{Type: TypeBookmark, Bookmark: &Bookmark{ID: "b2"}},
+			},
+		},
+	}
+
+	dto := NewFlatNode(node, "parent-id")
+	if dto.ID != "f1" {
+		t.Errorf("ID=%q, want %q", dto.ID, "f1")
+	}
+	if dto.Type != TypeFolder {
+		t.Errorf("Type=%v, want %v", dto.Type, TypeFolder)
+	}
+	if dto.ParentID != "parent-id" {
+		t.Errorf("ParentID=%q, want %q", dto.ParentID, "parent-id")
+	}
+	if dto.Name != "Test Folder" {
+		t.Errorf("Name=%q, want %q", dto.Name, "Test Folder")
+	}
+	if dto.ChildCount != 2 {
+		t.Errorf("ChildCount=%d, want 2", dto.ChildCount)
+	}
+}
+
+func TestNewFlatNode_Bookmark(t *testing.T) {
+	node := Node{
+		Type: TypeBookmark,
+		Bookmark: &Bookmark{
+			ID:    "b1",
+			Title: "Google",
+			URL:   "https://google.com",
+		},
+	}
+
+	dto := NewFlatNode(node, "f1")
+	if dto.ID != "b1" {
+		t.Errorf("ID=%q, want %q", dto.ID, "b1")
+	}
+	if dto.Type != TypeBookmark {
+		t.Errorf("Type=%v, want %v", dto.Type, TypeBookmark)
+	}
+	if dto.ParentID != "f1" {
+		t.Errorf("ParentID=%q, want %q", dto.ParentID, "f1")
+	}
+	if dto.Name != "Google" {
+		t.Errorf("Name=%q, want %q", dto.Name, "Google")
+	}
+	if dto.URL != "https://google.com" {
+		t.Errorf("URL=%q, want %q", dto.URL, "https://google.com")
+	}
+	if dto.ChildCount != 0 {
+		t.Errorf("ChildCount=%d, want 0", dto.ChildCount)
+	}
+}
+
+func TestFindFolder(t *testing.T) {
+	nodes := []Node{
+		{
+			Type: TypeFolder,
+			Folder: &Folder{
+				ID:   "f1",
+				Name: "Root",
+				Children: []Node{
+					{Type: TypeBookmark, Bookmark: &Bookmark{ID: "b1", Title: "Google"}},
+					{
+						Type: TypeFolder,
+						Folder: &Folder{
+							ID:   "f2",
+							Name: "Nested",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// Find existing folder
+	found := FindFolder(nodes, "f1")
+	if found == nil {
+		t.Error("expected to find folder f1")
+	} else if found.ID() != "f1" {
+		t.Errorf("found ID=%q, want %q", found.ID(), "f1")
+	}
+
+	// Find nested folder
+	found = FindFolder(nodes, "f2")
+	if found == nil {
+		t.Error("expected to find folder f2")
+	} else if found.ID() != "f2" {
+		t.Errorf("found ID=%q, want %q", found.ID(), "f2")
+	}
+
+	// Find bookmark (should return nil)
+	found = FindFolder(nodes, "b1")
+	if found != nil {
+		t.Errorf("expected nil for bookmark, got ID=%q", found.ID())
+	}
+
+	// Find non-existent
+	found = FindFolder(nodes, "nonexistent")
+	if found != nil {
+		t.Errorf("expected nil for nonexistent, got ID=%q", found.ID())
+	}
+}

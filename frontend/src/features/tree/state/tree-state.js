@@ -1,9 +1,10 @@
 // @ts-check
 
-import { GetFlatIndex, GetFlatTree, LoadFile } from "../../../shared/api/api.js";
+import { GetFlatIndex, GetFlatTree, GetFolderChildren, GetRootNodes, LoadFile } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { computed, signal } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
+import { buildSearchIndexInWorker } from "../../search/workers/search-worker-client.js";
 import {
   expandAncestorIds,
   getDefaultExpandedFolderIds,
@@ -13,7 +14,6 @@ import {
   isExpandedId,
   toggleExpandedId,
 } from "./expansion.js";
-import { normalizeFlat } from "./normalize-flat.js";
 import {
   getPersistentTreeState,
   pruneSelectionState,
@@ -39,6 +39,7 @@ import {
   getParentNodeById,
   getSiblingIds as getSiblingIdsFromTree,
 } from "./structure.js";
+import { normalizeFlatInWorker } from "../workers/tree-worker-client.js";
 
 /** Tree state owner for normalized tree data, selection, expansion, and load/restore workflows. */
 
@@ -281,6 +282,28 @@ function expandAncestors(id) {
  * @returns {void}
  */
 function toggleExpand(id) {
+  const node = getNode(id);
+  if (!node || node.type !== 0) {
+    return;
+  }
+  const currentlyExpanded = isExpanded(id);
+  const childrenLoaded = node.folder.childrenLoaded;
+
+  // Collapsed and not loaded: load children then expand
+  if (!currentlyExpanded && !childrenLoaded) {
+    loadFolderChildren(id).then(() => {
+      expandedNodeIds(toggleExpandedId(expandedNodeIds(), id));
+    });
+    return;
+  }
+
+  // Expanded but not loaded (auto-expanded on initial load): load children, keep expanded
+  if (currentlyExpanded && !childrenLoaded) {
+    loadFolderChildren(id);
+    return;
+  }
+
+  // Normal toggle (children are loaded)
   expandedNodeIds(toggleExpandedId(expandedNodeIds(), id));
 }
 
@@ -318,10 +341,49 @@ function pruneSelection() {
   applySelectionState(pruneSelectionState(tree(), getSelectionState()));
 }
 
-/** @returns {Promise<void>} */
+/**
+ * Load children for a folder that hasn't been loaded yet.
+ * Finds the folder node, fetches its children from Go, normalizes them,
+ * and patches the folder's children array + marks it as loaded.
+ * @param {string} folderId
+ * @returns {Promise<void>}
+ */
+async function loadFolderChildren(folderId) {
+  const folder = getNode(folderId);
+  if (!folder || folder.type !== 0) {
+    return;
+  }
+  if (folder.folder.childrenLoaded) {
+    return;
+  }
+  const flatChildren = await GetFolderChildren(folderId);
+  const normalized = await normalizeFlatInWorker(flatChildren);
+  // Patch the folder node in place -- signal will notify because tree() content changed
+  const currentTree = tree();
+  const folderInTree = getNodeById(currentTree, folderId);
+  if (folderInTree && folderInTree.type === 0) {
+    folderInTree.folder.children = normalized;
+    folderInTree.folder.childrenLoaded = true;
+    tree([...currentTree]);
+  }
+}
+
+/**
+ * Sync the full tree state from Go. Used for initial load and after mutations.
+ * @returns {Promise<void>}
+ */
 async function syncTreeState() {
-  const [flatData, flatIndex] = await Promise.all([GetFlatTree(), GetFlatIndex()]);
-  tree(normalizeFlat(flatData));
+  const flatData = await GetFlatTree();
+  const normalized = await normalizeFlatInWorker(flatData);
+  tree(normalized);
+  searchState.actions.setIndex(await buildSearchIndexInWorker(normalized));
+  pruneSelection();
+}
+
+/** @returns {Promise<void>} */
+async function syncRootNodes() {
+  const [rootNodes, flatIndex] = await Promise.all([GetRootNodes(), GetFlatIndex()]);
+  tree(await normalizeFlatInWorker(rootNodes));
   searchState.actions.setIndex(flatIndex);
   pruneSelection();
 }
@@ -337,8 +399,10 @@ async function loadFile(path) {
     await LoadFile(path);
     expandedNodeIds([]);
     clearSelection();
-    await syncTreeState();
-    expandedNodeIds(getDefaultExpandedFolderIds(tree()));
+    await syncRootNodes();
+    // Don't auto-expand root folders on initial load with lazy loading.
+    // Users expand folders as needed; children load on demand.
+    // expandedNodeIds(getDefaultExpandedFolderIds(tree()));
     return true;
   } catch (caughtError) {
     error(getErrorMessage(caughtError, "Failed to load bookmark file"));

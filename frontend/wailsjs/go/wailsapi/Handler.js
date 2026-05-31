@@ -50,8 +50,16 @@ export function GetFlatTree() {
   return window['go']['wailsapi']['Handler']['GetFlatTree']();
 }
 
+export function GetFolderChildren(arg1) {
+  return window['go']['wailsapi']['Handler']['GetFolderChildren'](arg1);
+}
+
 export function GetHistoryState() {
   return window['go']['wailsapi']['Handler']['GetHistoryState']();
+}
+
+export function GetRootNodes() {
+  return window['go']['wailsapi']['Handler']['GetRootNodes']();
 }
 
 export function LoadFile(arg1) {

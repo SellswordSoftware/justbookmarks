@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, list, mount, template } from "../../../shared/runtime/naf.js";
+import { effect, list, raw, template } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
 import { createBookmarkTreeDndController } from "../interactions/bookmark-tree-dnd.js";
@@ -50,6 +50,9 @@ const SEARCH_RESULT_HTML = /*html*/ `
     <span class="search-result__meta"></span>
   </article>
 `;
+
+/** Fixed row height for virtual scrolling. */
+const ROW_HEIGHT = 32;
 
 /**
  * @typedef {object} BookmarkTreeShell
@@ -132,6 +135,7 @@ export function mountBookmarkTree(shell) {
           }
           return mountBookmarkSearchResultRow(el, item);
         },
+        { virtual: { rowHeight: ROW_HEIGHT } },
       );
       return;
     }
@@ -151,6 +155,7 @@ export function mountBookmarkTree(shell) {
           shouldIgnoreClick: dnd.shouldIgnoreClick,
         });
       },
+      { virtual: { rowHeight: ROW_HEIGHT } },
     );
   }
 
@@ -175,25 +180,39 @@ export function mountBookmarkTree(shell) {
   // "only has the empty-state message".
   /** @type {Component<HTMLElement> | null} */
   let emptyStateComponent = null;
+  let emptyStateKind = "";
 
   const stopEmptyStateEffect = effect(() => {
     // Read the signals to determine if data is empty (drives reactivity).
     // The list() effect has already run by this point and added/removed DOM items.
     const isSearching = searchState.selectors.isSearching();
+    const loading = treeState.selectors.isLoading();
     const dataIsEmpty = isSearching
       ? searchState.selectors.getResults().length === 0
       : treeState.selectors.getVisibleNodeEntries().length === 0;
+    const nextEmptyStateKind = loading
+      ? "loading"
+      : dataIsEmpty
+        ? `empty:${isSearching ? "search" : "tree"}`
+        : "";
 
-    if (dataIsEmpty && emptyStateComponent === null) {
+    if (nextEmptyStateKind && nextEmptyStateKind !== emptyStateKind) {
+      emptyStateComponent?.unmount?.();
       const renderEmptyTreeState = /** @type {TemplateTag} */ (template);
-      const message = isSearching ? "No results found" : "No bookmarks or folders yet";
+      const content = loading
+        ? raw('<span class="spinner spinner-sm tree-empty-state__spinner" aria-hidden="true"></span><span>Loading bookmark library...</span>')
+        : isSearching
+          ? "No results found"
+          : "No bookmarks or folders yet";
       emptyStateComponent = renderEmptyTreeState`
-        <div class="tree-empty-state">${message}</div>
+        <div class="tree-empty-state">${content}</div>
       `;
-      mount(emptyStateComponent, shell.treeList);
-    } else if (!dataIsEmpty && emptyStateComponent !== null) {
+      emptyStateComponent.mount(shell.treeList);
+      emptyStateKind = nextEmptyStateKind;
+    } else if (!nextEmptyStateKind && emptyStateComponent !== null) {
       emptyStateComponent.unmount?.();
       emptyStateComponent = null;
+      emptyStateKind = "";
     }
   });
 

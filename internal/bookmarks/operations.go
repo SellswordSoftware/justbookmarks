@@ -27,6 +27,15 @@ func FindNode(nodes []Node, id string) *Node {
 	return nil
 }
 
+// FindFolder locates a folder node by ID. Returns nil if not found or not a folder.
+func FindFolder(nodes []Node, id string) *Node {
+	node := FindNode(nodes, id)
+	if node != nil && node.Type == TypeFolder {
+		return node
+	}
+	return nil
+}
+
 // FindParent locates the parent folder that contains the given child ID.
 // Returns nil if the child is at the root level or not found.
 func FindParent(nodes []Node, childID string) *Node {

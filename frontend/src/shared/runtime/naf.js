@@ -301,7 +301,20 @@ function createTemplateFromString(html) {
 }
 
 /**
+ * Virtual scrolling options for list().
+ * @typedef {object} VirtualOptions
+ * @property {number} rowHeight - Fixed pixel height per row.
+ */
+
+/**
+ * List render options.
+ * @typedef {object} ListOptions
+ * @property {VirtualOptions} [virtual] - Enable virtual scrolling.
+ */
+
+/**
  * Render a keyed list from a template element or HTML string.
+ * Supports virtual scrolling via the optional `options` parameter.
  *
  * @template T
  * @param {Element | null} container
@@ -309,9 +322,10 @@ function createTemplateFromString(html) {
  * @param {() => T[]} items
  * @param {(item: T) => string | number} key
  * @param {(el: Element, item: () => T, index: () => number) => void | (() => void)} setup
+ * @param {ListOptions} [options]
  * @returns {() => void}
  */
-export function list(container, templateEl, items, key, setup) {
+export function list(container, templateEl, items, key, setup, options) {
   if (!container || !templateEl) {
     return () => {};
   }
@@ -321,6 +335,17 @@ export function list(container, templateEl, items, key, setup) {
     ? createTemplateFromString(templateEl)
     : templateEl;
 
+  /** @type {VirtualOptions | undefined} */
+  const virtualOpts = options?.virtual;
+  const isVirtual = !!virtualOpts;
+  const rowHeight = isVirtual ? virtualOpts.rowHeight : 0;
+
+  // --- Virtual scrolling mode ---
+  if (isVirtual && rowHeight > 0) {
+    return listVirtual(/** @type {HTMLElement} */ (container), tpl, items, key, setup, rowHeight);
+  }
+
+  // --- Standard (full render) mode ---
   /** @type {Map<string | number, { el: Element, item: Signal<T>, index: Signal<number>, cleanup?: () => void }>} */
   const entries = new Map();
 
@@ -383,6 +408,148 @@ export function list(container, templateEl, items, key, setup) {
       entry.el.remove();
     }
     entries.clear();
+  };
+}
+
+/**
+ * Internal: virtual-scrolling list renderer.
+ * Only creates DOM nodes for the visible viewport. Uses a spacer element
+ * for scroll height and translateY for row positioning.
+ *
+ * @template T
+ * @param {HTMLElement} container
+ * @param {HTMLTemplateElement} tpl
+ * @param {() => T[]} items
+ * @param {(item: T) => string | number} key
+ * @param {(el: Element, item: () => T, index: () => number) => void | (() => void)} setup
+ * @param {number} rowHeight
+ * @returns {() => void}
+ */
+function listVirtual(container, tpl, items, key, setup, rowHeight) {
+  // Set up the scrollable container
+  container.style.overflowY = "auto";
+  container.style.position = "relative";
+
+  // Spacer element: provides the scrollable height
+  const spacer = document.createElement("div");
+  spacer.style.position = "absolute";
+  spacer.style.top = "0";
+  spacer.style.left = "0";
+  spacer.style.width = "100%";
+  container.appendChild(spacer);
+
+  /** @type {Map<string | number, { el: HTMLElement, item: Signal<T>, index: Signal<number>, cleanup?: () => void }>} */
+  const entries = new Map();
+
+  /**
+   * Calculate which items are visible in the current viewport.
+   * @returns {{ start: number, end: number }}
+   */
+  function getVisibleRange() {
+    const totalItems = items().length;
+    if (totalItems === 0) {
+      return { start: 0, end: 0 };
+    }
+    const scrollTop = container.scrollTop;
+    const viewportHeight = container.clientHeight;
+    const bufferSize = Math.max(3, Math.floor(viewportHeight / rowHeight));
+
+    const startIdx = Math.max(0, Math.floor(scrollTop / rowHeight) - bufferSize);
+    const endIdx = Math.min(totalItems, Math.ceil((scrollTop + viewportHeight) / rowHeight) + bufferSize);
+
+    return { start: startIdx, end: endIdx };
+  }
+
+  /**
+   * Update the virtual list: create/remove/position rows for the visible range.
+   */
+  function updateVirtualList() {
+    const arr = items();
+    const totalItems = arr.length;
+
+    // Update spacer height
+    spacer.style.height = `${totalItems * rowHeight}px`;
+
+    const { start, end } = getVisibleRange();
+    const visibleKeys = new Set();
+
+    for (let i = start; i < end; i++) {
+      const item = arr[i];
+      const entryKey = key(item);
+      visibleKeys.add(entryKey);
+
+      let entry = entries.get(entryKey);
+
+      if (!entry) {
+        const el = /** @type {HTMLElement} */ (tpl.content.firstElementChild?.cloneNode(true));
+        el.style.position = "absolute";
+        el.style.top = `${i * rowHeight}px`;
+        el.style.left = "0";
+        el.style.width = "100%";
+        el.style.height = `${rowHeight}px`;
+
+        const itemSig = signal(item);
+        const indexSig = signal(i);
+        entry = { el, item: itemSig, index: indexSig };
+        entries.set(entryKey, entry);
+
+        const cleanup = setup(el, () => itemSig(), () => indexSig());
+        if (cleanup) {
+          entry.cleanup = cleanup;
+        }
+
+        spacer.appendChild(el);
+      } else {
+        entry.item(item);
+        entry.index(i);
+        // Update position in case items shifted
+        entry.el.style.top = `${i * rowHeight}px`;
+      }
+    }
+
+    // Remove entries that are no longer visible
+    for (const [entryKey, entry] of entries) {
+      if (!visibleKeys.has(entryKey)) {
+        entry.cleanup?.();
+        entry.el.remove();
+        entries.delete(entryKey);
+      }
+    }
+  }
+
+  // Scroll listener with requestAnimationFrame throttling
+  let scrollTick = false;
+  const onScroll = () => {
+    if (!scrollTick) {
+      scrollTick = true;
+      requestAnimationFrame(() => {
+        updateVirtualList();
+        scrollTick = false;
+      });
+    }
+  };
+  container.addEventListener("scroll", onScroll, { passive: true });
+
+  // Reactive effect: re-render when items change
+  const stopEffect = effect(() => {
+    updateVirtualList();
+  });
+
+  // Initial render
+  updateVirtualList();
+
+  return () => {
+    stopEffect();
+    container.removeEventListener("scroll", onScroll);
+    for (const entry of entries.values()) {
+      entry.cleanup?.();
+      entry.el.remove();
+    }
+    entries.clear();
+    spacer.remove();
+    // Reset container styles
+    container.style.overflowY = "";
+    container.style.position = "";
   };
 }
 
@@ -662,6 +829,9 @@ function createComponent(html, components, options) {
         options.onUnmount(context);
       }
       cleanup.run();
+      for (const element of mountedElements) {
+        element.remove();
+      }
       component.el = undefined;
       component.refs = {};
       mountedElements = [];

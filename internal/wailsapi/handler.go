@@ -54,6 +54,35 @@ func (h *Handler) GetFlatTree() []bookmarks.FlatNode {
 	return bookmarks.FlattenTree(h.tree)
 }
 
+// GetRootNodes returns only the root-level nodes as flat DTOs.
+// Used for lazy loading -- initial load only sends the top level.
+func (h *Handler) GetRootNodes() []bookmarks.FlatNode {
+	return flattenNodes(h.tree, "")
+}
+
+// GetFolderChildren returns the direct children of a folder as flat DTOs.
+// Used for lazy loading -- fetches a folder's contents on demand.
+func (h *Handler) GetFolderChildren(folderID string) []bookmarks.FlatNode {
+	folder := bookmarks.FindFolder(h.tree, folderID)
+	if folder == nil {
+		return nil
+	}
+	return flattenNodes(folder.Folder.Children, folderID)
+}
+
+// flattenNodes converts a slice of Node to FlatNode with a given parentID.
+func flattenNodes(nodes []bookmarks.Node, parentID string) []bookmarks.FlatNode {
+	if len(nodes) == 0 {
+		return nil
+	}
+	result := make([]bookmarks.FlatNode, 0, len(nodes))
+	for _, node := range nodes {
+		dto := bookmarks.NewFlatNode(node, parentID)
+		result = append(result, dto)
+	}
+	return result
+}
+
 // GetFlatIndex returns a flat index of all bookmarks for search.
 func (h *Handler) GetFlatIndex() []bookmarks.BookmarkIndexEntry {
 	return bookmarks.BuildFlatIndex(h.tree)

@@ -69,9 +69,14 @@ export function getFolderNodeIdsFromState(nodes) {
 }
 
 /**
+ * Get default expanded folder IDs for initial load.
+ * With lazy loading, only expand root-level folders.
+ * Their children load on demand when the user scrolls to them.
  * @param {TreeNode[]} nodes
  * @returns {string[]}
  */
 export function getDefaultExpandedFolderIds(nodes) {
-  return nodes.filter((node) => isFolderNode(node)).map((node) => node.id);
+  return nodes
+    .filter((node) => isFolderNode(node))
+    .map((node) => node.id);
 }

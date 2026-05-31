@@ -52,7 +52,19 @@
   background: var(--color-base-100);
 }
 
-.tree-pane__list,
+.tree-pane__list {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+#tree-list {
+  flex: 1;
+  min-height: 0;
+}
+
 .detail-pane__content {
   flex: 1;
   min-height: 0;

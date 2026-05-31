@@ -86,6 +86,7 @@ function normalizeTreeNode(node) {
         lastModified: node.folder.lastModified ?? "",
         meta: node.folder.meta ?? "",
         children: (node.folder.children ?? []).map(normalizeTreeNode),
+        childrenLoaded: true,
       },
     };
   }
@@ -160,6 +161,27 @@ export async function GetFlatTree() {
     return [];
   }
   return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetFlatTree()));
+}
+
+/** @returns {Promise<FlatNode[]>} */
+export async function GetRootNodes() {
+  const handler = getHandlerBindings();
+  if (!handler) {
+    return [];
+  }
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetRootNodes()));
+}
+
+/**
+ * @param {string} folderId
+ * @returns {Promise<FlatNode[]>}
+ */
+export async function GetFolderChildren(folderId) {
+  const handler = getHandlerBindings();
+  if (!handler) {
+    return [];
+  }
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetFolderChildren(folderId)));
 }
 
 /** @returns {Promise<BookmarkIndexEntry[]>} */

@@ -27,7 +27,11 @@ export function GetFlatIndex():Promise<Array<bookmarks.BookmarkIndexEntry>>;
 
 export function GetFlatTree():Promise<Array<bookmarks.FlatNode>>;
 
+export function GetFolderChildren(arg1:string):Promise<Array<bookmarks.FlatNode>>;
+
 export function GetHistoryState():Promise<bookmarks.HistoryState>;
+
+export function GetRootNodes():Promise<Array<bookmarks.FlatNode>>;
 
 export function LoadFile(arg1:string):Promise<void>;
 

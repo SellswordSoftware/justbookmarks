@@ -95,6 +95,7 @@ declare global {
     lastModified: TimestampValue;
     meta: string;
     children: TreeNode[];
+    childrenLoaded: boolean;
   }
 
   interface FolderNode {

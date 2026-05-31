@@ -71,3 +71,33 @@ func formatFlatTime(t time.Time) string {
 	}
 	return t.UTC().Format(time.RFC3339)
 }
+
+// NewFlatNode creates a FlatNode from a Node with the given parentID.
+// Unlike FlattenTree, this only converts a single node (no recursion).
+func NewFlatNode(node Node, parentID string) FlatNode {
+	dto := FlatNode{
+		ID:       node.ID(),
+		Type:     node.Type,
+		ParentID: parentID,
+	}
+
+	switch node.Type {
+	case TypeFolder:
+		dto.Name = node.Folder.Name
+		dto.ChildCount = len(node.Folder.Children)
+		dto.AddDate = formatFlatTime(node.Folder.AddDate)
+		dto.LastModified = formatFlatTime(node.Folder.LastModified)
+		dto.Icon = node.Folder.Icon
+		dto.Meta = node.Folder.Meta
+	case TypeBookmark:
+		dto.Name = node.Bookmark.Title
+		dto.URL = node.Bookmark.URL
+		dto.Icon = node.Bookmark.Icon
+		dto.IconURI = node.Bookmark.IconURI
+		dto.Meta = node.Bookmark.Meta
+		dto.AddDate = formatFlatTime(node.Bookmark.AddDate)
+		dto.LastModified = formatFlatTime(node.Bookmark.LastModified)
+	}
+
+	return dto
+}
