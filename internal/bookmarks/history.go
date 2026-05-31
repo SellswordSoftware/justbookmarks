@@ -96,3 +96,113 @@ func CloneBookmark(bookmark Bookmark) Bookmark {
 		Meta:         bookmark.Meta,
 	}
 }
+
+// AddCommand is a lightweight undoable command for add bookmark/folder operations.
+// Stores only the created node and its parent ID instead of full-tree snapshots.
+type AddCommand struct {
+	label    string
+	parentID string
+	node     Node
+}
+
+// NewAddCommand creates an add command that can undo by deleting the node
+// and redo by re-adding it.
+func NewAddCommand(label string, parentID string, node Node) AddCommand {
+	return AddCommand{
+		label:    label,
+		parentID: parentID,
+		node:     CloneNode(node),
+	}
+}
+
+func (c AddCommand) Label() string {
+	return c.label
+}
+
+// Apply re-adds the created node to its parent (or root).
+func (c AddCommand) Apply(tree []Node) ([]Node, error) {
+	if c.parentID == "" {
+		return append(tree, c.node), nil
+	}
+	parent := FindNode(tree, c.parentID)
+	if parent == nil || parent.Type != TypeFolder {
+		return tree, ErrNotFound
+	}
+	parent.Folder.Children = append(parent.Folder.Children, c.node)
+	return tree, nil
+}
+
+// Undo deletes the created node from the tree.
+func (c AddCommand) Undo(tree []Node) ([]Node, error) {
+	return DeleteNode(tree, c.node.ID())
+}
+
+// MoveCommand is a lightweight undoable command for move operations.
+// Stores only the move parameters instead of full-tree snapshots.
+type MoveCommand struct {
+	label       string
+	nodeID      string
+	oldParentID string
+	oldIndex    int
+	newParentID string
+	newIndex    int
+}
+
+// NewMoveCommand creates a move command that can undo by moving the node
+// back to its original location and redo by re-applying the move.
+func NewMoveCommand(label, nodeID, oldParentID string, oldIndex int, newParentID string, newIndex int) MoveCommand {
+	return MoveCommand{
+		label:       label,
+		nodeID:      nodeID,
+		oldParentID: oldParentID,
+		oldIndex:    oldIndex,
+		newParentID: newParentID,
+		newIndex:    newIndex,
+	}
+}
+
+func (c MoveCommand) Label() string {
+	return c.label
+}
+
+// Apply moves the node to its new location.
+func (c MoveCommand) Apply(tree []Node) ([]Node, error) {
+	return MoveNode(tree, c.nodeID, c.newParentID, c.newIndex)
+}
+
+// Undo moves the node back to its original location.
+func (c MoveCommand) Undo(tree []Node) ([]Node, error) {
+	return MoveNode(tree, c.nodeID, c.oldParentID, c.oldIndex)
+}
+
+// MultiMoveCommand is a lightweight undoable command for multi-node move operations.
+type MultiMoveCommand struct {
+	label       string
+	nodeIDs     []string
+	oldParentID string
+	newParentID string
+}
+
+// NewMultiMoveCommand creates a multi-move command.
+func NewMultiMoveCommand(label string, nodeIDs []string, oldParentID, newParentID string) MultiMoveCommand {
+	return MultiMoveCommand{
+		label:       label,
+		nodeIDs:     append([]string{}, nodeIDs...),
+		oldParentID: oldParentID,
+		newParentID: newParentID,
+	}
+}
+
+func (c MultiMoveCommand) Label() string {
+	return c.label
+}
+
+// Apply moves all nodes to the new parent folder.
+func (c MultiMoveCommand) Apply(tree []Node) ([]Node, error) {
+	return MoveNodes(tree, c.nodeIDs, c.newParentID)
+}
+
+// Undo moves all nodes back to the original parent folder.
+func (c MultiMoveCommand) Undo(tree []Node) ([]Node, error) {
+	return MoveNodes(tree, c.nodeIDs, c.oldParentID)
+}

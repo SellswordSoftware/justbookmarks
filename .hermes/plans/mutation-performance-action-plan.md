@@ -166,9 +166,9 @@ Acceptance criteria:
 
 ### Task D1: Replace Add Snapshot History With Operation-Specific Undo
 
-- [ ] Add an undo command for add bookmark/folder that deletes the created node on undo and re-adds it on redo.
-- [ ] Avoid full-tree before/after snapshot cloning for add operations.
-- [ ] Keep save behavior and history labels unchanged.
+- [x] Add an undo command for add bookmark/folder that deletes the created node on undo and re-adds it on redo.
+- [x] Avoid full-tree before/after snapshot cloning for add operations.
+- [x] Keep save behavior and history labels unchanged.
 
 Acceptance criteria:
 
@@ -177,9 +177,9 @@ Acceptance criteria:
 
 ### Task D2: Replace Move Snapshot History With Operation-Specific Undo
 
-- [ ] Capture old parent and old index before move.
-- [ ] Add move undo command that moves node(s) back to original location.
-- [ ] Avoid full-tree snapshot cloning for move operations.
+- [x] Capture old parent and old index before move.
+- [x] Add move undo command that moves node(s) back to original location.
+- [x] Avoid full-tree snapshot cloning for move operations.
 
 Acceptance criteria:
 

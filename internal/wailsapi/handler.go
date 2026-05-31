@@ -105,36 +105,36 @@ func collectFolders(nodes []bookmarks.Node) []bookmarks.Node {
 }
 
 // AddBookmark adds a bookmark to a folder, auto-saves, and returns the created node.
+// Uses AddCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) AddBookmark(parentID string, bm BookmarkCreateDTO) (bookmarks.FlatNode, error) {
-	var created bookmarks.FlatNode
-	err := h.executeSnapshotCommand("Add Bookmark", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		nextTree, createdNode, err := bookmarks.AddBookmarkWithCreated(nodes, parentID, toBookmarkCreate(bm))
-		if err != nil {
-			return nil, err
-		}
-		created = bookmarks.NewFlatNode(createdNode, parentID)
-		return nextTree, nil
-	})
+	nextTree, createdNode, err := bookmarks.AddBookmarkWithCreated(h.tree, parentID, toBookmarkCreate(bm))
 	if err != nil {
 		return bookmarks.FlatNode{}, err
 	}
+	created := bookmarks.NewFlatNode(createdNode, parentID)
+	if err := h.saveTree(nextTree); err != nil {
+		return bookmarks.FlatNode{}, err
+	}
+	h.tree = nextTree
+	h.undoStack = append(h.undoStack, bookmarks.NewAddCommand("Add Bookmark", parentID, createdNode))
+	h.redoStack = nil
 	return created, nil
 }
 
 // AddFolder adds a folder, auto-saves, and returns the created node.
+// Uses AddCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) AddFolder(parentID string, name string) (bookmarks.FlatNode, error) {
-	var created bookmarks.FlatNode
-	err := h.executeSnapshotCommand("Add Folder", func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		nextTree, createdNode, err := bookmarks.AddFolderWithCreated(nodes, parentID, name)
-		if err != nil {
-			return nil, err
-		}
-		created = bookmarks.NewFlatNode(createdNode, parentID)
-		return nextTree, nil
-	})
+	nextTree, createdNode, err := bookmarks.AddFolderWithCreated(h.tree, parentID, name)
 	if err != nil {
 		return bookmarks.FlatNode{}, err
 	}
+	created := bookmarks.NewFlatNode(createdNode, parentID)
+	if err := h.saveTree(nextTree); err != nil {
+		return bookmarks.FlatNode{}, err
+	}
+	h.tree = nextTree
+	h.undoStack = append(h.undoStack, bookmarks.NewAddCommand("Add Folder", parentID, createdNode))
+	h.redoStack = nil
 	return created, nil
 }
 
@@ -189,26 +189,35 @@ func (h *Handler) DeleteNodes(ids []string) error {
 }
 
 // MoveNode moves a node, auto-saves, and returns metadata for targeted frontend patching.
+// Uses MoveCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) MoveNode(nodeID, newParentID string, newIndex int) (MoveResult, error) {
 	label := "Move Bookmark"
 	if node := bookmarks.FindNode(h.tree, nodeID); node != nil && node.Type == bookmarks.TypeFolder {
 		label = "Move Folder"
 	}
 
+	// Capture old location before the move
 	oldParentID := parentIDForNode(h.tree, nodeID)
-	var result MoveResult
-	err := h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		return bookmarks.MoveNode(nodes, nodeID, newParentID, newIndex)
-	})
+	oldIndex := childIndexInParent(h.tree, oldParentID, nodeID)
+
+	nextTree, err := bookmarks.MoveNode(h.tree, nodeID, newParentID, newIndex)
 	if err != nil {
 		return MoveResult{}, err
 	}
 
-	result = buildMoveResult(h.tree, []string{nodeID}, oldParentID, newParentID)
+	if err := h.saveTree(nextTree); err != nil {
+		return MoveResult{}, err
+	}
+	h.tree = nextTree
+	h.undoStack = append(h.undoStack, bookmarks.NewMoveCommand(label, nodeID, oldParentID, oldIndex, newParentID, newIndex))
+	h.redoStack = nil
+
+	result := buildMoveResult(h.tree, []string{nodeID}, oldParentID, newParentID)
 	return result, nil
 }
 
 // MoveNodes moves multiple nodes, auto-saves once, and returns metadata for targeted frontend patching.
+// Uses MultiMoveCommand for lightweight undo (no full-tree snapshot clone).
 func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) (MoveResult, error) {
 	label := fmt.Sprintf("Move %d Items", len(nodeIDs))
 	if len(nodeIDs) > 0 {
@@ -221,19 +230,25 @@ func (h *Handler) MoveNodes(nodeIDs []string, targetFolderID string) (MoveResult
 		}
 	}
 
+	// Capture old location before the move
 	oldParentID := ""
 	if len(nodeIDs) > 0 {
 		oldParentID = parentIDForNode(h.tree, nodeIDs[0])
 	}
-	var result MoveResult
-	err := h.executeSnapshotCommand(label, func(nodes []bookmarks.Node) ([]bookmarks.Node, error) {
-		return bookmarks.MoveNodes(nodes, nodeIDs, targetFolderID)
-	})
+
+	nextTree, err := bookmarks.MoveNodes(h.tree, nodeIDs, targetFolderID)
 	if err != nil {
 		return MoveResult{}, err
 	}
 
-	result = buildMoveResult(h.tree, nodeIDs, oldParentID, targetFolderID)
+	if err := h.saveTree(nextTree); err != nil {
+		return MoveResult{}, err
+	}
+	h.tree = nextTree
+	h.undoStack = append(h.undoStack, bookmarks.NewMultiMoveCommand(label, nodeIDs, oldParentID, targetFolderID))
+	h.redoStack = nil
+
+	result := buildMoveResult(h.tree, nodeIDs, oldParentID, targetFolderID)
 	return result, nil
 }
 
