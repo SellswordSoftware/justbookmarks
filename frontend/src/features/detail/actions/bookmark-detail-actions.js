@@ -56,11 +56,11 @@ export function createBookmarkDetailActions(options) {
         icon: patch.icon,
         meta: patch.meta,
       });
-      options.resetMetadataTracking(options.getCurrentTitle(), options.getCurrentIcon());
-      options.setEditing(false);
       if (!treeState.actions.patchBookmark(bookmark.id, patch)) {
         await treeState.actions.refresh();
       }
+      options.resetMetadataTracking(options.getCurrentTitle(), options.getCurrentIcon());
+      options.setEditing(false);
       treeState.actions.selectSingle(bookmark.id);
       uiState.actions.showToast("Bookmark updated", "success");
     } catch (caughtError) {

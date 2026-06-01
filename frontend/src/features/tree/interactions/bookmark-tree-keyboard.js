@@ -4,6 +4,21 @@ import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
 
 /**
+ * @param {EventTarget | null} target
+ * @returns {boolean}
+ */
+function isEditableTarget(target) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  if (target.isContentEditable) {
+    return true;
+  }
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
+/**
  * @param {(nodeId: string) => void} activateSearchNode
  * @returns {(event: KeyboardEvent) => void}
  */
@@ -13,6 +28,10 @@ export function createBookmarkTreeKeydownHandler(activateSearchNode) {
    * @returns {void}
    */
   return function handleTreeKeydown(event) {
+    if (isEditableTarget(event.target)) {
+      return;
+    }
+
     if ((event.ctrlKey || event.metaKey) && event.key === " ") {
       return;
     }

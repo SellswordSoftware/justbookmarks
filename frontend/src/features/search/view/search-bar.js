@@ -6,7 +6,6 @@ import { searchState } from "../state/search-state.js";
 /**
  * @typedef {object} SearchBarShell
  * @property {HTMLInputElement} input
- * @property {HTMLButtonElement} clearButton
  */
 
 /**
@@ -15,18 +14,13 @@ import { searchState } from "../state/search-state.js";
  */
 export function collectSearchBarShell(root) {
   const input = root.querySelector("#search-input");
-  const clearButton = root.querySelector("#search-clear");
 
   if (!(input instanceof HTMLInputElement)) {
     throw new Error("Expected #search-input element");
   }
-  if (!(clearButton instanceof HTMLButtonElement)) {
-    throw new Error("Expected #search-clear button");
-  }
 
   return {
     input,
-    clearButton,
   };
 }
 
@@ -44,18 +38,7 @@ export function mountSearchBar(shell) {
     shell.input.select();
   }
 
-  /** @returns {void} */
-  function clear() {
-    searchState.actions.clearQuery();
-    shell.input.focus();
-  }
-
-  shell.clearButton.addEventListener("click", clear);
-
   const stopEffect = effect(() => {
-    const query = searchState.selectors.getQuery();
-    shell.clearButton.hidden = query.length === 0;
-
     if (!hasFocused) {
       shell.input.focus();
       hasFocused = true;
@@ -65,12 +48,14 @@ export function mountSearchBar(shell) {
   const cleanup = cleanupCollector(
     queryBinding.cleanup,
     stopEffect,
-    () => shell.clearButton.removeEventListener("click", clear),
   );
 
   return {
     focus,
-    clear,
+    clear() {
+      searchState.actions.clearQuery();
+      shell.input.focus();
+    },
     cleanup() {
       cleanup.run();
     },

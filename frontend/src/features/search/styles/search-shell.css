@@ -16,7 +16,3 @@
   flex: 1;
   min-width: 0;
 }
-
-#search-clear[hidden] {
-  display: none;
-}

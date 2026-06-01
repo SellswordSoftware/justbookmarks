@@ -34,16 +34,22 @@ export function createFolderDetail(folder) {
   const nameErrorMessage = signal("");
   const addBookmark = createAddBookmarkForm({
     triggerLabel: "Add Bookmark",
-    triggerClassName: "btn btn-ghost btn-sm",
+    triggerClassName: "btn btn-ghost btn-sm btn-square detail-action-btn",
     formTitle: "Create bookmark inside selection",
     triggerKeyboardAction: "folder-add-bookmark",
+    triggerAriaLabel: "Add bookmark",
+    triggerTitle: "Add bookmark",
+    triggerIconClassName: "icon-mask detail-action-icon--bookmark detail-action-icon--with-plus",
     getParentFolderId: () => folder.id,
   });
   const addFolder = createAddFolderForm({
     triggerLabel: "Add Folder",
-    triggerClassName: "btn btn-secondary btn-sm",
+    triggerClassName: "btn btn-ghost btn-sm btn-square detail-action-btn",
     formTitle: "Create folder inside selection",
     triggerKeyboardAction: "folder-add-folder",
+    triggerAriaLabel: "Add folder",
+    triggerTitle: "Add folder",
+    triggerIconClassName: "icon-mask detail-action-icon--folder detail-action-icon--with-plus",
     getParentFolderId: () => folder.id,
   });
   const cleanup = cleanupCollector();
@@ -268,38 +274,46 @@ export function createFolderDetail(folder) {
   return renderFolderDetail/*html*/`
     <div class="folder-detail">
       <div class="folder-detail__header" data-ref="header">
-        <div class="folder-detail__title-block">
-          <h3 class="folder-detail__title" data-ref="title"></h3>
-          <p class="folder-detail__meta" data-ref="count"></p>
-          <p class="folder-detail__meta" data-ref="created"></p>
-        </div>
-        <div class="detail-inline-actions">
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            data-keyboard-action="folder-edit"
-            data-ref="editButton"
-          >
-            Edit
-          </button>
-          <button
-            type="button"
-            class="btn btn-ghost btn-sm"
-            data-keyboard-action="folder-move"
-            data-ref="moveButton"
-          >
-            Move...
-          </button>
-          ${addBookmark}
-          ${addFolder}
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            data-keyboard-action="folder-delete"
-            data-ref="deleteButton"
-          >
-            Delete
-          </button>
+        <div class="folder-detail__top-row">
+          <div class="folder-detail__title-block">
+            <h3 class="folder-detail__title" data-ref="title"></h3>
+            <p class="folder-detail__meta" data-ref="count"></p>
+            <p class="folder-detail__meta" data-ref="created"></p>
+          </div>
+          <div class="detail-inline-actions">
+            ${addBookmark}
+            ${addFolder}
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-square detail-action-btn detail-action-btn--main"
+              data-keyboard-action="folder-edit"
+              data-ref="editButton"
+              aria-label="Edit folder"
+              title="Edit folder"
+            >
+              <span class="icon-mask detail-action-icon--edit" aria-hidden="true"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-square detail-action-btn detail-action-btn--main"
+              data-keyboard-action="folder-move"
+              data-ref="moveButton"
+              aria-label="Move folder"
+              title="Move folder"
+            >
+              <span class="icon-mask detail-action-icon--move" aria-hidden="true"></span>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost btn-sm btn-square detail-action-btn detail-action-btn--main detail-action-btn--danger"
+              data-keyboard-action="folder-delete"
+              data-ref="deleteButton"
+              aria-label="Delete folder"
+              title="Delete folder"
+            >
+              <span class="icon-mask detail-action-icon--delete" aria-hidden="true"></span>
+            </button>
+          </div>
         </div>
       </div>
 

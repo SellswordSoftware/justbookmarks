@@ -400,27 +400,33 @@ export function createBookmarkDetail(bookmark) {
           <div class="detail-inline-actions">
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="btn btn-ghost btn-sm btn-square detail-action-btn detail-action-btn--main"
               data-keyboard-action="bookmark-edit"
               data-ref="editButton"
+              aria-label="Edit bookmark"
+              title="Edit bookmark"
             >
-              Edit
+              <span class="icon-mask detail-action-icon--edit" aria-hidden="true"></span>
             </button>
             <button
               type="button"
-              class="btn btn-ghost btn-sm"
+              class="btn btn-ghost btn-sm btn-square detail-action-btn detail-action-btn--main"
               data-keyboard-action="bookmark-move"
               data-ref="moveButton"
+              aria-label="Move bookmark"
+              title="Move bookmark"
             >
-              Move...
+              <span class="icon-mask detail-action-icon--move" aria-hidden="true"></span>
             </button>
             <button
               type="button"
-              class="btn btn-danger btn-sm"
+              class="btn btn-ghost btn-sm btn-square detail-action-btn detail-action-btn--main detail-action-btn--danger"
               data-keyboard-action="bookmark-delete"
               data-ref="deleteButton"
+              aria-label="Delete bookmark"
+              title="Delete bookmark"
             >
-              Delete
+              <span class="icon-mask detail-action-icon--delete" aria-hidden="true"></span>
             </button>
             <button
               type="button"

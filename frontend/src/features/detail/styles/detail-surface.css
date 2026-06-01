@@ -56,6 +56,67 @@
   gap: 0.5rem;
 }
 
+.detail-action-btn {
+  color: var(--color-icon);
+}
+
+.detail-action-btn .icon-mask {
+  --icon-size: 1rem;
+}
+
+.detail-action-btn--main .icon-mask {
+  --icon-size: 1.1rem;
+}
+
+.detail-action-btn--danger {
+  color: var(--color-danger-text);
+}
+
+.detail-action-icon--edit::before {
+  mask-image: var(--mask-edit);
+  -webkit-mask-image: var(--mask-edit);
+}
+
+.detail-action-icon--move::before {
+  mask-image: var(--mask-move);
+  -webkit-mask-image: var(--mask-move);
+}
+
+.detail-action-icon--delete::before {
+  mask-image: var(--mask-trash);
+  -webkit-mask-image: var(--mask-trash);
+}
+
+.detail-action-icon--bookmark::before {
+  mask-image: var(--mask-bookmark);
+  -webkit-mask-image: var(--mask-bookmark);
+}
+
+.detail-action-icon--folder::before {
+  mask-image: var(--mask-folder);
+  -webkit-mask-image: var(--mask-folder);
+}
+
+.detail-action-icon--with-plus::after {
+  content: "";
+  position: absolute;
+  right: -0.18rem;
+  top: -0.18rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-icon);
+  box-shadow: 0 0 0 1px var(--color-surface-1);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 0.9rem 0.9rem;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 0.9rem 0.9rem;
+  mask-image: var(--mask-plus);
+  -webkit-mask-image: var(--mask-plus);
+}
+
 .folder-detail {
   display: grid;
   gap: 1rem;
@@ -69,6 +130,13 @@
   border: var(--border) solid var(--color-border-quiet);
   border-radius: 0.375rem;
   background: var(--color-surface-1);
+}
+
+.folder-detail__top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .folder-detail__title-block {

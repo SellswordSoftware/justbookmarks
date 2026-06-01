@@ -100,9 +100,4 @@ export async function bootstrapSession() {
   appState.session.setHasTriedLoad(true);
   await appState.window.sync();
   appState.session.setPersistenceReady(true);
-
-  uiState.actions.showToast("This is a test toast", "success", 1000 * 1000);
-  uiState.actions.showToast("This is a test toast", "info", 1000 * 1000);
-  uiState.actions.showToast("This is a test toast", "error", 1000 * 1000);
-  uiState.actions.showToast("This is a test toast", "warning", 1000 * 1000);
 }
