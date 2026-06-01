@@ -239,6 +239,40 @@ export function fx(el, fn) {
 }
 
 /**
+ * Show element when condition signal is truthy.
+ *
+ * Reactive -- re-evaluates when condition changes.
+ * Null-safe -- returns no-op cleanup when element is missing.
+ *
+ * @param {HTMLElement | null | undefined} el
+ * @param {() => any} condition
+ * @returns {() => void}
+ */
+export function show(el, condition) {
+  if (!el) {
+    return () => {};
+  }
+  return effect(() => { el.hidden = !condition(); });
+}
+
+/**
+ * Hide element when condition signal is truthy.
+ *
+ * Reactive -- re-evaluates when condition changes.
+ * Null-safe -- returns no-op cleanup when element is missing.
+ *
+ * @param {HTMLElement | null | undefined} el
+ * @param {() => any} condition
+ * @returns {() => void}
+ */
+export function hide(el, condition) {
+  if (!el) {
+    return () => {};
+  }
+  return effect(() => { el.hidden = condition(); });
+}
+
+/**
  * Two-way bind a form control to a signal.
  *
  * @template {HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement} T

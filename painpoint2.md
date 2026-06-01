@@ -161,7 +161,7 @@ Keep `fx()` when the callback also sets other properties (textContent, disabled,
 Prefer `show()` or `hide()` over negated conditions:
 - `show(el, editing)` -- not `show(el, () => !editing())`
 - `hide(el, editing)` -- communicates "hidden when editing" directly
-```
+
 
 **Verification**: No build impact -- documentation only.
 

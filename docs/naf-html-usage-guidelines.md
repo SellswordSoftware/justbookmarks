@@ -50,6 +50,8 @@ The current runtime surface includes:
 - `template()`
 - `when()`
 - `fx()`
+- `show()`
+- `hide()`
 - `model()`
 - `list()`
 - `cleanupCollector()`
@@ -198,6 +200,36 @@ Good uses:
 - small style updates
 
 Prefer multiple small `fx()` bindings over one large DOM-sync effect when that improves clarity.
+
+### `show(el, condition)` / `hide(el, condition)`
+
+Use for reactive visibility toggling when the only DOM operation is setting `.hidden`.
+
+Good uses:
+
+- showing/hiding elements based on a single signal (editing, open, loading)
+- conditional visibility based on data state (hasDate, isEmpty, etc.)
+
+Example:
+
+```js
+// Instead of:
+fx(titleInput, (el) => { el.hidden = !editing(); }),
+fx(cancelButton, (el) => { el.hidden = !editing(); }),
+
+// Write:
+show(titleInput, editing),
+show(cancelButton, editing),
+hide(titleHeading, editing),
+```
+
+Prefer `show()`/`hide()` over `fx()` when the callback only sets `.hidden`.
+Keep `fx()` when the callback also sets other properties (textContent, disabled, etc.).
+
+Prefer `show()` or `hide()` over negated conditions:
+
+- `show(el, editing)` -- not `show(el, () => !editing())`
+- `hide(el, editing)` -- communicates "hidden when editing" directly
 
 ### `model(el, sig, { reactive: true })`
 
