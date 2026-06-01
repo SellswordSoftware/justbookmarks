@@ -9,6 +9,7 @@ import {
   cleanupCollector,
   effect,
   fx,
+  listener,
   model,
   raw,
   signal,
@@ -394,56 +395,50 @@ export function createAddBookmarkForm(options) {
             errorMessage("");
           }
 
-          trigger.addEventListener("click", handleTriggerClick);
-          submit.addEventListener("click", handleSubmitClick);
-          cancel.addEventListener("click", handleCancelClick);
-          urlInputEl.addEventListener("keydown", handleFieldKeydown);
-          titleInputEl.addEventListener("keydown", handleFieldKeydown);
-          urlInputEl.addEventListener("input", handleURLInput);
-          titleInputEl.addEventListener("input", handleTitleInput);
-
           cleanup.add(
-            urlBinding.cleanup,
-            titleBinding.cleanup,
-            effect(() => {
-              const available = options.isAvailable
-                ? options.isAvailable()
-                : Boolean(appState.currentFilePath());
-              trigger.disabled = !available;
-              if (!available) {
-                setOpen(false);
-              }
-            }),
-            fx(panel, (currentPanel) => {
-              currentPanel.hidden = !open();
-            }),
-            fx(loading, (currentLoading) => {
-              const active = loadingState();
-              currentLoading.hidden = !active;
-              currentLoading.setAttribute(
-                "aria-hidden",
-                active ? "false" : "true",
-              );
-            }),
-            fx(error, (currentError) => {
-              const message = errorMessage();
-              currentError.hidden = message.length === 0;
-              currentError.textContent = message;
-            }),
-            fx(submit, (currentSubmit) => {
-              currentSubmit.disabled = busy();
-            }),
-            () => clearScheduledFetch(),
-            () => detachPositionListeners(),
-            () => trigger.removeEventListener("click", handleTriggerClick),
-            () => submit.removeEventListener("click", handleSubmitClick),
-            () => cancel.removeEventListener("click", handleCancelClick),
-            () => urlInputEl.removeEventListener("keydown", handleFieldKeydown),
-            () =>
-              titleInputEl.removeEventListener("keydown", handleFieldKeydown),
-            () => urlInputEl.removeEventListener("input", handleURLInput),
-            () => titleInputEl.removeEventListener("input", handleTitleInput),
-          );
+          listener(trigger, "click", handleTriggerClick),
+          listener(submit, "click", handleSubmitClick),
+          listener(cancel, "click", handleCancelClick),
+          listener(urlInputEl, "keydown", handleFieldKeydown),
+          listener(titleInputEl, "keydown", handleFieldKeydown),
+          listener(urlInputEl, "input", handleURLInput),
+          listener(titleInputEl, "input", handleTitleInput),
+        );
+
+        cleanup.add(
+          urlBinding.cleanup,
+          titleBinding.cleanup,
+          effect(() => {
+            const available = options.isAvailable
+              ? options.isAvailable()
+              : Boolean(appState.currentFilePath());
+            trigger.disabled = !available;
+            if (!available) {
+              setOpen(false);
+            }
+          }),
+          fx(panel, (currentPanel) => {
+            currentPanel.hidden = !open();
+          }),
+          fx(loading, (currentLoading) => {
+            const active = loadingState();
+            currentLoading.hidden = !active;
+            currentLoading.setAttribute(
+              "aria-hidden",
+              active ? "false" : "true",
+            );
+          }),
+          fx(error, (currentError) => {
+            const message = errorMessage();
+            currentError.hidden = message.length === 0;
+            currentError.textContent = message;
+          }),
+          fx(submit, (currentSubmit) => {
+            currentSubmit.disabled = busy();
+          }),
+          () => clearScheduledFetch(),
+          () => detachPositionListeners(),
+        );
         },
         onUnmount() {
           cleanup.run();

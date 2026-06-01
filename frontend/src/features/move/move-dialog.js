@@ -8,6 +8,7 @@ import {
   cleanupCollector,
   effect,
   list,
+  listener,
   mount,
   template,
 } from "../../shared/runtime/naf.js";
@@ -364,9 +365,6 @@ export function mountMoveDialog(shell) {
             })();
           };
 
-          row.addEventListener("click", handleRowClick);
-          toggle.addEventListener("click", handleToggleClick);
-
           const stopRowEffect = effect(() => {
             const currentFolder = folder();
             const selected = moveDialogState.selectors.getSelectedTarget() === currentFolder.id;
@@ -396,11 +394,13 @@ export function mountMoveDialog(shell) {
             }
           });
 
-          return () => {
-            stopRowEffect();
-            row.removeEventListener("click", handleRowClick);
-            toggle.removeEventListener("click", handleToggleClick);
-          };
+          const rowCleanup = cleanupCollector(
+            listener(row, "click", handleRowClick),
+            listener(toggle, "click", handleToggleClick),
+            stopRowEffect,
+          );
+
+          return rowCleanup.run;
         },
         { virtual: { rowHeight: 32 } },
       ),
@@ -496,20 +496,13 @@ export function mountMoveDialog(shell) {
       }
     };
 
-    backdrop.addEventListener("click", handleBackdropClick);
-    dialog.addEventListener("click", handleDialogClick);
-    dialog.addEventListener("keydown", handleDialogKeydown);
-    filterInput.addEventListener("input", handleFilterInput);
-    cancelButton.addEventListener("click", handleCancelClick);
-    confirmButton.addEventListener("click", handleConfirmClick);
-
     cleanup.add(
-      () => backdrop.removeEventListener("click", handleBackdropClick),
-      () => dialog.removeEventListener("click", handleDialogClick),
-      () => dialog.removeEventListener("keydown", handleDialogKeydown),
-      () => filterInput.removeEventListener("input", handleFilterInput),
-      () => cancelButton.removeEventListener("click", handleCancelClick),
-      () => confirmButton.removeEventListener("click", handleConfirmClick),
+      listener(backdrop, "click", handleBackdropClick),
+      listener(dialog, "click", handleDialogClick),
+      listener(dialog, "keydown", handleDialogKeydown),
+      listener(filterInput, "input", handleFilterInput),
+      listener(cancelButton, "click", handleCancelClick),
+      listener(confirmButton, "click", handleConfirmClick),
       () => {
         if (filterTimer !== null) {
           window.clearTimeout(filterTimer);
