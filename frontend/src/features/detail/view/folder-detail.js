@@ -7,6 +7,7 @@ import { getErrorMessage } from "../../../shared/infra/errors.js";
 import {
   cleanupCollector,
   fx,
+  listener,
   model,
   signal,
   template,
@@ -220,14 +221,13 @@ export function createFolderDetail(folder) {
           }
         }
 
-        editButton.addEventListener("click", handleEditClick);
-        moveButton.addEventListener("click", showMoveDialog);
-        deleteButton.addEventListener("click", showDeleteConfirm);
-        saveButton.addEventListener("click", handleSaveClick);
-        cancelButton.addEventListener("click", handleCancelClick);
-        nameInputEl.addEventListener("keydown", handleNameKeydown);
-
         cleanup.add(
+          listener(editButton, "click", handleEditClick),
+          listener(moveButton, "click", showMoveDialog),
+          listener(deleteButton, "click", showDeleteConfirm),
+          listener(saveButton, "click", handleSaveClick),
+          listener(cancelButton, "click", handleCancelClick),
+          listener(nameInputEl, "keydown", handleNameKeydown),
           nameBinding.cleanup,
           fx(title, (currentTitleEl) => {
             currentTitleEl.textContent = currentName() || "Untitled folder";
@@ -257,12 +257,6 @@ export function createFolderDetail(folder) {
             currentNameError.hidden = message.length === 0;
             currentNameError.textContent = message;
           }),
-          () => editButton.removeEventListener("click", handleEditClick),
-          () => moveButton.removeEventListener("click", showMoveDialog),
-          () => deleteButton.removeEventListener("click", showDeleteConfirm),
-          () => saveButton.removeEventListener("click", handleSaveClick),
-          () => cancelButton.removeEventListener("click", handleCancelClick),
-          () => nameInputEl.removeEventListener("keydown", handleNameKeydown),
         );
       },
       onUnmount() {

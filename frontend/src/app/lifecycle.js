@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener } from "../shared/runtime/naf.js";
 import { setPerFileTreeState } from "../shared/infra/persistence.js";
 import { appState } from "../shared/state/app-state.js";
 import { searchState } from "../features/search/state/search-state.js";
@@ -57,25 +57,29 @@ export function mountAppLifecycle(options) {
   });
   const cleanupFeatures = combineCleanups(options.featureCleanups);
 
-  const handleBeforeUnload = () => {
-    if (saveWindowSizeTimer) {
-      clearTimeout(saveWindowSizeTimer);
-    }
-    window.removeEventListener("resize", handleWindowResize);
-    cleanupFeatures();
-    stopTreePersistence();
-    stopThemeSync();
-    searchState.dispose();
-    void appState.window.persistCurrentSize();
-  };
-
-  window.addEventListener("resize", handleWindowResize);
-  window.addEventListener("beforeunload", handleBeforeUnload);
+  const cleanup = cleanupCollector(
+    listener(window, "resize", handleWindowResize),
+    listener(window, "beforeunload", () => {
+      if (saveWindowSizeTimer) {
+        clearTimeout(saveWindowSizeTimer);
+      }
+      void appState.window.persistCurrentSize();
+      searchState.dispose();
+      cleanup.run();
+    }),
+    stopTreePersistence,
+    stopThemeSync,
+    cleanupFeatures,
+  );
 
   return {
-    cleanup() {
-      handleBeforeUnload();
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+    cleanup: () => {
+      if (saveWindowSizeTimer) {
+        clearTimeout(saveWindowSizeTimer);
+      }
+      void appState.window.persistCurrentSize();
+      searchState.dispose();
+      cleanup.run();
     },
   };
 }

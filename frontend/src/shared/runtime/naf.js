@@ -212,7 +212,7 @@ export function $$(selector, root = document) {
  * Example:
  *   cleanup.add(listener(btn, "click", handleClick));
  *
- * @template {Element} T
+ * @template {EventTarget} [T=EventTarget]
  * @param {T | null | undefined} el
  * @param {string} event
  * @param {(...args: any[]) => void} handler

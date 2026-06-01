@@ -6,6 +6,7 @@ import {
   attr,
   cleanupCollector,
   effect,
+  listener,
   mount,
   template,
 } from "../../shared/runtime/naf.js";
@@ -61,12 +62,9 @@ function createEmptyLibrarySplash(actions) {
             void actions.createFile();
           };
 
-          openButton.addEventListener("click", handleOpenClick);
-          createButton.addEventListener("click", handleCreateClick);
-
           cleanup.add(
-            () => openButton.removeEventListener("click", handleOpenClick),
-            () => createButton.removeEventListener("click", handleCreateClick),
+            listener(openButton, "click", handleOpenClick),
+            listener(createButton, "click", handleCreateClick),
             attr(openButton, "disabled", () => treeState.selectors.isLoading()),
             attr(createButton, "disabled", () => treeState.selectors.isLoading()),
           );

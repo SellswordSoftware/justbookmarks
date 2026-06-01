@@ -3,6 +3,7 @@
 import {
   attr,
   cleanupCollector,
+  listener,
   mount,
   template,
 } from "../../shared/runtime/naf.js";
@@ -59,14 +60,10 @@ function createToolbarActionsComponent(actions) {
             void actions.importFile();
           };
 
-          openButton.addEventListener("click", handleOpenClick);
-          createButton.addEventListener("click", handleCreateClick);
-          importButton.addEventListener("click", handleImportClick);
-
           cleanup.add(
-            () => openButton.removeEventListener("click", handleOpenClick),
-            () => createButton.removeEventListener("click", handleCreateClick),
-            () => importButton.removeEventListener("click", handleImportClick),
+            listener(openButton, "click", handleOpenClick),
+            listener(createButton, "click", handleCreateClick),
+            listener(importButton, "click", handleImportClick),
             attr(importButton, "disabled", () => !appState.currentFilePath()),
           );
         },

@@ -1,6 +1,6 @@
 // @ts-check
 
-import { attr, effect, mount, template } from "../../shared/runtime/naf.js";
+import { attr, effect, listener, mount, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 import { saving } from "../../shared/state/save-state.js";
 import {
@@ -120,17 +120,12 @@ function createTitlebarWindowControlsComponent() {
           themeToggleButton.innerHTML = current === "light" ? "🌞" : "🌙";
         });
         themeToggleButton.innerHTML = appState.window.theme() === "light" ? "🌙" : "🌞";
-        minimizeButton.addEventListener("click", minimiseWindow);
-        maximizeButton.addEventListener("click", handleMaximiseClick);
-        closeButton.addEventListener("click", closeWindow);
-        window.addEventListener("focus", handleFocus);
 
         cleanup.add(
-          () => minimizeButton.removeEventListener("click", minimiseWindow),
-          () =>
-            maximizeButton.removeEventListener("click", handleMaximiseClick),
-          () => closeButton.removeEventListener("click", closeWindow),
-          () => window.removeEventListener("focus", handleFocus),
+          listener(minimizeButton, "click", minimiseWindow),
+          listener(maximizeButton, "click", handleMaximiseClick),
+          listener(closeButton, "click", closeWindow),
+          listener(window, "focus", handleFocus),
           attr(minimizeButton, "disabled", () => !appState.hasWailsRuntime()),
           attr(maximizeButton, "disabled", () => !appState.hasWailsRuntime()),
           attr(closeButton, "disabled", () => !appState.hasWailsRuntime()),
@@ -213,9 +208,8 @@ function createTitlebarComponent() {
           void toggleMaximiseWindow();
         };
 
-        host.addEventListener("dblclick", handleDoubleClick);
-        cleanup.add(() =>
-          host.removeEventListener("dblclick", handleDoubleClick),
+        cleanup.add(
+          listener(host, "dblclick", handleDoubleClick),
         );
       },
     })

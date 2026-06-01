@@ -1,5 +1,6 @@
 // @ts-check
 
+import { listener } from "../../shared/runtime/naf.js";
 import { moveDialogState } from "../move/move-dialog-state.js";
 import { searchState } from "../search/state/search-state.js";
 import { treeState } from "../tree/state/tree-state.js";
@@ -217,11 +218,11 @@ export function mountGlobalShortcuts(options) {
     }
   }
 
-  window.addEventListener("keydown", handleGlobalKeydown);
+  const cleanup = listener(window, "keydown", handleGlobalKeydown);
 
   return {
     cleanup() {
-      window.removeEventListener("keydown", handleGlobalKeydown);
+      cleanup();
     },
   };
 }

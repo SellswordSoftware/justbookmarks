@@ -8,6 +8,7 @@ import { getErrorMessage } from "../../../shared/infra/errors.js";
 import {
   cleanupCollector,
   fx,
+  listener,
   signal,
   template,
 } from "../../../shared/runtime/naf.js";
@@ -170,12 +171,11 @@ export function createBulkSelectionDetail() {
           void fetchFavicons();
         };
 
-        moveButton.addEventListener("click", handleMoveClick);
-        deleteButton.addEventListener("click", handleDeleteClick);
-        faviconButton.addEventListener("click", handleFaviconClick);
-        clearButton.addEventListener("click", clearSelection);
-
         cleanup.add(
+          listener(moveButton, "click", handleMoveClick),
+          listener(deleteButton, "click", handleDeleteClick),
+          listener(faviconButton, "click", handleFaviconClick),
+          listener(clearButton, "click", clearSelection),
           fx(title, (currentTitle) => {
             const selectionCount = treeState.computed.selectionCount();
             currentTitle.textContent = `${selectionCount} ${getSelectionLabel()}`;
@@ -201,10 +201,6 @@ export function createBulkSelectionDetail() {
             currentFaviconButton.textContent =
               activeAction === "favicons" ? "Fetching..." : "Fetch Favicons";
           }),
-          () => moveButton.removeEventListener("click", handleMoveClick),
-          () => deleteButton.removeEventListener("click", handleDeleteClick),
-          () => faviconButton.removeEventListener("click", handleFaviconClick),
-          () => clearButton.removeEventListener("click", clearSelection),
         );
       },
       onUnmount() {

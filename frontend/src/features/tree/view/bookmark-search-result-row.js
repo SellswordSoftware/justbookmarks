@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener } from "../../../shared/runtime/naf.js";
 import { treeState } from "../state/tree-state.js";
 
 /**
@@ -35,8 +35,6 @@ export function mountBookmarkSearchResultRow(el, item) {
     void treeState.actions.revealAndSelectNode(item().nodeId);
   };
 
-  row.addEventListener("click", handleClick);
-
   const stop = effect(() => {
     const current = item();
     const selected = treeState.selectors.getSelectedNodeId() === current.nodeId;
@@ -57,8 +55,10 @@ export function mountBookmarkSearchResultRow(el, item) {
     }
   });
 
-  return () => {
-    stop();
-    row.removeEventListener("click", handleClick);
-  };
+  const cleanup = cleanupCollector(
+    listener(row, "click", handleClick),
+    stop,
+  );
+
+  return cleanup.run;
 }

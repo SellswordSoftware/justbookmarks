@@ -5,6 +5,7 @@ import {
   cleanupCollector,
   effect,
   fx,
+  listener,
   model,
   raw,
   signal,
@@ -254,12 +255,11 @@ export function createAddFolderForm(options) {
           }
         }
 
-        trigger.addEventListener("click", handleTriggerClick);
-        submit.addEventListener("click", handleSubmitClick);
-        cancel.addEventListener("click", handleCancelClick);
-        inputEl.addEventListener("keydown", handleInputKeydown);
-
         cleanup.add(
+          listener(trigger, "click", handleTriggerClick),
+          listener(submit, "click", handleSubmitClick),
+          listener(cancel, "click", handleCancelClick),
+          listener(inputEl, "keydown", handleInputKeydown),
           nameBinding.cleanup,
           effect(() => {
             const available = options.isAvailable
@@ -282,10 +282,6 @@ export function createAddFolderForm(options) {
             currentSubmit.disabled = busy();
           }),
           () => detachPositionListeners(),
-          () => trigger.removeEventListener("click", handleTriggerClick),
-          () => submit.removeEventListener("click", handleSubmitClick),
-          () => cancel.removeEventListener("click", handleCancelClick),
-          () => inputEl.removeEventListener("keydown", handleInputKeydown),
         );
       },
       onUnmount() {

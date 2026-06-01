@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { effect, mount, raw, template } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, raw, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 
 const groups = [
@@ -153,20 +153,19 @@ function createKeyboardShortcutsDialog() {
           }
         };
 
-        backdrop.addEventListener("click", handleBackdropClick);
-        dialog.addEventListener("click", handleDialogClick);
-        dialog.addEventListener("keydown", handleDialogKeydown);
-        closeButton.addEventListener("click", handleCloseClick);
-
         queueMicrotask(() => {
           closeButton.focus();
         });
 
+        const cleanup = cleanupCollector(
+          listener(backdrop, "click", handleBackdropClick),
+          listener(dialog, "click", handleDialogClick),
+          listener(dialog, "keydown", handleDialogKeydown),
+          listener(closeButton, "click", handleCloseClick),
+        );
+
         cleanupRendered = () => {
-          backdrop.removeEventListener("click", handleBackdropClick);
-          dialog.removeEventListener("click", handleDialogClick);
-          dialog.removeEventListener("keydown", handleDialogKeydown);
-          closeButton.removeEventListener("click", handleCloseClick);
+          cleanup.run();
         };
       },
       onUnmount() {

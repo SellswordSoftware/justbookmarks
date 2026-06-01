@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener } from "../../shared/runtime/naf.js";
 import { setLeftPaneWidth } from "../../shared/infra/persistence.js";
 import { appState } from "../../shared/state/app-state.js";
 
@@ -120,22 +120,19 @@ export function mountLayout(shell) {
     applyLeftPaneWidth(leftPaneWidth);
   }
 
-  shell.paneResizer.addEventListener("mousedown", startResize);
-  window.addEventListener("mousemove", handleResize);
-  window.addEventListener("mouseup", stopResize);
-  window.addEventListener("resize", handleWindowResize);
-
   const stopEffect = effect(() => {
     applyLeftPaneWidth(appState.persistedState().leftPaneWidth);
   });
 
   applyLeftPaneWidth(leftPaneWidth);
 
-  return () => {
-    stopEffect();
-    shell.paneResizer.removeEventListener("mousedown", startResize);
-    window.removeEventListener("mousemove", handleResize);
-    window.removeEventListener("mouseup", stopResize);
-    window.removeEventListener("resize", handleWindowResize);
-  };
+  const cleanup = cleanupCollector(
+    listener(shell.paneResizer, "mousedown", startResize),
+    listener(window, "mousemove", handleResize),
+    listener(window, "mouseup", stopResize),
+    listener(window, "resize", handleWindowResize),
+    stopEffect,
+  );
+
+  return cleanup.run;
 }

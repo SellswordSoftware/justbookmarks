@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { effect, mount, template } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, template } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /**
@@ -85,22 +85,20 @@ function createConfirmModal(modal) {
             }
           };
 
-          backdrop.addEventListener("click", handleBackdropClick);
-          dialog.addEventListener("click", handleDialogClick);
-          dialog.addEventListener("keydown", handleDialogKeydown);
-          cancelButton.addEventListener("click", handleCancelClick);
-          confirmButton.addEventListener("click", handleConfirmClick);
-
           queueMicrotask(() => {
             cancelButton.focus();
           });
 
+          const cleanup = cleanupCollector(
+            listener(backdrop, "click", handleBackdropClick),
+            listener(dialog, "click", handleDialogClick),
+            listener(dialog, "keydown", handleDialogKeydown),
+            listener(cancelButton, "click", handleCancelClick),
+            listener(confirmButton, "click", handleConfirmClick),
+          );
+
           createConfirmModalCleanup = () => {
-            backdrop.removeEventListener("click", handleBackdropClick);
-            dialog.removeEventListener("click", handleDialogClick);
-            dialog.removeEventListener("keydown", handleDialogKeydown);
-            cancelButton.removeEventListener("click", handleCancelClick);
-            confirmButton.removeEventListener("click", handleConfirmClick);
+            cleanup.run();
           };
         },
         onUnmount() {

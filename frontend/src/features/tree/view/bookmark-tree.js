@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, list, raw, template } from "../../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, list, raw, template } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
 import { createBookmarkTreeDndController } from "../interactions/bookmark-tree-dnd.js";
@@ -250,26 +250,24 @@ export function mountBookmarkTree(shell) {
     treeState.actions.setTreeScrollTop(shell.treeList.scrollTop);
   }
 
-  shell.root.addEventListener("keydown", handleTreeKeydown);
-  shell.treeList.addEventListener("scroll", handleTreeListScroll, { passive: true });
-  document.addEventListener("mousemove", dnd.handleDocumentMouseMove);
-  document.addEventListener("mouseup", dnd.handleDocumentMouseUp);
-  document.addEventListener("mouseleave", dnd.handleDocumentMouseLeave);
+  const cleanup = cleanupCollector(
+    listener(shell.root, "keydown", handleTreeKeydown),
+    listener(shell.treeList, "scroll", handleTreeListScroll),
+    listener(document, "mousemove", dnd.handleDocumentMouseMove),
+    listener(document, "mouseup", dnd.handleDocumentMouseUp),
+    listener(document, "mouseleave", dnd.handleDocumentMouseLeave),
+    stopListEffect,
+    stopEmptyStateEffect,
+    stopMetaEffect,
+    stopScrollRestoreEffect,
+  );
 
   return {
     focusTree() {
       shell.root.focus();
     },
     cleanup() {
-      shell.root.removeEventListener("keydown", handleTreeKeydown);
-      shell.treeList.removeEventListener("scroll", handleTreeListScroll);
-      document.removeEventListener("mousemove", dnd.handleDocumentMouseMove);
-      document.removeEventListener("mouseup", dnd.handleDocumentMouseUp);
-      document.removeEventListener("mouseleave", dnd.handleDocumentMouseLeave);
-      stopListEffect();
-      stopEmptyStateEffect();
-      stopMetaEffect();
-      stopScrollRestoreEffect();
+      cleanup.run();
       stopList();
       dnd.clearDragState();
     },

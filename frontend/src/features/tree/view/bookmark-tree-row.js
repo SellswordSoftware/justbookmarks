@@ -1,6 +1,6 @@
 // @ts-check
 
-import { fx } from "../../../shared/runtime/naf.js";
+import { cleanupCollector, fx, listener } from "../../../shared/runtime/naf.js";
 import { treeState } from "../state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
@@ -118,10 +118,6 @@ export function mountBookmarkTreeRow(el, entry, options) {
     options.onPointerDown(entry(), event);
   };
 
-  toggle?.addEventListener("click", handleToggleClick);
-  row.addEventListener("click", handleRowClick);
-  row.addEventListener("mousedown", handlePointerDown);
-
   const stop = fx(row, (currentRow) => {
     const current = entry();
     const node = current.node;
@@ -185,10 +181,12 @@ export function mountBookmarkTreeRow(el, entry, options) {
     }
   });
 
-  return () => {
-    stop();
-    toggle?.removeEventListener("click", handleToggleClick);
-    row.removeEventListener("click", handleRowClick);
-    row.removeEventListener("mousedown", handlePointerDown);
-  };
+  const cleanup = cleanupCollector(
+    listener(toggle, "click", handleToggleClick),
+    listener(row, "click", handleRowClick),
+    listener(row, "mousedown", handlePointerDown),
+    stop,
+  );
+
+  return cleanup.run;
 }

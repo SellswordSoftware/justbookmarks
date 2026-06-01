@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector } from "../../shared/runtime/naf.js";
+import { cleanupCollector, listener } from "../../shared/runtime/naf.js";
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
 import { importMergeState } from "./import-merge-state.js";
 
@@ -66,14 +66,6 @@ export function bindImportMergeDialogInteractions(elements, view) {
     }
   };
 
-  elements.backdrop.addEventListener("click", handleBackdropClick);
-  elements.dialog.addEventListener("click", handleDialogClick);
-  elements.dialog.addEventListener("keydown", handleDialogKeydown);
-  elements.closeButton.addEventListener("click", handleCloseClick);
-  elements.cancelButton.addEventListener("click", handleCancelClick);
-  elements.chooseFileButton.addEventListener("click", handleChooseFileClick);
-  elements.applyButton.addEventListener("click", handleApplyClick);
-
   queueMicrotask(() => {
     if (!elements.chooseFileButton.disabled) {
       elements.chooseFileButton.focus();
@@ -83,13 +75,13 @@ export function bindImportMergeDialogInteractions(elements, view) {
   });
 
   const cleanup = cleanupCollector(
-    () => elements.backdrop.removeEventListener("click", handleBackdropClick),
-    () => elements.dialog.removeEventListener("click", handleDialogClick),
-    () => elements.dialog.removeEventListener("keydown", handleDialogKeydown),
-    () => elements.closeButton.removeEventListener("click", handleCloseClick),
-    () => elements.cancelButton.removeEventListener("click", handleCancelClick),
-    () => elements.chooseFileButton.removeEventListener("click", handleChooseFileClick),
-    () => elements.applyButton.removeEventListener("click", handleApplyClick),
+    listener(elements.backdrop, "click", handleBackdropClick),
+    listener(elements.dialog, "click", handleDialogClick),
+    listener(elements.dialog, "keydown", handleDialogKeydown),
+    listener(elements.closeButton, "click", handleCloseClick),
+    listener(elements.cancelButton, "click", handleCancelClick),
+    listener(elements.chooseFileButton, "click", handleChooseFileClick),
+    listener(elements.applyButton, "click", handleApplyClick),
   );
 
   return () => {
