@@ -93,14 +93,14 @@ export function collectBookmarkTreeShell(root) {
 export function mountBookmarkTree(shell) {
   let stopList = () => {};
   const dnd = createBookmarkTreeDndController({ treeList: shell.treeList });
+  let syncingScrollFromState = false;
 
   /**
    * @param {string} nodeId
    * @returns {void}
    */
   function activateSearchNode(nodeId) {
-    treeState.actions.expandAncestors(nodeId);
-    treeState.actions.selectSingle(nodeId);
+    void treeState.actions.revealAndSelectNode(nodeId);
   }
   const handleTreeKeydown = createBookmarkTreeKeydownHandler(activateSearchNode);
 
@@ -231,7 +231,27 @@ export function mountBookmarkTree(shell) {
       `${stats.bookmarks} bookmark${stats.bookmarks === 1 ? "" : "s"}`;
   });
 
+  const stopScrollRestoreEffect = effect(() => {
+    const nextScrollTop = treeState.selectors.getTreeScrollTop();
+    if (Math.abs(shell.treeList.scrollTop - nextScrollTop) < 1) {
+      return;
+    }
+    syncingScrollFromState = true;
+    shell.treeList.scrollTop = nextScrollTop;
+    requestAnimationFrame(() => {
+      syncingScrollFromState = false;
+    });
+  });
+
+  function handleTreeListScroll() {
+    if (syncingScrollFromState) {
+      return;
+    }
+    treeState.actions.setTreeScrollTop(shell.treeList.scrollTop);
+  }
+
   shell.root.addEventListener("keydown", handleTreeKeydown);
+  shell.treeList.addEventListener("scroll", handleTreeListScroll, { passive: true });
   document.addEventListener("mousemove", dnd.handleDocumentMouseMove);
   document.addEventListener("mouseup", dnd.handleDocumentMouseUp);
   document.addEventListener("mouseleave", dnd.handleDocumentMouseLeave);
@@ -242,12 +262,14 @@ export function mountBookmarkTree(shell) {
     },
     cleanup() {
       shell.root.removeEventListener("keydown", handleTreeKeydown);
+      shell.treeList.removeEventListener("scroll", handleTreeListScroll);
       document.removeEventListener("mousemove", dnd.handleDocumentMouseMove);
       document.removeEventListener("mouseup", dnd.handleDocumentMouseUp);
       document.removeEventListener("mouseleave", dnd.handleDocumentMouseLeave);
       stopListEffect();
       stopEmptyStateEffect();
       stopMetaEffect();
+      stopScrollRestoreEffect();
       stopList();
       dnd.clearDragState();
     },

@@ -32,8 +32,7 @@ export function mountBookmarkSearchResultRow(el, item) {
   }
 
   const handleClick = () => {
-    treeState.actions.expandAncestors(item().nodeId);
-    treeState.actions.selectSingle(item().nodeId);
+    void treeState.actions.revealAndSelectNode(item().nodeId);
   };
 
   row.addEventListener("click", handleClick);

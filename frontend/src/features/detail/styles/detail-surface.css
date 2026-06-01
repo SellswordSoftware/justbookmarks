@@ -200,8 +200,12 @@
 .bookmark-detail__icon-fallback {
   display: grid;
   place-items: center;
-  font-size: 1rem;
   background: var(--color-icon-fallback-bg);
+}
+
+.bookmark-detail__icon-fallback-icon {
+  --icon-size: 1rem;
+  color: var(--color-icon);
 }
 
 .bookmark-detail__title-block {

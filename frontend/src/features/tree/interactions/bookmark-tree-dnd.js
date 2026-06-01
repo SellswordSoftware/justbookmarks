@@ -1,6 +1,6 @@
 // @ts-check
 
-import { MoveNode } from "../../../shared/api/api.js";
+import { MoveNode, MoveNodes } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
@@ -36,6 +36,8 @@ import { uiState } from "../../../shared/state/ui-state.js";
 export function createBookmarkTreeDndController(options) {
   /** @type {string} */
   let draggedNodeId = "";
+  /** @type {string[]} */
+  let draggedNodeIds = [];
   /** @type {DropTarget | null} */
   let dropTarget = null;
   /** @type {{ entryId: string, startX: number, startY: number } | null} */
@@ -126,6 +128,7 @@ export function createBookmarkTreeDndController(options) {
   /** @returns {void} */
   function clearDragState() {
     draggedNodeId = "";
+    draggedNodeIds = [];
     dropTarget = null;
     pendingPointerDrag = null;
     document.body.classList.remove("is-tree-dragging");
@@ -158,7 +161,7 @@ export function createBookmarkTreeDndController(options) {
     }
 
     const entryId = row.dataset.nodeId ?? "";
-    if (!entryId || entryId === draggedNodeId) {
+    if (!entryId || draggedNodeIds.includes(entryId)) {
       return null;
     }
 
@@ -194,8 +197,15 @@ export function createBookmarkTreeDndController(options) {
    * @returns {void}
    */
   function beginPointerDrag(entryId) {
-    treeState.actions.selectSingle(entryId);
-    draggedNodeId = entryId;
+    const selectedIds = treeState.selectors.getSelectedNodeIds();
+    if (selectedIds.length > 1 && selectedIds.includes(entryId)) {
+      draggedNodeIds = [...selectedIds];
+      draggedNodeId = selectedIds[0] ?? entryId;
+    } else {
+      treeState.actions.selectSingle(entryId);
+      draggedNodeIds = [entryId];
+      draggedNodeId = entryId;
+    }
     dropTarget = null;
     suppressNextClick = true;
     document.body.classList.add("is-tree-dragging");
@@ -203,22 +213,67 @@ export function createBookmarkTreeDndController(options) {
   }
 
   /**
-   * @param {string} nodeId
-   * @param {DropTarget} target
-   * @returns {Promise<MoveResult | null>}
+   * Reorder multiple nodes by issuing indexed single-node moves.
+   * @param {string[]} nodeIds
+   * @param {string} targetParentId
+   * @param {number} insertIndex
+   * @returns {Promise<boolean>}
    */
-  async function applyDropTarget(nodeId, target) {
-    if (!nodeId || nodeId === target.targetId) {
-      return null;
+  async function reorderMultipleNodes(nodeIds, targetParentId, insertIndex) {
+    if (nodeIds.length === 0) {
+      return false;
+    }
+
+    // Keep a stable sibling order based on current parent indexes.
+    const orderedNodeIds = [...nodeIds].sort((a, b) => {
+      const indexA = targetParentId
+        ? treeState.selectors.getChildIndex(targetParentId, a)
+        : treeState.selectors.getTree().findIndex((node) => node.id === a);
+      const indexB = targetParentId
+        ? treeState.selectors.getChildIndex(targetParentId, b)
+        : treeState.selectors.getTree().findIndex((node) => node.id === b);
+      return indexA - indexB;
+    });
+
+    // When reordering within the same parent, removing dragged siblings before the
+    // insertion point shifts the index left.
+    const draggedBeforeInsert = orderedNodeIds.reduce((count, nodeId) => {
+      const nodeIndex = targetParentId
+        ? treeState.selectors.getChildIndex(targetParentId, nodeId)
+        : treeState.selectors.getTree().findIndex((node) => node.id === nodeId);
+      return nodeIndex >= 0 && nodeIndex < insertIndex ? count + 1 : count;
+    }, 0);
+    const adjustedInsertIndex = Math.max(0, insertIndex - draggedBeforeInsert);
+
+    for (let i = 0; i < orderedNodeIds.length; i += 1) {
+      await MoveNode(orderedNodeIds[i], targetParentId, adjustedInsertIndex + i);
+    }
+    return true;
+  }
+
+  /**
+   * @param {string[]} nodeIds
+   * @param {DropTarget} target
+   * @returns {Promise<{ result: MoveResult | null, requiresRefresh: boolean }>}
+   */
+  async function applyDropTarget(nodeIds, target) {
+    if (!Array.isArray(nodeIds) || nodeIds.length === 0) {
+      return { result: null, requiresRefresh: false };
+    }
+    if (nodeIds.includes(target.targetId)) {
+      return { result: null, requiresRefresh: false };
     }
 
     if (target.position === "inside") {
-      return MoveNode(nodeId, target.targetId, -1);
+      if (nodeIds.length > 1) {
+        return { result: await MoveNodes(nodeIds, target.targetId), requiresRefresh: false };
+      }
+      return { result: await MoveNode(nodeIds[0], target.targetId, -1), requiresRefresh: false };
     }
 
     const targetNode = treeState.selectors.getNode(target.targetId);
     if (!targetNode) {
-      return null;
+      return { result: null, requiresRefresh: false };
     }
 
     const parentId = treeState.selectors.getParentId(target.targetId);
@@ -226,11 +281,15 @@ export function createBookmarkTreeDndController(options) {
       ? treeState.selectors.getChildIndex(parentId, targetNode.id)
       : treeState.selectors.getTree().findIndex((node) => node.id === targetNode.id);
     if (targetIndex < 0) {
-      return null;
+      return { result: null, requiresRefresh: false };
     }
 
     const insertIndex = target.position === "before" ? targetIndex : targetIndex + 1;
-    return MoveNode(nodeId, parentId, insertIndex);
+    if (nodeIds.length > 1) {
+      const changed = await reorderMultipleNodes(nodeIds, parentId, insertIndex);
+      return { result: null, requiresRefresh: changed };
+    }
+    return { result: await MoveNode(nodeIds[0], parentId, insertIndex), requiresRefresh: false };
   }
 
   /**
@@ -240,13 +299,6 @@ export function createBookmarkTreeDndController(options) {
    */
   function handleNodePointerDown(entry, event) {
     if (searchState.selectors.isSearching()) {
-      return;
-    }
-
-    if (treeState.computed.selectionCount() > 1) {
-      if (event.button === 0) {
-        uiState.actions.showToast("Drag-and-drop is disabled during multi-select", "warning");
-      }
       return;
     }
 
@@ -301,7 +353,7 @@ export function createBookmarkTreeDndController(options) {
     dropTarget = getDropTargetFromPoint(event);
     syncDropTargetClasses();
 
-    const draggedId = draggedNodeId;
+    const draggedIds = [...draggedNodeIds];
     const finalDropTarget = dropTarget;
     clearDragState();
 
@@ -311,8 +363,12 @@ export function createBookmarkTreeDndController(options) {
       }
 
       try {
-        const result = await applyDropTarget(draggedId, finalDropTarget);
-        if (result && !await treeState.actions.applyMoveResult(result)) {
+        const dropOutcome = await applyDropTarget(draggedIds, finalDropTarget);
+        if (dropOutcome.requiresRefresh) {
+          await treeState.actions.refresh();
+          return;
+        }
+        if (dropOutcome.result && !await treeState.actions.applyMoveResult(dropOutcome.result)) {
           await treeState.actions.refresh();
         }
       } catch (caughtError) {

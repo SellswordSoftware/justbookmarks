@@ -1,7 +1,7 @@
 // @ts-check
 
 import { createEmptySelectionState, createSingleSelectionState } from "./selection.js";
-import { getFolderNodeIds, getNodeById } from "./structure.js";
+import { getNodeById } from "./structure.js";
 
 /** @typedef {import("./selection.js").TreeSelectionState} TreeSelectionState */
 
@@ -35,34 +35,43 @@ export function pruneSelectionState(nodes, selectionState) {
 /**
  * @param {TreeNode[]} nodes
  * @param {PerFileTreeState | null | undefined} state
- * @returns {{ expandedNodeIds: string[], selectionState: TreeSelectionState }}
+ * @returns {{ expandedNodeIds: string[], selectionState: TreeSelectionState, scrollTop: number }}
  */
 export function restorePersistentTreeState(nodes, state) {
   if (!state) {
     return {
       expandedNodeIds: [],
       selectionState: createEmptySelectionState(),
+      scrollTop: 0,
     };
   }
 
-  const validFolderIds = new Set(getFolderNodeIds(nodes));
-  const expandedNodeIds = state.expandedNodeIds.filter((id) => validFolderIds.has(id));
-  const selectionState =
-    state.selectedNodeId && getNodeById(nodes, state.selectedNodeId)
-      ? createSingleSelectionState(state.selectedNodeId)
-      : createEmptySelectionState();
+  // With lazy-loading we often restore before deep folders/nodes are loaded,
+  // so keep persisted IDs and let runtime hydration validate/fetch as needed.
+  const expandedNodeIds = state.expandedNodeIds.filter((id) => typeof id === "string");
+  const selectionState = state.selectedNodeId
+    ? createSingleSelectionState(state.selectedNodeId)
+    : createEmptySelectionState();
 
-  return { expandedNodeIds, selectionState };
+  return {
+    expandedNodeIds,
+    selectionState,
+    scrollTop: typeof state.scrollTop === "number" && Number.isFinite(state.scrollTop)
+      ? state.scrollTop
+      : 0,
+  };
 }
 
 /**
  * @param {string[]} expandedNodeIds
  * @param {string} primarySelectedNodeId
+ * @param {number} scrollTop
  * @returns {PerFileTreeState}
  */
-export function getPersistentTreeState(expandedNodeIds, primarySelectedNodeId) {
+export function getPersistentTreeState(expandedNodeIds, primarySelectedNodeId, scrollTop) {
   return {
     expandedNodeIds: [...expandedNodeIds],
     selectedNodeId: primarySelectedNodeId,
+    scrollTop,
   };
 }

@@ -21,7 +21,7 @@ export async function loadFileIntoSession(path, silentFailure = false) {
   const loaded = await treeState.actions.loadFile(path);
   if (loaded) {
     const nextState = appState.session.reloadPersistedState();
-    treeState.actions.restoreUIState(nextState.files[path]);
+    await treeState.actions.restoreUIState(nextState.files[path]);
     appState.session.rememberLoadedFile(path);
     return true;
   }

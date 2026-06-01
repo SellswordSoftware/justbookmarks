@@ -51,6 +51,7 @@ const primarySelectedNodeId = signal("");
 const selectedNodeIds = signal(/** @type {string[]} */ ([]));
 const selectionAnchorNodeId = signal("");
 const expandedNodeIds = signal(/** @type {string[]} */ ([]));
+const treeScrollTop = signal(0);
 const loading = signal(false);
 const error = signal("");
 const treeStats = signal(/** @type {TreeStats} */ ({ folders: 0, bookmarks: 0 }));
@@ -189,6 +190,47 @@ function selectSingle(id) {
     return;
   }
   applySelectionState(createSingleSelectionState(id));
+}
+
+/**
+ * Ensure a node is visible in the lazy tree (loading ancestor folders if needed),
+ * then select it.
+ * @param {string} id
+ * @returns {Promise<boolean>}
+ */
+async function revealAndSelectNode(id) {
+  if (!id) {
+    clearSelection();
+    return false;
+  }
+
+  /** @type {string[]} */
+  let selectedAncestors = [];
+  try {
+    selectedAncestors = getAncestorChainFromFlatTree(id, await GetFlatTree());
+  } catch {
+    selectedAncestors = [];
+  }
+
+  const expanded = new Set(expandedNodeIds());
+  for (const ancestorId of selectedAncestors) {
+    expanded.add(ancestorId);
+  }
+  expandedNodeIds([...expanded]);
+
+  for (const folderId of selectedAncestors) {
+    const folderNode = getNode(folderId);
+    if (folderNode && folderNode.type === 0 && !folderNode.folder.childrenLoaded) {
+      await loadFolderChildren(folderId);
+    }
+  }
+
+  if (!getNode(id)) {
+    clearSelection();
+    return false;
+  }
+  selectSingle(id);
+  return true;
 }
 
 /**
@@ -651,6 +693,42 @@ async function loadFolderChildren(folderId) {
 }
 
 /**
+ * @param {string} selectedId
+ * @param {FlatNode[]} flatTree
+ * @returns {string[]}
+ */
+function getAncestorChainFromFlatTree(selectedId, flatTree) {
+  if (!selectedId || !Array.isArray(flatTree) || flatTree.length === 0) {
+    return [];
+  }
+
+  /** @type {Map<string, FlatNode>} */
+  const byId = new Map();
+  for (const node of flatTree) {
+    if (node.id) {
+      byId.set(node.id, node);
+    }
+  }
+
+  /** @type {string[]} */
+  const chain = [];
+  /** @type {Set<string>} */
+  const visited = new Set();
+  let cursor = byId.get(selectedId);
+  while (cursor && cursor.parentId && !visited.has(cursor.parentId)) {
+    visited.add(cursor.parentId);
+    const parent = byId.get(cursor.parentId);
+    if (!parent || parent.type !== 0) {
+      break;
+    }
+    chain.push(parent.id);
+    cursor = parent;
+  }
+  chain.reverse();
+  return chain;
+}
+
+/**
  * Sync the full tree state from Go. Used for initial load and after mutations.
  * @returns {Promise<void>}
  */
@@ -693,6 +771,7 @@ async function loadFile(path) {
   try {
     await LoadFile(path);
     expandedNodeIds([]);
+    treeScrollTop(0);
     clearSelection();
     await syncRootNodes();
     // Don't auto-expand root folders on initial load with lazy loading.
@@ -709,17 +788,47 @@ async function loadFile(path) {
 
 /**
  * @param {PerFileTreeState | null | undefined} state
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function restoreUIState(state) {
+async function restoreUIState(state) {
   const nextState = restorePersistentTreeState(tree(), state);
-  expandedNodeIds(nextState.expandedNodeIds);
+  const selectedId = nextState.selectionState.primarySelectedNodeId;
+  /** @type {string[]} */
+  let selectedAncestors = [];
+
+  if (selectedId) {
+    try {
+      selectedAncestors = getAncestorChainFromFlatTree(selectedId, await GetFlatTree());
+    } catch {
+      selectedAncestors = [];
+    }
+  }
+
+  const expanded = new Set(nextState.expandedNodeIds);
+  for (const ancestorId of selectedAncestors) {
+    expanded.add(ancestorId);
+  }
+  expandedNodeIds([...expanded]);
+  treeScrollTop(nextState.scrollTop);
   applySelectionState(nextState.selectionState);
+
+  for (const folderId of expanded) {
+    const folderNode = getNode(folderId);
+    if (folderNode && folderNode.type === 0 && !folderNode.folder.childrenLoaded) {
+      await loadFolderChildren(folderId);
+    }
+  }
+
+  if (selectedId && getNode(selectedId)) {
+    selectSingle(selectedId);
+  } else if (selectedId) {
+    clearSelection();
+  }
 }
 
 /** @returns {PerFileTreeState} */
 function getPersistentState() {
-  return getPersistentTreeState(expandedNodeIds(), primarySelectedNodeId());
+  return getPersistentTreeState(expandedNodeIds(), primarySelectedNodeId(), treeScrollTop());
 }
 
 /** @returns {SelectionSnapshot} */
@@ -768,6 +877,7 @@ export const treeState = {
     selectedNodeIds,
     selectionAnchorNodeId,
     expandedNodeIds,
+    treeScrollTop,
     loading,
     error,
   },
@@ -780,6 +890,7 @@ export const treeState = {
     refresh,
     selectNode: selectSingle,
     selectSingle,
+    revealAndSelectNode,
     toggleSelected,
     selectRange,
     clearSelection,
@@ -796,6 +907,16 @@ export const treeState = {
     patchBookmark,
     patchFlatNodes,
     applyMoveResult,
+    /**
+     * @param {number} scrollTop
+     * @returns {number}
+     */
+    setTreeScrollTop(scrollTop) {
+      if (!Number.isFinite(scrollTop)) {
+        return treeScrollTop();
+      }
+      return treeScrollTop(Math.max(0, scrollTop));
+    },
     /**
      * Test/support helper during migration.
      *
@@ -860,6 +981,12 @@ export const treeState = {
      */
     getExpandedNodeIds() {
       return expandedNodeIds();
+    },
+    /**
+     * @returns {number}
+     */
+    getTreeScrollTop() {
+      return treeScrollTop();
     },
     /**
      * @returns {boolean}

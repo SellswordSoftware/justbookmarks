@@ -221,6 +221,7 @@ declare global {
   interface PerFileTreeState {
     expandedNodeIds: string[];
     selectedNodeId: string;
+    scrollTop: number;
   }
 
   interface WindowState {

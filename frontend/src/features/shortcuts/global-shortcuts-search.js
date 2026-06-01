@@ -34,8 +34,10 @@ export async function activateSearchResult(mode) {
     return;
   }
 
-  treeState.actions.expandAncestors(nodeId);
-  treeState.actions.selectSingle(nodeId);
+  const selected = await treeState.actions.revealAndSelectNode(nodeId);
+  if (!selected) {
+    return;
+  }
 
   if (mode === "open") {
     const node = treeState.selectors.getNode(nodeId);
@@ -79,8 +81,7 @@ export function createSearchInputKeydownHandler(searchInput, focusTree) {
       if (searchState.selectors.getQuery()) {
         const results = searchState.selectors.getResults();
         if (results[0]) {
-          treeState.actions.expandAncestors(results[0].nodeId);
-          treeState.actions.selectSingle(results[0].nodeId);
+          void treeState.actions.revealAndSelectNode(results[0].nodeId);
         }
       }
       focusTree();

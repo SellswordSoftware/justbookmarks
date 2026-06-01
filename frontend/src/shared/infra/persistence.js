@@ -51,6 +51,10 @@ function sanitizeState(raw) {
           typeof fileState.selectedNodeId === "string"
             ? fileState.selectedNodeId
             : "",
+        scrollTop:
+          typeof fileState.scrollTop === "number" && Number.isFinite(fileState.scrollTop)
+            ? fileState.scrollTop
+            : 0,
       };
     }
   }

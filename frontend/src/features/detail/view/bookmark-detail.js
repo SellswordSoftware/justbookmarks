@@ -307,9 +307,7 @@ export function createBookmarkDetail(bookmark) {
             currentTitleLoading.setAttribute("aria-hidden", active ? "false" : "true");
           }),
           fx(iconImage, (currentIconImage) => {
-            const displayIcon = editing()
-              ? currentIcon() || bookmark.bookmark.icon
-              : bookmark.bookmark.icon;
+            const displayIcon = currentIcon();
             if (displayIcon) {
               currentIconImage.hidden = false;
               currentIconImage.src = displayIcon;
@@ -319,9 +317,7 @@ export function createBookmarkDetail(bookmark) {
             }
           }),
           fx(fallbackIcon, (currentFallbackIcon) => {
-            const displayIcon = editing()
-              ? currentIcon() || bookmark.bookmark.icon
-              : bookmark.bookmark.icon;
+            const displayIcon = currentIcon();
             currentFallbackIcon.hidden = Boolean(displayIcon);
           }),
           fx(addedDate, (currentAddedDate) => {
@@ -384,7 +380,12 @@ export function createBookmarkDetail(bookmark) {
         <div class="bookmark-detail__top-row">
           <div class="bookmark-detail__identity">
             <img class="bookmark-detail__icon-image" alt="" hidden data-ref="iconImage" />
-            <div class="bookmark-detail__icon-fallback" data-ref="fallbackIcon">🔖</div>
+            <div class="bookmark-detail__icon-fallback" data-ref="fallbackIcon">
+              <span
+                class="icon-mask detail-action-icon--bookmark bookmark-detail__icon-fallback-icon"
+                aria-hidden="true"
+              ></span>
+            </div>
             <div class="bookmark-detail__title-block">
               <h3 class="bookmark-detail__title" data-ref="titleHeading"></h3>
               <input
