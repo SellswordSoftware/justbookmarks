@@ -103,6 +103,7 @@ function normalizeTreeNode(node) {
         lastModified: node.folder.lastModified ?? "",
         meta: node.folder.meta ?? "",
         children: (node.folder.children ?? []).map(normalizeTreeNode),
+        childCount: Array.isArray(node.folder.children) ? node.folder.children.length : 0,
         childrenLoaded: true,
       },
     };

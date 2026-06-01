@@ -94,6 +94,7 @@ declare global {
     addDate: TimestampValue;
     lastModified: TimestampValue;
     meta: string;
+    childCount: number;
     children: TreeNode[];
     childrenLoaded: boolean;
   }

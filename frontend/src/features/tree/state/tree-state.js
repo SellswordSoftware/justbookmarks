@@ -404,6 +404,7 @@ function createTreeNodeFromFlatNode(flatNode) {
         addDate: flatNode.addDate ?? "",
         lastModified: flatNode.lastModified ?? "",
         meta: flatNode.meta ?? "",
+        childCount: flatNode.childCount ?? 0,
         children: [],
         childrenLoaded: (flatNode.childCount ?? 0) === 0,
       },
@@ -687,6 +688,7 @@ async function loadFolderChildren(folderId) {
   const folderInTree = getNodeById(currentTree, folderId);
   if (folderInTree && folderInTree.type === 0) {
     folderInTree.folder.children = normalized;
+    folderInTree.folder.childCount = normalized.length;
     folderInTree.folder.childrenLoaded = true;
     tree([...currentTree]);
   }

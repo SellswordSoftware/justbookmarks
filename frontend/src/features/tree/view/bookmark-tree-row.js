@@ -164,7 +164,14 @@ export function mountBookmarkTreeRow(el, entry, options) {
 
     if (count instanceof HTMLElement) {
       count.hidden = !folder;
-      count.textContent = folder ? `(${node.folder.children.length})` : "";
+      if (folder) {
+        const childCount = node.folder.childrenLoaded
+          ? node.folder.children.length
+          : node.folder.childCount;
+        count.textContent = `(${childCount})`;
+      } else {
+        count.textContent = "";
+      }
     }
 
     if (favicon) {

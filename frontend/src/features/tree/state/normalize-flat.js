@@ -42,8 +42,9 @@ export function normalizeFlat(flatNodes) {
           addDate: flat.addDate ?? "",
           lastModified: flat.lastModified ?? "",
           meta: flat.meta ?? "",
+          childCount: flat.childCount ?? 0,
           children: [],
-          childrenLoaded: false,
+          childrenLoaded: (flat.childCount ?? 0) === 0,
         },
       };
       node = folderNode;
