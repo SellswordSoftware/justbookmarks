@@ -3,6 +3,7 @@
 import {
   cleanupCollector,
   fx,
+  listener,
   model,
   signal,
   template,
@@ -241,20 +242,22 @@ export function createBookmarkDetail(bookmark) {
           void actions.openInBrowser();
         }
 
-        editButton.addEventListener("click", handleEditClick);
-        moveButton.addEventListener("click", actions.showMoveDialog);
-        deleteButton.addEventListener("click", actions.showDeleteConfirm);
-        saveButton.addEventListener("click", handleSaveClick);
-        cancelButton.addEventListener("click", handleCancelClick);
-        openButton.addEventListener("click", handleOpenClick);
-        faviconButton.addEventListener("click", handleFetchFaviconClick);
-        urlLink.addEventListener("click", handleOpenLinkClick);
-        titleInputEl.addEventListener("keydown", handleEditKeydown);
-        urlInputEl.addEventListener("keydown", handleEditKeydown);
-        notesInputEl.addEventListener("keydown", handleEditKeydown);
-        titleInputEl.addEventListener("input", handleTitleInput);
-        urlInputEl.addEventListener("input", handleURLInput);
-        notesInputEl.addEventListener("input", handleMetaInput);
+        cleanup.add(
+          listener(editButton, "click", handleEditClick),
+          listener(moveButton, "click", actions.showMoveDialog),
+          listener(deleteButton, "click", actions.showDeleteConfirm),
+          listener(saveButton, "click", handleSaveClick),
+          listener(cancelButton, "click", handleCancelClick),
+          listener(openButton, "click", handleOpenClick),
+          listener(faviconButton, "click", handleFetchFaviconClick),
+          listener(urlLink, "click", handleOpenLinkClick),
+          listener(titleInputEl, "keydown", handleEditKeydown),
+          listener(urlInputEl, "keydown", handleEditKeydown),
+          listener(notesInputEl, "keydown", handleEditKeydown),
+          listener(titleInputEl, "input", handleTitleInput),
+          listener(urlInputEl, "input", handleURLInput),
+          listener(notesInputEl, "input", handleMetaInput),
+        );
 
         cleanup.add(
           titleBinding.cleanup,
@@ -352,20 +355,6 @@ export function createBookmarkDetail(bookmark) {
           }),
           () => metadata.clearScheduledFetch(),
           () => metadata.cancelOutstandingFetches(),
-          () => editButton.removeEventListener("click", handleEditClick),
-          () => moveButton.removeEventListener("click", actions.showMoveDialog),
-          () => deleteButton.removeEventListener("click", actions.showDeleteConfirm),
-          () => saveButton.removeEventListener("click", handleSaveClick),
-          () => cancelButton.removeEventListener("click", handleCancelClick),
-          () => openButton.removeEventListener("click", handleOpenClick),
-          () => faviconButton.removeEventListener("click", handleFetchFaviconClick),
-          () => urlLink.removeEventListener("click", handleOpenLinkClick),
-          () => titleInputEl.removeEventListener("keydown", handleEditKeydown),
-          () => urlInputEl.removeEventListener("keydown", handleEditKeydown),
-          () => notesInputEl.removeEventListener("keydown", handleEditKeydown),
-          () => titleInputEl.removeEventListener("input", handleTitleInput),
-          () => urlInputEl.removeEventListener("input", handleURLInput),
-          () => notesInputEl.removeEventListener("input", handleMetaInput),
         );
       },
       onUnmount() {
