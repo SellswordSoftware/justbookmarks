@@ -913,6 +913,7 @@ export const treeState = {
     patchBookmark,
     patchFlatNodes,
     applyMoveResult,
+    loadFolderChildren,
     /**
      * @param {number} scrollTop
      * @returns {number}

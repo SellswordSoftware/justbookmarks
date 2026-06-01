@@ -204,6 +204,8 @@ declare global {
     name: string;
     depth: number;
     pathLabel: string;
+    hasChildren?: boolean;
+    expanded?: boolean;
   }
 
   interface MoveDialogRequest {

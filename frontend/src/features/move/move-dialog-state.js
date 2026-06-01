@@ -2,20 +2,23 @@
 
 import { computed, signal } from "../../shared/runtime/naf.js";
 
-/**
- * Move dialog state owner.
- *
- * Owns:
- * - dialog open/closed state
- * - current move request
- * - valid folder targets derived from tree data
- * - excluded-descendant logic for folder moves
- */
-
 const open = signal(false);
 const request = signal(/** @type {MoveDialogRequest | null} */ (null));
 const selectedTarget = signal("");
 const treeNodes = signal(/** @type {TreeNode[]} */ ([]));
+const expandedFolderIds = signal(/** @type {string[]} */ ([]));
+const filterQuery = signal("");
+const loadingFolderIds = signal(/** @type {string[]} */ ([]));
+
+/**
+ * @typedef {object} FolderRecord
+ * @property {string} id
+ * @property {string} name
+ * @property {string} pathLabel
+ * @property {string} parentId
+ * @property {number} depth
+ * @property {boolean} hasChildren
+ */
 
 /**
  * @param {TreeNode} node
@@ -26,59 +29,176 @@ function isFolderNode(node) {
 }
 
 /**
- * @param {TreeNode[]} nodes
- * @param {string[]} excludedIds
- * @returns {MoveTarget[]}
+ * @param {string[]} ids
+ * @returns {Set<string>}
  */
-function collectFolderTargets(nodes, excludedIds) {
-  /** @type {MoveTarget[]} */
-  const result = [];
-  const excludedIdSet = new Set(excludedIds);
-
-  /**
-   * @param {TreeNode} node
-   * @param {boolean} [insideExcludedBranch=false]
-   * @param {number} [depth=0]
-   * @param {string} [parentPath=""]
-   * @returns {void}
-   */
-  function visit(node, insideExcludedBranch = false, depth = 0, parentPath = "") {
-    if (!isFolderNode(node)) {
-      return;
-    }
-
-    const isExcludedBranch = insideExcludedBranch || excludedIdSet.has(node.id);
-    const pathLabel = parentPath ? `${parentPath} / ${node.folder.name}` : node.folder.name;
-
-    if (!isExcludedBranch) {
-      result.push({
-        id: node.id,
-        name: node.folder.name,
-        depth,
-        pathLabel,
-      });
-    }
-
-    for (const child of node.folder.children) {
-      visit(child, isExcludedBranch, depth + 1, pathLabel);
-    }
-  }
-
-  for (const node of nodes) {
-    visit(node);
-  }
-
-  return result;
+function toSet(ids) {
+  return new Set(ids);
 }
 
-const folders = computed(() => {
+/**
+ * @param {TreeNode[]} nodes
+ * @returns {string[]}
+ */
+function getRootFolderIds(nodes) {
+  return nodes
+    .filter((node) => isFolderNode(node))
+    .map((node) => node.id);
+}
+
+/**
+ * @param {TreeNode[]} nodes
+ * @param {Set<string>} excludedIds
+ * @returns {{
+ *   records: FolderRecord[],
+ *   byId: Map<string, FolderRecord>,
+ *   childIdsByParentId: Map<string, string[]>,
+ * }}
+ */
+function buildFolderIndex(nodes, excludedIds) {
+  /** @type {FolderRecord[]} */
+  const records = [];
+  /** @type {Map<string, FolderRecord>} */
+  const byId = new Map();
+  /** @type {Map<string, string[]>} */
+  const childIdsByParentId = new Map();
+
+  /**
+   * @param {TreeNode[]} currentNodes
+   * @param {string} parentId
+   * @param {number} depth
+   * @param {string} parentPath
+   * @param {boolean} insideExcludedBranch
+   */
+  function visit(currentNodes, parentId, depth, parentPath, insideExcludedBranch) {
+    for (const node of currentNodes) {
+      if (!isFolderNode(node)) {
+        continue;
+      }
+
+      const isExcluded = insideExcludedBranch || excludedIds.has(node.id);
+      if (isExcluded) {
+        continue;
+      }
+
+      const name = node.folder.name || "Untitled folder";
+      const pathLabel = parentPath ? `${parentPath} / ${name}` : name;
+      const hasChildren = (node.folder.childCount ?? 0) > 0 || node.folder.children.some(
+        (child) => isFolderNode(child) && !excludedIds.has(child.id),
+      );
+
+      /** @type {FolderRecord} */
+      const record = {
+        id: node.id,
+        name,
+        pathLabel,
+        parentId,
+        depth,
+        hasChildren,
+      };
+
+      records.push(record);
+      byId.set(record.id, record);
+
+      if (!childIdsByParentId.has(parentId)) {
+        childIdsByParentId.set(parentId, []);
+      }
+      childIdsByParentId.get(parentId)?.push(record.id);
+
+      visit(node.folder.children, record.id, depth + 1, pathLabel, isExcluded);
+    }
+  }
+
+  visit(nodes, "", 0, "", false);
+
+  return {
+    records,
+    byId,
+    childIdsByParentId,
+  };
+}
+
+const excludedFolderIds = computed(() => {
+  const currentRequest = request();
+  if (!currentRequest || currentRequest.type !== "folder") {
+    return new Set();
+  }
+  return toSet(currentRequest.nodeIds);
+});
+
+const folderIndex = computed(() => buildFolderIndex(treeNodes(), excludedFolderIds()));
+
+const visibleFolders = computed(() => {
   const currentRequest = request();
   if (!currentRequest) {
     return /** @type {MoveTarget[]} */ ([]);
   }
 
-  const excludedIds = currentRequest.type === "folder" ? currentRequest.nodeIds : [];
-  return collectFolderTargets(treeNodes(), excludedIds);
+  const expanded = toSet(expandedFolderIds());
+  const query = filterQuery().trim().toLowerCase();
+  const filtering = query.length > 0;
+
+  const { records, byId, childIdsByParentId } = folderIndex();
+
+  /** @type {Set<string>} */
+  const includeIds = new Set();
+
+  if (filtering) {
+    for (const record of records) {
+      if (
+        record.name.toLowerCase().includes(query) ||
+        record.pathLabel.toLowerCase().includes(query)
+      ) {
+        includeIds.add(record.id);
+        let cursorParentId = record.parentId;
+        while (cursorParentId) {
+          includeIds.add(cursorParentId);
+          cursorParentId = byId.get(cursorParentId)?.parentId ?? "";
+        }
+      }
+    }
+  } else {
+    for (const record of records) {
+      includeIds.add(record.id);
+    }
+  }
+
+  /** @type {MoveTarget[]} */
+  const result = [];
+
+  /**
+   * @param {string} parentId
+   */
+  function appendVisible(parentId) {
+    const childIds = childIdsByParentId.get(parentId) ?? [];
+    for (const childId of childIds) {
+      if (!includeIds.has(childId)) {
+        continue;
+      }
+
+      const record = byId.get(childId);
+      if (!record) {
+        continue;
+      }
+
+      const isExpanded = filtering ? true : expanded.has(record.id);
+      result.push({
+        id: record.id,
+        name: record.name,
+        depth: record.depth,
+        pathLabel: record.pathLabel,
+        hasChildren: record.hasChildren,
+        expanded: isExpanded,
+      });
+
+      if (filtering || isExpanded) {
+        appendVisible(record.id);
+      }
+    }
+  }
+
+  appendVisible("");
+  return result;
 });
 
 export const moveDialogState = {
@@ -87,9 +207,12 @@ export const moveDialogState = {
     request,
     selectedTarget,
     treeNodes,
+    expandedFolderIds,
+    filterQuery,
+    loadingFolderIds,
   },
   computed: {
-    folders,
+    visibleFolders,
   },
   actions: {
     /**
@@ -107,6 +230,40 @@ export const moveDialogState = {
       return selectedTarget(targetId);
     },
     /**
+     * @param {string} nextQuery
+     * @returns {string}
+     */
+    setFilterQuery(nextQuery) {
+      return filterQuery(nextQuery);
+    },
+    /**
+     * @param {string} folderId
+     * @param {boolean} loading
+     * @returns {void}
+     */
+    setFolderLoading(folderId, loading) {
+      const next = new Set(loadingFolderIds());
+      if (loading) {
+        next.add(folderId);
+      } else {
+        next.delete(folderId);
+      }
+      loadingFolderIds([...next]);
+    },
+    /**
+     * @param {string} folderId
+     * @returns {void}
+     */
+    toggleExpanded(folderId) {
+      const next = new Set(expandedFolderIds());
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      expandedFolderIds([...next]);
+    },
+    /**
      * @param {MoveDialogRequest} nextRequest
      * @param {TreeNode[]=} nodes
      * @returns {MoveDialogRequest}
@@ -117,6 +274,9 @@ export const moveDialogState = {
       }
       request(nextRequest);
       selectedTarget("");
+      filterQuery("");
+      loadingFolderIds([]);
+      expandedFolderIds([]);
       open(true);
       return nextRequest;
     },
@@ -160,6 +320,8 @@ export const moveDialogState = {
     closeMoveDialog() {
       open(false);
       selectedTarget("");
+      filterQuery("");
+      loadingFolderIds([]);
       request(null);
     },
   },
@@ -180,13 +342,39 @@ export const moveDialogState = {
      * @returns {MoveTarget[]}
      */
     getFolders() {
-      return folders();
+      return visibleFolders();
+    },
+    /**
+     * @returns {MoveTarget[]}
+     */
+    getVisibleFolders() {
+      return visibleFolders();
     },
     /**
      * @returns {string}
      */
     getSelectedTarget() {
       return selectedTarget();
+    },
+    /**
+     * @returns {string}
+     */
+    getFilterQuery() {
+      return filterQuery();
+    },
+    /**
+     * @param {string} folderId
+     * @returns {boolean}
+     */
+    isExpanded(folderId) {
+      return expandedFolderIds().includes(folderId);
+    },
+    /**
+     * @param {string} folderId
+     * @returns {boolean}
+     */
+    isFolderLoading(folderId) {
+      return loadingFolderIds().includes(folderId);
     },
   },
 };

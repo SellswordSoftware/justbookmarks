@@ -9,7 +9,6 @@ import {
   effect,
   list,
   mount,
-  raw,
   template,
 } from "../../shared/runtime/naf.js";
 import { moveDialogState } from "./move-dialog-state.js";
@@ -30,14 +29,20 @@ export function collectMoveDialogShell(root) {
 }
 
 /** @type {string} */
-const MOVE_OPTION_HTML = /*html*/ `
-  <button type="button" class="move-dialog__option" role="option" data-keyboard-action="move-target">
-    <span class="move-dialog__option-icon">📁</span>
-    <span class="move-dialog__option-content">
-      <span data-ref="name"></span>
-      <span data-ref="path"></span>
-    </span>
-  </button>
+const MOVE_FOLDER_ROW_HTML = /*html*/ `
+  <article class="move-dialog__tree-node">
+    <div class="move-dialog__tree-row tree-row menu-item" role="treeitem" tabindex="-1" aria-selected="false">
+      <button
+        type="button"
+        class="tree-row__toggle btn btn-ghost btn-sm btn-square"
+        aria-label="Toggle folder"
+        data-ref="toggle"
+      ></button>
+      <span class="tree-row__folder-icon icon-mask" data-ref="folderIcon" aria-hidden="true"></span>
+      <span class="move-dialog__tree-label" data-ref="name"></span>
+      <span class="move-dialog__tree-path" data-ref="path"></span>
+    </div>
+  </article>
 `;
 
 /**
@@ -46,7 +51,7 @@ const MOVE_OPTION_HTML = /*html*/ `
  * @returns {void}
  */
 function ensureSelectedTarget(folders, selectedTarget) {
-  if (selectedTarget) {
+  if (selectedTarget && folders.some((folder) => folder.id === selectedTarget)) {
     return;
   }
   if (folders[0]) {
@@ -86,13 +91,14 @@ async function move() {
 /**
  * @param {{
  *   label: string,
- *   hasFolders: boolean,
- *   hasSelectedTarget: boolean
  * }} view
  * @param {(mounted: {
  *   backdrop: HTMLDivElement,
  *   dialog: HTMLDivElement,
+ *   title: HTMLElement,
  *   listbox: HTMLDivElement,
+ *   emptyState: HTMLDivElement,
+ *   filterInput: HTMLInputElement,
  *   cancelButton: HTMLButtonElement,
  *   confirmButton: HTMLButtonElement,
  * }) => void} onMountElements
@@ -107,6 +113,8 @@ function createMoveDialog(view, onMountElements) {
           const dialog = ctx.refs.dialog;
           const title = ctx.refs.title;
           const listbox = ctx.refs.listbox;
+          const emptyState = ctx.refs.emptyState;
+          const filterInput = ctx.refs.filterInput;
           const cancelButton = ctx.refs.cancelButton;
           const confirmButton = ctx.refs.confirmButton;
 
@@ -122,6 +130,12 @@ function createMoveDialog(view, onMountElements) {
           if (!(listbox instanceof HTMLDivElement)) {
             throw new Error("Expected move dialog listbox");
           }
+          if (!(emptyState instanceof HTMLDivElement)) {
+            throw new Error("Expected move dialog empty state");
+          }
+          if (!(filterInput instanceof HTMLInputElement)) {
+            throw new Error("Expected move dialog filter input");
+          }
           if (!(cancelButton instanceof HTMLButtonElement)) {
             throw new Error("Expected move cancel button");
           }
@@ -131,24 +145,19 @@ function createMoveDialog(view, onMountElements) {
 
           title.textContent = `Move "${view.label}"`;
 
-          ctx.cleanup.add(
-            attr(confirmButton, "disabled", () => !view.hasSelectedTarget),
-          );
-
           onMountElements({
             backdrop,
             dialog,
+            title,
             listbox,
+            emptyState,
+            filterInput,
             cancelButton,
             confirmButton,
           });
         },
       })
     );
-
-  const emptyStateComponent = view.hasFolders
-    ? null
-    : raw('<div class="move-dialog__empty">No eligible folders</div>');
 
   return renderDialog /*html*/ `
     <div class="modal-backdrop" role="presentation" data-ref="backdrop">
@@ -169,14 +178,22 @@ function createMoveDialog(view, onMountElements) {
         <div class="modal__body">
           <div class="move-dialog__list-shell">
             <div class="move-dialog__list-header">Folder Tree</div>
+            <div class="move-dialog__filter-shell">
+              <input
+                type="text"
+                class="input input-sm move-dialog__filter-input"
+                placeholder="Filter folders..."
+                data-ref="filterInput"
+                data-keyboard-action="move-filter"
+              />
+            </div>
             <div
               class="move-dialog__listbox"
-              role="listbox"
+              role="tree"
               aria-label="Target folder"
               data-ref="listbox"
-            >
-              ${emptyStateComponent}
-            </div>
+            ></div>
+            <div class="move-dialog__empty" data-ref="emptyState" hidden>No matching folders</div>
           </div>
         </div>
         <div class="modal__footer">
@@ -203,56 +220,191 @@ function createMoveDialog(view, onMountElements) {
 }
 
 /**
+ * @param {string} folderId
+ * @returns {Promise<void>}
+ */
+async function ensureFolderChildrenLoaded(folderId) {
+  const node = treeState.selectors.getNode(folderId);
+  if (!node || node.type !== 0 || node.folder.childrenLoaded) {
+    return;
+  }
+  if (moveDialogState.selectors.isFolderLoading(folderId)) {
+    return;
+  }
+  moveDialogState.actions.setFolderLoading(folderId, true);
+  try {
+    await treeState.actions.loadFolderChildren(folderId);
+    moveDialogState.actions.setTreeNodes(treeState.selectors.getTree());
+  } catch (caughtError) {
+    uiState.actions.showToast(
+      `Failed to load folder children: ${getErrorMessage(caughtError)}`,
+      "error",
+    );
+  } finally {
+    moveDialogState.actions.setFolderLoading(folderId, false);
+  }
+}
+
+/**
  * @param {{ container: HTMLElement }} shell
  * @returns {{ cleanup: () => void }}
  */
 export function mountMoveDialog(shell) {
-  let cleanupRendered = () => {};
+  let openCleanup = () => {};
+  let wasOpen = false;
 
   const stop = effect(() => {
-    cleanupRendered();
-    cleanupRendered = () => {};
+    const isOpen = moveDialogState.selectors.isOpen();
+    if (isOpen === wasOpen) {
+      return;
+    }
+    wasOpen = isOpen;
+
+    openCleanup();
+    openCleanup = () => {};
     shell.container.replaceChildren();
 
-    if (!moveDialogState.selectors.isOpen()) {
+    if (!isOpen) {
       return;
     }
 
     const request = moveDialogState.selectors.getRequest();
-    const folders = moveDialogState.selectors.getFolders();
-    const selectedTarget = moveDialogState.selectors.getSelectedTarget();
-
-    ensureSelectedTarget(folders, selectedTarget);
-
     /** @type {{
      *   backdrop: HTMLDivElement,
      *   dialog: HTMLDivElement,
+     *   title: HTMLElement,
      *   listbox: HTMLDivElement,
+     *   emptyState: HTMLDivElement,
+     *   filterInput: HTMLInputElement,
      *   cancelButton: HTMLButtonElement,
      *   confirmButton: HTMLButtonElement,
      * } | undefined} */
     let mounted;
 
     const component = createMoveDialog(
-      {
-        label: request?.label ?? "",
-        hasFolders: folders.length > 0,
-        hasSelectedTarget: Boolean(
-          moveDialogState.selectors.getSelectedTarget(),
-        ),
-      },
+      { label: request?.label ?? "" },
       (elements) => {
         mounted = elements;
       },
     );
-
     mount(component, shell.container);
 
     if (!mounted) {
       throw new Error("Expected move dialog elements after mount");
     }
 
-    const { backdrop, dialog, listbox, cancelButton, confirmButton } = mounted;
+    const {
+      backdrop,
+      dialog,
+      title,
+      listbox,
+      emptyState,
+      filterInput,
+      cancelButton,
+      confirmButton,
+    } = mounted;
+
+    const cleanup = cleanupCollector();
+    let filterTimer = /** @type {number | null} */ (null);
+
+    title.textContent = `Move "${request?.label ?? ""}"`;
+    filterInput.value = "";
+
+    cleanup.add(
+      attr(confirmButton, "disabled", () => !moveDialogState.selectors.getSelectedTarget()),
+      effect(() => {
+        const folders = moveDialogState.selectors.getVisibleFolders();
+        ensureSelectedTarget(folders, moveDialogState.selectors.getSelectedTarget());
+        emptyState.hidden = folders.length > 0;
+      }),
+      list(
+        listbox,
+        MOVE_FOLDER_ROW_HTML,
+        () => moveDialogState.selectors.getVisibleFolders(),
+        (folder) => folder.id,
+        (el, folder) => {
+          if (!(el instanceof HTMLElement)) {
+            throw new Error("Move folder template must render an element");
+          }
+
+          const row = el.querySelector(".move-dialog__tree-row");
+          const toggle = el.querySelector('[data-ref="toggle"]');
+          const folderIcon = el.querySelector('[data-ref="folderIcon"]');
+          const name = el.querySelector('[data-ref="name"]');
+          const path = el.querySelector('[data-ref="path"]');
+
+          if (!(row instanceof HTMLElement)) {
+            throw new Error("Expected move dialog tree row");
+          }
+          if (!(toggle instanceof HTMLButtonElement)) {
+            throw new Error("Expected move dialog tree row toggle");
+          }
+          if (!(folderIcon instanceof HTMLElement)) {
+            throw new Error("Expected move dialog folder icon");
+          }
+
+          const handleRowClick = () => {
+            moveDialogState.actions.setSelectedTarget(folder().id);
+          };
+          /** @param {MouseEvent} event */
+          const handleToggleClick = (event) => {
+            event.stopPropagation();
+            const current = folder();
+            if (!current.hasChildren) {
+              return;
+            }
+            const expanded = moveDialogState.selectors.isExpanded(current.id);
+            if (expanded) {
+              moveDialogState.actions.toggleExpanded(current.id);
+              return;
+            }
+            void (async () => {
+              await ensureFolderChildrenLoaded(current.id);
+              moveDialogState.actions.toggleExpanded(current.id);
+            })();
+          };
+
+          row.addEventListener("click", handleRowClick);
+          toggle.addEventListener("click", handleToggleClick);
+
+          const stopRowEffect = effect(() => {
+            const currentFolder = folder();
+            const selected = moveDialogState.selectors.getSelectedTarget() === currentFolder.id;
+
+            row.dataset.folderId = currentFolder.id;
+            row.style.paddingLeft = `${currentFolder.depth * 16 + 8}px`;
+            row.setAttribute("aria-selected", selected ? "true" : "false");
+            row.setAttribute("aria-expanded", String(Boolean(currentFolder.expanded)));
+            row.classList.toggle("is-selected", selected);
+            row.classList.toggle("is-primary", selected);
+
+            const loadingChildren = moveDialogState.selectors.isFolderLoading(currentFolder.id);
+            toggle.hidden = !currentFolder.hasChildren;
+            toggle.setAttribute("aria-hidden", currentFolder.hasChildren ? "false" : "true");
+            toggle.disabled = loadingChildren;
+            toggle.textContent = loadingChildren ? "…" : currentFolder.expanded ? "⌄" : "›";
+
+            folderIcon.classList.toggle("is-open", Boolean(currentFolder.expanded));
+
+            if (name instanceof HTMLElement) {
+              name.textContent = currentFolder.name;
+              name.title = currentFolder.name;
+            }
+            if (path instanceof HTMLElement) {
+              path.textContent = currentFolder.pathLabel;
+              path.title = currentFolder.pathLabel;
+            }
+          });
+
+          return () => {
+            stopRowEffect();
+            row.removeEventListener("click", handleRowClick);
+            toggle.removeEventListener("click", handleToggleClick);
+          };
+        },
+        { virtual: { rowHeight: 32 } },
+      ),
+    );
 
     const handleBackdropClick = () => {
       moveDialogState.actions.closeMoveDialog();
@@ -267,6 +419,22 @@ export function mountMoveDialog(shell) {
     const handleConfirmClick = () => {
       void move();
     };
+
+    /** @param {Event} event */
+    const handleFilterInput = (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) {
+        return;
+      }
+      const nextValue = target.value;
+      if (filterTimer !== null) {
+        window.clearTimeout(filterTimer);
+      }
+      filterTimer = window.setTimeout(() => {
+        moveDialogState.actions.setFilterQuery(nextValue);
+      }, 90);
+    };
+
     /** @param {KeyboardEvent} event */
     const handleDialogKeydown = (event) => {
       if (trapFocusInContainer(event, dialog)) {
@@ -279,107 +447,88 @@ export function mountMoveDialog(shell) {
         return;
       }
 
+      const visibleFolders = moveDialogState.selectors.getVisibleFolders();
+      if (visibleFolders.length === 0) {
+        return;
+      }
+
+      const currentIndex = visibleFolders.findIndex(
+        (folder) => folder.id === moveDialogState.selectors.getSelectedTarget(),
+      );
+      const selected = currentIndex >= 0 ? visibleFolders[currentIndex] : null;
+
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        const nextFolders = moveDialogState.selectors.getFolders();
-        if (nextFolders.length === 0) {
-          return;
-        }
-
-        const currentIndex = nextFolders.findIndex(
-          (folder) =>
-            folder.id === moveDialogState.selectors.getSelectedTarget(),
-        );
         const delta = event.key === "ArrowDown" ? 1 : -1;
         const nextIndex = Math.min(
           Math.max((currentIndex >= 0 ? currentIndex : 0) + delta, 0),
-          nextFolders.length - 1,
+          visibleFolders.length - 1,
         );
-        const nextTarget = nextFolders[nextIndex];
+        const nextTarget = visibleFolders[nextIndex];
         if (nextTarget) {
           moveDialogState.actions.setSelectedTarget(nextTarget.id);
+          const selectedEl = listbox.querySelector(`[data-folder-id="${nextTarget.id}"]`);
+          if (selectedEl instanceof HTMLElement) {
+            selectedEl.focus();
+          }
         }
         return;
       }
 
-      if (
-        event.key === "Enter" &&
-        moveDialogState.selectors.getSelectedTarget()
-      ) {
+      if (event.key === "ArrowRight" && selected?.hasChildren && !selected.expanded) {
+        event.preventDefault();
+        void (async () => {
+          await ensureFolderChildrenLoaded(selected.id);
+          moveDialogState.actions.toggleExpanded(selected.id);
+        })();
+        return;
+      }
+
+      if (event.key === "ArrowLeft" && selected?.hasChildren && selected.expanded) {
+        event.preventDefault();
+        moveDialogState.actions.toggleExpanded(selected.id);
+        return;
+      }
+
+      if (event.key === "Enter" && moveDialogState.selectors.getSelectedTarget()) {
         event.preventDefault();
         void move();
       }
     };
 
-    const cleanup = cleanupCollector(
-      () => backdrop.removeEventListener("click", handleBackdropClick),
-      () => dialog.removeEventListener("click", handleDialogClick),
-      () => dialog.removeEventListener("keydown", handleDialogKeydown),
-      () => cancelButton.removeEventListener("click", handleCancelClick),
-      () => confirmButton.removeEventListener("click", handleConfirmClick),
-    );
-
     backdrop.addEventListener("click", handleBackdropClick);
     dialog.addEventListener("click", handleDialogClick);
     dialog.addEventListener("keydown", handleDialogKeydown);
+    filterInput.addEventListener("input", handleFilterInput);
     cancelButton.addEventListener("click", handleCancelClick);
     confirmButton.addEventListener("click", handleConfirmClick);
 
-    if (folders.length > 0) {
-      cleanup.add(
-        list(
-          listbox,
-          MOVE_OPTION_HTML,
-          () => moveDialogState.selectors.getFolders(),
-          (folder) => folder.id,
-          (el, folder) => {
-            if (!(el instanceof HTMLButtonElement)) {
-              throw new Error("Move option template must render a button");
-            }
-
-            const name = el.querySelector('[data-ref="name"]');
-            const path = el.querySelector('[data-ref="path"]');
-            const handleOptionClick = () => {
-              moveDialogState.actions.setSelectedTarget(folder().id);
-            };
-
-            el.addEventListener("click", handleOptionClick);
-
-            const stopOptionEffect = effect(() => {
-              const currentFolder = folder();
-              const selected =
-                moveDialogState.selectors.getSelectedTarget() ===
-                currentFolder.id;
-              el.style.paddingLeft = `${currentFolder.depth * 18 + 12}px`;
-              el.setAttribute("aria-selected", selected ? "true" : "false");
-              el.classList.toggle("is-selected", selected);
-              if (name instanceof HTMLElement) {
-                name.textContent = currentFolder.name;
-              }
-              if (path instanceof HTMLElement) {
-                path.textContent = currentFolder.pathLabel;
-              }
-            });
-
-            return () => {
-              stopOptionEffect();
-              el.removeEventListener("click", handleOptionClick);
-            };
-          },
-        ),
-      );
-    }
+    cleanup.add(
+      () => backdrop.removeEventListener("click", handleBackdropClick),
+      () => dialog.removeEventListener("click", handleDialogClick),
+      () => dialog.removeEventListener("keydown", handleDialogKeydown),
+      () => filterInput.removeEventListener("input", handleFilterInput),
+      () => cancelButton.removeEventListener("click", handleCancelClick),
+      () => confirmButton.removeEventListener("click", handleConfirmClick),
+      () => {
+        if (filterTimer !== null) {
+          window.clearTimeout(filterTimer);
+        }
+      },
+    );
 
     queueMicrotask(() => {
-      const firstTarget = listbox.querySelector(".move-dialog__option");
-      if (firstTarget instanceof HTMLButtonElement) {
-        firstTarget.focus();
+      const selectedEl = listbox.querySelector(
+        `[data-folder-id="${moveDialogState.selectors.getSelectedTarget()}"]`,
+      );
+      if (selectedEl instanceof HTMLElement) {
+        selectedEl.focus();
         return;
       }
-      cancelButton.focus();
+      filterInput.focus();
     });
 
-    cleanupRendered = () => {
+    openCleanup = () => {
       cleanup.run();
       component.unmount?.();
       shell.container.replaceChildren();
@@ -388,7 +537,7 @@ export function mountMoveDialog(shell) {
 
   return {
     cleanup() {
-      cleanupRendered();
+      openCleanup();
       stop();
     },
   };
