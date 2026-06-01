@@ -3,7 +3,6 @@
 import {
   DeleteNodes,
   FetchFaviconsForNodes,
-  RefreshTitlesForNodes,
 } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import {
@@ -17,7 +16,7 @@ import { treeState } from "../../tree/state/tree-state.js";
 import { uiState } from "../../../shared/state/ui-state.js";
 
 /**
- * @typedef {"delete" | "move" | "favicons" | "titles" | ""} RunningAction
+ * @typedef {"delete" | "move" | "favicons" | ""} RunningAction
  */
 
 /**
@@ -127,24 +126,6 @@ export function createBulkSelectionDetail() {
     }
   }
 
-  async function refreshTitles() {
-    runningAction("titles");
-    try {
-      const updatedNodes = await RefreshTitlesForNodes(treeState.selectors.getSelectedNodeIds());
-      if (treeState.actions.patchFlatNodes(updatedNodes) === 0) {
-        await treeState.actions.refresh();
-      }
-      uiState.actions.showToast("Titles refreshed", "success");
-    } catch (caughtError) {
-      uiState.actions.showToast(
-        getErrorMessage(caughtError, "Bulk title refresh failed"),
-        "error",
-      );
-    } finally {
-      runningAction("");
-    }
-  }
-
   const renderBulkSelectionDetail = /** @type {TemplateTag} */ (
     template({
       root: ".bulk-selection-detail",
@@ -155,7 +136,6 @@ export function createBulkSelectionDetail() {
         const moveButton = ctx.refs.moveButton;
         const deleteButton = ctx.refs.deleteButton;
         const faviconButton = ctx.refs.faviconButton;
-        const titleRefreshButton = ctx.refs.titleRefreshButton;
 
         if (!(title instanceof HTMLElement)) {
           throw new Error("Expected bulk selection detail title");
@@ -175,9 +155,6 @@ export function createBulkSelectionDetail() {
         if (!(faviconButton instanceof HTMLButtonElement)) {
           throw new Error("Expected bulk selection favicon button");
         }
-        if (!(titleRefreshButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bulk selection title refresh button");
-        }
 
         function clearSelection() {
           treeState.actions.clearSelection();
@@ -192,14 +169,10 @@ export function createBulkSelectionDetail() {
         const handleFaviconClick = () => {
           void fetchFavicons();
         };
-        const handleRefreshTitlesClick = () => {
-          void refreshTitles();
-        };
 
         moveButton.addEventListener("click", handleMoveClick);
         deleteButton.addEventListener("click", handleDeleteClick);
         faviconButton.addEventListener("click", handleFaviconClick);
-        titleRefreshButton.addEventListener("click", handleRefreshTitlesClick);
         clearButton.addEventListener("click", clearSelection);
 
         cleanup.add(
@@ -228,17 +201,9 @@ export function createBulkSelectionDetail() {
             currentFaviconButton.textContent =
               activeAction === "favicons" ? "Fetching..." : "Fetch Favicons";
           }),
-          fx(titleRefreshButton, (currentTitleRefreshButton) => {
-            const activeAction = runningAction();
-            currentTitleRefreshButton.hidden = isFolderSelection();
-            currentTitleRefreshButton.disabled = activeAction !== "";
-            currentTitleRefreshButton.textContent =
-              activeAction === "titles" ? "Refreshing..." : "Refresh Titles";
-          }),
           () => moveButton.removeEventListener("click", handleMoveClick),
           () => deleteButton.removeEventListener("click", handleDeleteClick),
           () => faviconButton.removeEventListener("click", handleFaviconClick),
-          () => titleRefreshButton.removeEventListener("click", handleRefreshTitlesClick),
           () => clearButton.removeEventListener("click", clearSelection),
         );
       },
@@ -289,14 +254,6 @@ export function createBulkSelectionDetail() {
           data-ref="faviconButton"
         >
           Fetch Favicons
-        </button>
-        <button
-          type="button"
-          class="btn btn-ghost btn-sm"
-          data-keyboard-action="bulk-refresh-titles"
-          data-ref="titleRefreshButton"
-        >
-          Refresh Titles
         </button>
       </div>
       <div class="bulk-selection-detail__footer">

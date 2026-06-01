@@ -364,18 +364,6 @@ export async function FetchFaviconsForNodes(ids) {
   return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await wrapMutation(handler.FetchFaviconsForNodes(ids))));
 }
 
-/**
- * @param {string[]} ids
- * @returns {Promise<FlatNode[]>}
- */
-export async function RefreshTitlesForNodes(ids) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await wrapMutation(handler.RefreshTitlesForNodes(ids))));
-}
-
 /** @param {string} url */
 export async function OpenURL(url) {
   const handler = getHandlerBindings();

@@ -770,11 +770,15 @@ async function syncSearchIndex() {
 async function loadFile(path) {
   loading(true);
   error("");
+  // Clear the current tree immediately so loading UI doesn't overlap stale rows.
+  tree(emptyTree);
+  searchState.actions.setIndex([]);
+  treeStats({ folders: 0, bookmarks: 0 });
+  expandedNodeIds([]);
+  treeScrollTop(0);
+  clearSelection();
   try {
     await LoadFile(path);
-    expandedNodeIds([]);
-    treeScrollTop(0);
-    clearSelection();
     await syncRootNodes();
     // Don't auto-expand root folders on initial load with lazy loading.
     // Users expand folders as needed; children load on demand.

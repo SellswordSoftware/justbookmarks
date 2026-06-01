@@ -429,7 +429,7 @@ func (h *Handler) FetchFaviconsForNodes(ids []string) ([]bookmarks.FlatNode, err
 		olds[i] = *node.Bookmark
 	}
 
-	var updated []bookmarks.FlatNode
+	updated := make([]bookmarks.FlatNode, 0, len(bookmarksToUpdate))
 	successes := 0
 	for _, node := range bookmarksToUpdate {
 		icon, fetchErr := fetchFaviconWithClient(client, node.Bookmark.URL)
@@ -466,66 +466,6 @@ func (h *Handler) FetchFaviconsForNodes(ids []string) ([]bookmarks.FlatNode, err
 	}
 
 	return updated, nil
-}
-
-// RefreshTitlesForNodes refreshes bookmark titles, saves once at the end,
-// and returns the updated nodes for targeted frontend patching.
-// Uses UpdateBookmarkCommand for lightweight undo (no full-tree snapshot clone).
-func (h *Handler) RefreshTitlesForNodes(ids []string) ([]bookmarks.FlatNode, error) {
-	client := &http.Client{Timeout: 3 * time.Second}
-
-	bookmarksToUpdate, err := collectBookmarksFromTree(h.tree, ids)
-	if err != nil {
-		return nil, err
-	}
-
-	// Capture old values before mutation
-	olds := make([]bookmarks.Bookmark, len(bookmarksToUpdate))
-	for i, node := range bookmarksToUpdate {
-		olds[i] = *node.Bookmark
-	}
-
-	var updated []bookmarks.FlatNode
-	successes := 0
-	for _, node := range bookmarksToUpdate {
-		title, fetchErr := fetchPageTitleWithClient(client, node.Bookmark.URL)
-		if fetchErr != nil || title == "" || title == node.Bookmark.Title {
-			continue
-		}
-		node.Bookmark.Title = title
-		node.Bookmark.LastModified = time.Now()
-		updated = append(updated, bookmarks.NewFlatNode(*node, ""))
-		successes++
-	}
-
-	if successes == 0 {
-		return nil, fmt.Errorf("failed to refresh titles for selected bookmarks")
-	}
-
-	if err := h.saveTree(h.tree); err != nil {
-		// Rollback on save failure
-		for i, node := range bookmarksToUpdate {
-			if node.Bookmark.Title != olds[i].Title {
-				node.Bookmark.Title = olds[i].Title
-			}
-		}
-		return updated, err
-	}
-
-	// Push one undo command per changed bookmark
-	h.redoStack = nil
-	for i, node := range bookmarksToUpdate {
-		if node.Bookmark.Title != olds[i].Title {
-			h.undoStack = append(h.undoStack, bookmarks.NewUpdateBookmarkCommand(
-				"Refresh Titles", node.ID(), olds[i], *node.Bookmark))
-		}
-	}
-
-	return updated, nil
-}
-
-func (h *Handler) collectBookmarks(ids []string) ([]*bookmarks.Node, error) {
-	return collectBookmarksFromTree(h.tree, ids)
 }
 
 func collectBookmarksFromTree(tree []bookmarks.Node, ids []string) ([]*bookmarks.Node, error) {

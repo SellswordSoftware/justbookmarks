@@ -196,11 +196,6 @@ export function mountGlobalShortcuts(options) {
       void triggerBulkRefreshShortcut("favicons");
       return;
     }
-    if (key === "t" && event.shiftKey) {
-      event.preventDefault();
-      void triggerBulkRefreshShortcut("titles");
-      return;
-    }
     if (key === "a" && event.shiftKey) {
       event.preventDefault();
       treeState.actions.collapseSelectionToPrimary();

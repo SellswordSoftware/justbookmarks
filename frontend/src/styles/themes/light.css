@@ -55,6 +55,7 @@
   --color-hover-card: rgba(0, 0, 0, 0.05);
   --color-active-bg: rgba(37, 99, 235, 0.1);
   --color-selection-bg: rgba(37, 99, 235, 0.08);
+  --color-selection-multi-bg: rgba(37, 99, 235, 0.17);
   --color-selection-text: var(--color-base-content);
 
   /* ── Focus ──────────────────────────────────────────── */

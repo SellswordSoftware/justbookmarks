@@ -44,10 +44,13 @@ export function mountBookmarkSearchResultRow(el, item) {
     row.classList.toggle("is-selected", selected);
     row.setAttribute("aria-selected", selected ? "true" : "false");
     if (label) {
-      label.textContent = current.title || current.url;
+      const labelText = current.title || current.url;
+      label.textContent = labelText;
+      label.title = labelText;
     }
     if (meta) {
       meta.textContent = current.folderPath;
+      meta.title = current.folderPath;
     }
     if (icon instanceof HTMLElement) {
       icon.classList.add("is-bookmark");

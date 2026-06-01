@@ -4,7 +4,6 @@ import {
   DeleteNode,
   DeleteNodes,
   FetchFaviconsForNodes,
-  RefreshTitlesForNodes,
 } from "../../shared/api/api.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
 import { moveDialogState } from "../move/move-dialog-state.js";
@@ -143,7 +142,7 @@ export function triggerDeleteShortcut() {
 }
 
 /**
- * @param {"favicons" | "titles"} kind
+ * @param {"favicons"} kind
  * @returns {Promise<void>}
  */
 export async function triggerBulkRefreshShortcut(kind) {
@@ -155,22 +154,14 @@ export async function triggerBulkRefreshShortcut(kind) {
   try {
     /** @type {FlatNode[]} */
     let updatedNodes;
-    if (kind === "favicons") {
-      updatedNodes = await FetchFaviconsForNodes(treeState.selectors.getSelectedNodeIds());
-      uiState.actions.showToast("Favicons refreshed", "success");
-    } else {
-      updatedNodes = await RefreshTitlesForNodes(treeState.selectors.getSelectedNodeIds());
-      uiState.actions.showToast("Titles refreshed", "success");
-    }
+    updatedNodes = await FetchFaviconsForNodes(treeState.selectors.getSelectedNodeIds());
+    uiState.actions.showToast("Favicons refreshed", "success");
     if (treeState.actions.patchFlatNodes(updatedNodes) === 0) {
       await treeState.actions.refresh();
     }
   } catch (caughtError) {
     uiState.actions.showToast(
-      getErrorMessage(
-        caughtError,
-        kind === "favicons" ? "Bulk favicon refresh failed" : "Bulk title refresh failed",
-      ),
+      getErrorMessage(caughtError, "Bulk favicon refresh failed"),
       "error",
     );
   }

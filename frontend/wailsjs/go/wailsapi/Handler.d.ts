@@ -47,8 +47,6 @@ export function PreviewImportMerge(arg1:string):Promise<bookmarks.MergePreview>;
 
 export function Redo():Promise<bookmarks.HistoryState>;
 
-export function RefreshTitlesForNodes(arg1:Array<string>):Promise<Array<bookmarks.FlatNode>>;
-
 export function Undo():Promise<bookmarks.HistoryState>;
 
 export function UpdateBookmark(arg1:string,arg2:wailsapi.BookmarkPatchDTO):Promise<void>;

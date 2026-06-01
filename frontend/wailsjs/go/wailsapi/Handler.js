@@ -90,10 +90,6 @@ export function Redo() {
   return window['go']['wailsapi']['Handler']['Redo']();
 }
 
-export function RefreshTitlesForNodes(arg1) {
-  return window['go']['wailsapi']['Handler']['RefreshTitlesForNodes'](arg1);
-}
-
 export function Undo() {
   return window['go']['wailsapi']['Handler']['Undo']();
 }
