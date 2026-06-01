@@ -72,7 +72,100 @@ export function createAddFolderForm(options) {
         }
 
         const inputEl = input;
+        const panelEl = panel;
+        const detailPaneContent = panelEl.closest(".detail-pane__content");
+        const treePane = panelEl.closest(".tree-pane");
+        let isPositionListenerAttached = false;
         const nameBinding = model(inputEl, name, { reactive: true });
+
+        /**
+         * @param {number} value
+         * @param {number} min
+         * @param {number} max
+         * @returns {number}
+         */
+        function clamp(value, min, max) {
+          return Math.min(Math.max(value, min), max);
+        }
+
+        function clearPanelPlacement() {
+          panelEl.style.removeProperty("left");
+          panelEl.style.removeProperty("right");
+          panelEl.style.removeProperty("top");
+          panelEl.style.removeProperty("bottom");
+        }
+
+        function positionPanel() {
+          const inDetailActions = Boolean(panelEl.closest(".detail-inline-actions"));
+          const inTreeActions = Boolean(panelEl.closest(".tree-pane__actions"));
+          const boundaryContainer = inDetailActions
+            ? detailPaneContent
+            : inTreeActions
+              ? treePane
+              : null;
+          if (!(boundaryContainer instanceof HTMLElement)) {
+            return;
+          }
+          const launcher = panelEl.parentElement;
+          if (!(launcher instanceof HTMLElement)) {
+            return;
+          }
+
+          // Start from default "below + right aligned" placement.
+          panelEl.style.left = "0px";
+          panelEl.style.right = "auto";
+          panelEl.style.top = "calc(100% + 0.4rem)";
+          panelEl.style.bottom = "auto";
+
+          const margin = 8;
+          const gap = 6;
+          const containerRect = boundaryContainer.getBoundingClientRect();
+          const launcherRect = launcher.getBoundingClientRect();
+          const panelRect = panelEl.getBoundingClientRect();
+          if (panelRect.width === 0 || panelRect.height === 0) {
+            return;
+          }
+
+          const defaultLeft = launcherRect.width - panelRect.width;
+          const minLeft = containerRect.left + margin - launcherRect.left;
+          const maxLeft = containerRect.right - margin - panelRect.width - launcherRect.left;
+          const nextLeft = minLeft <= maxLeft
+            ? clamp(defaultLeft, minLeft, maxLeft)
+            : minLeft;
+          panelEl.style.left = `${Math.round(nextLeft)}px`;
+
+          const spaceBelow = containerRect.bottom - launcherRect.bottom - margin;
+          const spaceAbove = launcherRect.top - containerRect.top - margin;
+          const shouldOpenUp =
+            spaceBelow < panelRect.height + gap && spaceAbove > spaceBelow;
+
+          if (shouldOpenUp) {
+            panelEl.style.top = "auto";
+            panelEl.style.bottom = `${Math.round(launcherRect.height + gap)}px`;
+          }
+        }
+
+        function attachPositionListeners() {
+          if (isPositionListenerAttached) {
+            return;
+          }
+          if (detailPaneContent instanceof HTMLElement && panelEl.closest(".detail-inline-actions")) {
+            detailPaneContent.addEventListener("scroll", positionPanel);
+          }
+          window.addEventListener("resize", positionPanel);
+          isPositionListenerAttached = true;
+        }
+
+        function detachPositionListeners() {
+          if (!isPositionListenerAttached) {
+            return;
+          }
+          if (detailPaneContent instanceof HTMLElement) {
+            detailPaneContent.removeEventListener("scroll", positionPanel);
+          }
+          window.removeEventListener("resize", positionPanel);
+          isPositionListenerAttached = false;
+        }
 
         /**
          * @param {boolean} nextOpen
@@ -81,8 +174,14 @@ export function createAddFolderForm(options) {
         function setOpen(nextOpen) {
           open(nextOpen);
           if (nextOpen) {
-            queueMicrotask(() => inputEl.focus());
+            attachPositionListeners();
+            queueMicrotask(() => {
+              positionPanel();
+              inputEl.focus();
+            });
           } else {
+            detachPositionListeners();
+            clearPanelPlacement();
             name("");
             errorMessage("");
           }
@@ -182,6 +281,7 @@ export function createAddFolderForm(options) {
           fx(submit, (currentSubmit) => {
             currentSubmit.disabled = busy();
           }),
+          () => detachPositionListeners(),
           () => trigger.removeEventListener("click", handleTriggerClick),
           () => submit.removeEventListener("click", handleSubmitClick),
           () => cancel.removeEventListener("click", handleCancelClick),

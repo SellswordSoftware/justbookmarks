@@ -7,8 +7,9 @@
 /* Floating popup for add forms inside detail-inline-actions */
 .detail-inline-actions .add-folder-launcher,
 .detail-inline-actions .add-bookmark-launcher {
+  display: inline-flex;
+  flex: 0 0 auto;
   position: relative;
-  width: 0;
 }
 
 .detail-inline-actions .add-folder-panel,
@@ -18,6 +19,7 @@
   right: 0;
   z-index: 1000;
   width: 18rem;
+  max-width: min(18rem, calc(100vw - 2rem));
   box-shadow: var(--shadow-md);
 }
 

@@ -5,17 +5,31 @@
  * @returns {boolean}
  */
 export function isEditableTarget(target) {
-  if (!(target instanceof HTMLElement)) {
-    return false;
+  /**
+   * @param {Element | null} element
+   * @returns {boolean}
+   */
+  function isEditableElement(element) {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+    if (element.isContentEditable) {
+      return true;
+    }
+    const tagName = element.tagName.toLowerCase();
+    return tagName === "input" || tagName === "textarea" || tagName === "select";
   }
 
-  const tagName = target.tagName.toLowerCase();
-  return (
-    target.isContentEditable ||
-    tagName === "input" ||
-    tagName === "textarea" ||
-    tagName === "select"
-  );
+  if (target instanceof HTMLElement) {
+    if (isEditableElement(target)) {
+      return true;
+    }
+    if (isEditableElement(target.closest("input, textarea, select, [contenteditable]"))) {
+      return true;
+    }
+  }
+
+  return isEditableElement(document.activeElement);
 }
 
 /**

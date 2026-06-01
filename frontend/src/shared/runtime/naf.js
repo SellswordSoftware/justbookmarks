@@ -983,15 +983,30 @@ export function mount(component, host) {
 export function when(condition, thenBranch, elseBranch) {
   /** @type {Component | undefined} */
   let currentComponent;
+  /** @type {unknown} */
+  let previousValue;
+  /** @type {boolean | undefined} */
+  let previousBranch;
+  let initialized = false;
 
   return reactiveSlot((placeholder) => {
     const commentId = placeholder.textContent?.replace("naf-", "") || "0";
     const whenSlotId = slotId++;
 
     const stop = effect(() => {
-      currentComponent?.unmount?.();
       const value = condition();
-      currentComponent = value ? thenBranch(value) : elseBranch?.(value);
+      const branch = Boolean(value);
+
+      if (initialized && previousBranch === branch && previousValue === value) {
+        return;
+      }
+
+      initialized = true;
+      previousBranch = branch;
+      previousValue = value;
+
+      currentComponent?.unmount?.();
+      currentComponent = branch ? thenBranch(value) : elseBranch?.(value);
       const parent = placeholder.parentNode;
       if (!(parent instanceof Element)) {
         throw new Error("Reactive slot placeholder is not attached to an element parent");
