@@ -3,9 +3,11 @@
 import {
   cleanupCollector,
   fx,
+  hide,
   listener,
   model,
   signal,
+  show,
   template,
 } from "../../../shared/runtime/naf.js";
 import { createBookmarkDetailActions } from "../actions/bookmark-detail-actions.js";
@@ -267,35 +269,21 @@ export function createBookmarkDetail(bookmark) {
             currentTitleHeading.hidden = editing();
             currentTitleHeading.textContent = bookmark.bookmark.title || "(Untitled)";
           }),
-          fx(titleInput, (currentTitleInput) => {
-            currentTitleInput.hidden = !editing();
-          }),
+          show(titleInput, editing),
           fx(urlLink, (currentURLLink) => {
             currentURLLink.hidden = editing();
             currentURLLink.textContent = bookmark.bookmark.url || "No URL set";
           }),
-          fx(urlInputWrap, (currentURLInputWrap) => {
-            currentURLInputWrap.hidden = !editing();
-          }),
+          show(urlInputWrap, editing),
           fx(saveButton, (currentSaveButton) => {
             currentSaveButton.hidden = !editing();
             currentSaveButton.disabled = fetchingFavicon();
           }),
-          fx(cancelButton, (currentCancelButton) => {
-            currentCancelButton.hidden = !editing();
-          }),
-          fx(editButton, (currentEditButton) => {
-            currentEditButton.hidden = editing();
-          }),
-          fx(moveButton, (currentMoveButton) => {
-            currentMoveButton.hidden = editing();
-          }),
-          fx(deleteButton, (currentDeleteButton) => {
-            currentDeleteButton.hidden = editing();
-          }),
-          fx(actionRow, (currentActionRow) => {
-            currentActionRow.hidden = editing();
-          }),
+          show(cancelButton, editing),
+          hide(editButton, editing),
+          hide(moveButton, editing),
+          hide(deleteButton, editing),
+          hide(actionRow, editing),
           fx(openButton, (currentOpenButton) => {
             currentOpenButton.disabled = !bookmark.bookmark.url;
           }),
@@ -319,10 +307,7 @@ export function createBookmarkDetail(bookmark) {
               currentIconImage.removeAttribute("src");
             }
           }),
-          fx(fallbackIcon, (currentFallbackIcon) => {
-            const displayIcon = currentIcon();
-            currentFallbackIcon.hidden = Boolean(displayIcon);
-          }),
+          hide(fallbackIcon, currentIcon),
           fx(addedDate, (currentAddedDate) => {
             const hasDate = hasRealDate(bookmark.bookmark.addDate);
             currentAddedDate.hidden = !hasDate;
@@ -337,9 +322,7 @@ export function createBookmarkDetail(bookmark) {
               ? `Modified: ${new Date(bookmark.bookmark.lastModified).toLocaleString()}`
               : "";
           }),
-          fx(notesInput, (currentNotesInput) => {
-            currentNotesInput.hidden = !editing();
-          }),
+          show(notesInput, editing),
           fx(notesText, (currentNotesText) => {
             const nextMeta = currentMeta();
             currentNotesText.hidden = editing() || !nextMeta.trim();
