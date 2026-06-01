@@ -150,6 +150,7 @@ Use low-level helpers when they make repeated patterns clearer:
 - `model()`
 - `list()`
 - `cleanupCollector()`
+- `listener()`
 
 For template-backed shell modules, also prefer:
 

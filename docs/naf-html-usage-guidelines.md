@@ -53,9 +53,9 @@ The current runtime surface includes:
 - `model()`
 - `list()`
 - `cleanupCollector()`
+- `listener()`
 - `$()`
 - `$$()`
-- `$on()`
 - `attr()`
 - `setText()`
 - `text()`
@@ -291,14 +291,37 @@ Use `querySelector()` only when:
 - the module is intentionally binding into a stable external shell anchor
 - imperative DOM ownership is clearer than ref-marking
 
-### `$()`, `$$()`, `$on()`, `attr()`, `setText()`, `text()`
+### `listener(el, event, handler)`
+
+Attach an event listener and return a cleanup function.
+
+Use with `cleanupCollector()` to avoid manual addEventListener/removeEventListener pairing:
+
+```js
+// Instead of:
+el.addEventListener("click", handleClick);
+cleanup.add(() => el.removeEventListener("click", handleClick));
+
+// Write:
+cleanup.add(listener(el, "click", handleClick));
+```
+
+Good uses:
+
+- click handlers on buttons
+- keydown handlers on inputs
+- scroll or resize listeners
+- any listener that needs cleanup on unmount
+
+Prefer `listener()` over manual addEventListener/removeEventListener pairing. It is null-safe (handles missing refs) and returns a cleanup function that works directly with `cleanupCollector()`.
+
+### `$()`, `$$()`, `attr()`, `setText()`, `text()`
 
 Use these as lightweight DOM helpers, not as a mini-framework.
 
 Good uses:
 
 - local element lookup
-- small event attachment helpers
 - simple attribute and text syncing
 - text escaping when building HTML strings
 

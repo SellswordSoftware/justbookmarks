@@ -204,17 +204,23 @@ export function $$(selector, root = document) {
 }
 
 /**
- * Attach an event listener and return the original element.
+ * Attach an event listener and return a cleanup function.
+ *
+ * Designed to be used with `cleanupCollector()` so that listeners
+ * are automatically removed on unmount without manual pairing.
+ *
+ * Example:
+ *   cleanup.add(listener(btn, "click", handleClick));
  *
  * @template {Element} T
- * @param {T | null} el
+ * @param {T | null | undefined} el
  * @param {string} event
- * @param {(e: Event) => void} handler
- * @returns {T | null}
+ * @param {(...args: any[]) => void} handler
+ * @returns {() => void}
  */
-export function $on(el, event, handler) {
+export function listener(el, event, handler) {
   el?.addEventListener(event, handler);
-  return el;
+  return () => el?.removeEventListener(event, handler);
 }
 
 /**

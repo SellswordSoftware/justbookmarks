@@ -42,11 +42,12 @@ This eliminates the manual pairing ceremony. One line replaces two, and the risk
 
 ### Phase 1: Add the helper to NAF
 
-#### Task 1.1: Implement `listener()` in naf.js
+#### Task 1.1: Replace `$on()` with `listener()` in naf.js
 - File: `frontend/src/shared/runtime/naf.js`
-- Add the `listener()` function after `$on()` (around line 218)
+- `$on()` is currently defined but never used anywhere in the codebase -- it is dead code
+- Remove `$on()` entirely and replace it with `listener()`
+- `listener(el, event, handler)` returns a cleanup function, not the element
 - Include JSDoc with proper @template typing
-- Signature: `listener(el, event, handler)` returns cleanup function
 - Must handle null/undefined elements safely (el?.addEventListener)
 
 ```js
@@ -69,7 +70,7 @@ export function listener(el, event, handler) {
 - File: `docs/naf-html-usage-guidelines.md`
 - Add `listener()` to the Runtime Surface section
 - Add a Helper Guide entry explaining when and how to use it
-- Note that `$on()` remains for chaining; `listener()` is for cleanup-collector patterns
+- Note that `$on()` is no longer needed and usage guidance can be removed
 
 ### Phase 2: Migrate files (most impacted first)
 
@@ -166,11 +167,11 @@ Each migration task follows the same mechanical pattern:
 
 ### Phase 3: Handle special cases
 
-#### Task 3.1: Review $on() usage and document the distinction
-- `$on()` is for chaining (returns the element)
-- `listener()` is for cleanup (returns a cleanup function)
-- Document when to use each in the usage guidelines
-- Consider whether any `$on()` calls should become `listener()` calls
+#### Task 3.1: Update Runtime Surface docs to remove $on()
+- File: `docs/naf-html-usage-guidelines.md`
+- Remove `$on()` from the Runtime Surface list
+- Add `listener()` with a clear description
+- Note: `$on()` was designed for chaining but never adopted; `listener()` is the single approach
 
 #### Task 3.2: Review model() internal listener management
 - File: `frontend/src/shared/runtime/naf.js` (model() function, lines 245-289)
