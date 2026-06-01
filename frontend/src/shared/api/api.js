@@ -213,6 +213,15 @@ export async function GetAllFolders() {
   return handler ? (await handler.GetAllFolders()).map(normalizeTreeNode) : [];
 }
 
+/** @returns {Promise<TreeStats>} */
+export async function GetTreeStats() {
+  const handler = getHandlerBindings();
+  if (!handler) {
+    return { folders: 0, bookmarks: 0 };
+  }
+  return /** @type {TreeStats} */ (/** @type {unknown} */ (await handler.GetTreeStats()));
+}
+
 /**
  * @param {string} parentFolderId
  * @param {BookmarkCreate} bookmark

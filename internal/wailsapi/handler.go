@@ -93,6 +93,30 @@ func (h *Handler) GetAllFolders() []NodeDTO {
 	return toNodeDTOs(collectFolders(h.tree))
 }
 
+// TreeStats holds aggregate counts for the bookmark tree.
+type TreeStats struct {
+	Folders   int `json:"folders"`
+	Bookmarks int `json:"bookmarks"`
+}
+
+// GetTreeStats returns the total number of folders and bookmarks in the tree.
+func (h *Handler) GetTreeStats() TreeStats {
+	var folders, bookmarks int
+	countNodes(h.tree, &folders, &bookmarks)
+	return TreeStats{Folders: folders, Bookmarks: bookmarks}
+}
+
+func countNodes(nodes []bookmarks.Node, folders, bmCount *int) {
+	for i := range nodes {
+		if nodes[i].Type == bookmarks.TypeFolder {
+			*folders++
+			countNodes(nodes[i].Folder.Children, folders, bmCount)
+		} else {
+			*bmCount++
+		}
+	}
+}
+
 func collectFolders(nodes []bookmarks.Node) []bookmarks.Node {
 	var folders []bookmarks.Node
 	for i := range nodes {

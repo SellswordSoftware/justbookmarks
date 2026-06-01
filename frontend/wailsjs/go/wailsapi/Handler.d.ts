@@ -33,6 +33,8 @@ export function GetHistoryState():Promise<bookmarks.HistoryState>;
 
 export function GetRootNodes():Promise<Array<bookmarks.FlatNode>>;
 
+export function GetTreeStats():Promise<wailsapi.TreeStats>;
+
 export function LoadFile(arg1:string):Promise<void>;
 
 export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<wailsapi.MoveResult>;

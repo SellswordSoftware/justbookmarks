@@ -248,14 +248,14 @@ Acceptance criteria:
 - [ ] `go test ./internal/bookmarks/... ./internal/wailsapi/...`
 - [ ] `cd frontend && npm run typecheck`
 - [ ] `cd frontend && npm run build`
-- [ ] Manual 1M file test: add root bookmark.
+- [x] Manual 1M file test: add root bookmark.
 - [ ] Manual 1M file test: add bookmark in loaded folder.
-- [ ] Manual 1M file test: add root folder.
+- [x] Manual 1M file test: add root folder.
 - [ ] Manual 1M file test: add folder in loaded folder.
-- [ ] Manual 1M file test: move bookmark via dialog.
-- [ ] Manual 1M file test: move bookmark via drag-and-drop.
-- [ ] Manual 1M file test: undo/redo each optimized mutation.
-- [ ] Manual 1M file test: confirm no full tree blanking or long UI lock after targeted operations.
+- [x] Manual 1M file test: move bookmark via dialog.
+- [x] Manual 1M file test: move bookmark via drag-and-drop.
+- [x] Manual 1M file test: undo/redo each optimized mutation.
+- [x] Manual 1M file test: confirm no full tree blanking or long UI lock after targeted operations.
 
 ## Out Of Scope For This Plan
 

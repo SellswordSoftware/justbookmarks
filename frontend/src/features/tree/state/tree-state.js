@@ -1,6 +1,6 @@
 // @ts-check
 
-import { GetFlatIndex, GetFlatTree, GetFolderChildren, GetRootNodes, LoadFile } from "../../../shared/api/api.js";
+import { GetFlatIndex, GetFlatTree, GetFolderChildren, GetRootNodes, GetTreeStats, LoadFile } from "../../../shared/api/api.js";
 import { getErrorMessage } from "../../../shared/infra/errors.js";
 import { computed, signal } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
@@ -53,6 +53,7 @@ const selectionAnchorNodeId = signal("");
 const expandedNodeIds = signal(/** @type {string[]} */ ([]));
 const loading = signal(false);
 const error = signal("");
+const treeStats = signal(/** @type {TreeStats} */ ({ folders: 0, bookmarks: 0 }));
 
 const selectionCount = computed(() => selectedNodeIds().length);
 const hasMultiSelection = computed(() => selectedNodeIds().length > 1);
@@ -654,18 +655,20 @@ async function loadFolderChildren(folderId) {
  * @returns {Promise<void>}
  */
 async function syncTreeState() {
-  const flatData = await GetFlatTree();
+  const [flatData, stats] = await Promise.all([GetFlatTree(), GetTreeStats()]);
   const normalized = await normalizeFlatInWorker(flatData);
   tree(normalized);
   searchState.actions.setIndex(await buildSearchIndexInWorker(normalized));
+  treeStats(stats);
   pruneSelection();
 }
 
 /** @returns {Promise<void>} */
 async function syncRootNodes() {
-  const [rootNodes, flatIndex] = await Promise.all([GetRootNodes(), GetFlatIndex()]);
+  const [rootNodes, flatIndex, stats] = await Promise.all([GetRootNodes(), GetFlatIndex(), GetTreeStats()]);
   tree(await normalizeFlatInWorker(rootNodes));
   searchState.actions.setIndex(flatIndex);
+  treeStats(stats);
   pruneSelection();
 }
 
@@ -869,6 +872,12 @@ export const treeState = {
      */
     getError() {
       return error();
+    },
+    /**
+     * @returns {TreeStats}
+     */
+    getTreeStats() {
+      return treeStats();
     },
   },
 };

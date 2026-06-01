@@ -359,6 +359,21 @@ export namespace wailsapi {
 		    return a;
 		}
 	}
+	
+	export class TreeStats {
+	    folders: number;
+	    bookmarks: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new TreeStats(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.folders = source["folders"];
+	        this.bookmarks = source["bookmarks"];
+	    }
+	}
 
 }
 

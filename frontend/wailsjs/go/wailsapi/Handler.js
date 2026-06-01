@@ -62,6 +62,10 @@ export function GetRootNodes() {
   return window['go']['wailsapi']['Handler']['GetRootNodes']();
 }
 
+export function GetTreeStats() {
+  return window['go']['wailsapi']['Handler']['GetTreeStats']();
+}
+
 export function LoadFile(arg1) {
   return window['go']['wailsapi']['Handler']['LoadFile'](arg1);
 }

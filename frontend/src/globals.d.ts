@@ -175,6 +175,11 @@ declare global {
     redoLabel: string;
   }
 
+  interface TreeStats {
+    folders: number;
+    bookmarks: number;
+  }
+
   type ToastType = "info" | "success" | "error" | "warning";
 
   interface Toast {

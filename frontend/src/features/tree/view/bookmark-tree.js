@@ -225,11 +225,10 @@ export function mountBookmarkTree(shell) {
       return;
     }
 
-    const items = treeState.selectors.getTree();
-    const rootFolderCount = items.filter((item) => item.type === 0).length;
+    const stats = treeState.selectors.getTreeStats();
     shell.treePaneMeta.textContent =
-      `${items.length} root item${items.length === 1 ? "" : "s"}, ` +
-      `${rootFolderCount} folder${rootFolderCount === 1 ? "" : "s"}`;
+      `${stats.folders} folder${stats.folders === 1 ? "" : "s"}, ` +
+      `${stats.bookmarks} bookmark${stats.bookmarks === 1 ? "" : "s"}`;
   });
 
   shell.root.addEventListener("keydown", handleTreeKeydown);
