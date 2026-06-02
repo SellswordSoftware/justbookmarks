@@ -9,11 +9,6 @@ import {
   WindowToggleMaximise,
 } from "../../../wailsjs/runtime/runtime.js";
 
-/**
- * @typedef {object} TitlebarShell
- * @property {HTMLElement} titlebar
- */
-
 /** @returns {void} */
 function minimiseWindow() {
   if (!appState.selectors.hasWailsRuntime()) {
@@ -209,23 +204,16 @@ function createTitlebarComponent() {
 }
 
 /**
- * @param {TitlebarShell} shell
+ * @param {ParentNode} root
  * @returns {() => void}
  */
-export function mountTitlebar(shell) {
+export function mountTitlebar(root) {
+  const titlebar = /** @type {HTMLElement} */ (requireElement(root, "#titlebar", "titlebar"));
   const component = createTitlebarComponent();
-  mount(component, shell.titlebar);
+  mount(component, titlebar);
 
   return () => {
     component.unmount?.();
-    shell.titlebar.replaceChildren();
+    titlebar.replaceChildren();
   };
-}
-
-/**
- * @param {ParentNode} root
- * @returns {TitlebarShell}
- */
-export function collectTitlebarShell(root) {
-  return { titlebar: requireElement(root, "#titlebar", "titlebar") };
 }

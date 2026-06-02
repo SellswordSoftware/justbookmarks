@@ -1,21 +1,7 @@
 // @ts-check
 
-import { collectRowRefs, effect, list, mount, template, when } from "../../shared/runtime/naf.js";
+import { collectRowRefs, effect, list, mount, requireElement, template, when } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
-
-/**
- * @param {ParentNode} root
- * @returns {{ container: HTMLElement }}
- */
-export function collectToastContainerShell(root) {
-  const container = root.querySelector("#toast-container");
-
-  if (!(container instanceof HTMLElement)) {
-    throw new Error("Expected #toast-container element");
-  }
-
-  return { container };
-}
 
 /** @type {string} */
 const INFO_SVG = /*html*/ `
@@ -91,21 +77,22 @@ function getToastIcon(type) {
 }
 
 /**
- * @param {{ container: HTMLElement }} shell
+ * @param {ParentNode} root
  * @returns {{ cleanup: () => void }}
  */
-export function mountToastContainer(shell) {
+export function mountToastContainer(root) {
+  const container = /** @type {HTMLElement} */ (requireElement(root, "#toast-container", "toast-container"));
   const renderShell = /** @type {TemplateTag} */ (template);
 
   const component = renderShell`
     ${when(
       () => uiState.selectors.getToasts().length > 0,
-      () => createToastStack(shell.container),
+      () => createToastStack(container),
       () => createEmptyComponent(),
     )}
   `;
 
-  mount(component, shell.container);
+  mount(component, container);
 
   return {
     cleanup() {

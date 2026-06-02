@@ -15,23 +15,6 @@ function isFolderNode(node) {
 }
 
 /**
- * @typedef {object} DetailPanelShell
- * @property {HTMLElement} content
- * @property {HTMLElement} meta
- */
-
-/**
- * @param {ParentNode} root
- * @returns {DetailPanelShell}
- */
-export function collectDetailPanelShell(root) {
-  return {
-    content: requireElement(root, "#detail-pane-content", "detail-pane-content"),
-    meta: requireElement(root, "#detail-pane-meta", "detail-pane-meta"),
-  };
-}
-
-/**
  * @returns {Component<HTMLElement>}
  */
 function createDetailEmptyState() {
@@ -48,10 +31,12 @@ function createDetailEmptyState() {
 }
 
 /**
- * @param {DetailPanelShell} shell
+ * @param {ParentNode} root
  * @returns {{ cleanup: () => void }}
  */
-export function mountDetailPanel(shell) {
+export function mountDetailPanel(root) {
+  const content = requireElement(root, "#detail-pane-content", "detail-pane-content");
+  const meta = requireElement(root, "#detail-pane-meta", "detail-pane-meta");
   /** @type {Component | undefined} */
   let currentComponent;
 
@@ -72,16 +57,16 @@ export function mountDetailPanel(shell) {
       currentComponent = createDetailEmptyState();
     }
 
-    shell.content.replaceChildren();
-    currentComponent.mount(shell.content);
+    content.replaceChildren();
+    currentComponent.mount(content);
 
     // Update meta text inline -- avoids a second effect.
     if (selectionCount > 1) {
-      shell.meta.textContent = `${selectionCount} items selected`;
+      meta.textContent = `${selectionCount} items selected`;
     } else if (!selectedNode) {
-      shell.meta.textContent = "No selection yet";
+      meta.textContent = "No selection yet";
     } else {
-      shell.meta.textContent = isFolderNode(selectedNode) ? "Folder selected" : "Bookmark selected";
+      meta.textContent = isFolderNode(selectedNode) ? "Folder selected" : "Bookmark selected";
     }
   });
 

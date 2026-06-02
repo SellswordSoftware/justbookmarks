@@ -9,4 +9,4 @@ import { signal } from "../runtime/naf.js";
  * Used by the titlebar spinner and any other UI that needs to
  * indicate save activity.
  */
-export const saving = signal(false);
+export const saving = signal(false, { label: "save.saving" });

@@ -1,7 +1,5 @@
 // @ts-check
 
-import { requireElement } from "../shared/runtime/naf.js";
-
 /**
  * @typedef {object} PageFrameShell
  * @property {HTMLElement} appToolbar
@@ -33,14 +31,4 @@ export function showEmptyLibraryFrame(shell) {
   shell.detailPane.hidden = true;
   shell.paneResizer.hidden = true;
   shell.mainContent.classList.add("empty-library-page-shell");
-}
-
-/**
- * Collect the dedicated page host anchor from the shell.
- *
- * @param {ParentNode} root
- * @returns {HTMLElement}
- */
-export function collectPageHost(root) {
-  return requireElement(root, "#page-host", "page-host");
 }

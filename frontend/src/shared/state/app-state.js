@@ -35,13 +35,13 @@ import {
 
 // -- Private signals --
 
-const currentFilePath = signal("");
-const hasTriedLoad = signal(false);
-const persistenceReady = signal(false);
-const isMaximised = signal(false);
-const keyboardShortcutsOpen = signal(false);
-const theme = signal(loadPersistedUIState().theme ?? "light");
-const persistedState = signal(loadPersistedUIState());
+const currentFilePath = signal("", { label: "app.currentFilePath" });
+const hasTriedLoad = signal(false, { label: "app.hasTriedLoad" });
+const persistenceReady = signal(false, { label: "app.persistenceReady" });
+const isMaximised = signal(false, { label: "app.isMaximised" });
+const keyboardShortcutsOpen = signal(false, { label: "app.keyboardShortcutsOpen" });
+const theme = signal(loadPersistedUIState().theme ?? "light", { label: "app.theme" });
+const persistedState = signal(loadPersistedUIState(), { label: "app.persistedState" });
 
 // -- Private helpers --
 

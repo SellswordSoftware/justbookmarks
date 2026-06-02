@@ -4,6 +4,7 @@ import {
   cleanupCollector,
   effect,
   mount,
+  requireElement,
   template,
 } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
@@ -13,20 +14,16 @@ import {
   mountToolbarActions,
 } from "../../components/toolbar/toolbar-actions.js";
 import {
-  collectBookmarkTreeShell,
   mountBookmarkTree,
 } from "../../features/tree/view/bookmark-tree.js";
 import {
-  collectDetailPanelShell,
   mountDetailPanel,
 } from "../../features/detail/view/detail-panel.js";
 import { mountGlobalShortcuts } from "../../features/shortcuts/global-shortcuts.js";
 import {
-  collectSearchBarShell,
   mountSearchBar,
 } from "../../features/search/view/search-bar.js";
 import {
-  collectPageHost,
   showLibraryFrame,
 } from "../page-frame.js";
 
@@ -69,13 +66,9 @@ function activateLibraryShell(shell) {
 function mountLibraryToolbarAndFeatures(shell, actions) {
   const toolbarActions = mountToolbarActions(shell, actions);
   const rootTreeActions = mountRootTreeActions(shell);
-  const searchBar = mountSearchBar(collectSearchBarShell(shell.root));
-  const bookmarkTree = mountBookmarkTree(
-    collectBookmarkTreeShell(shell.root),
-  );
-  const detailPanel = mountDetailPanel(
-    collectDetailPanelShell(shell.root),
-  );
+  const searchBar = mountSearchBar(shell.root);
+  const bookmarkTree = mountBookmarkTree(shell.root);
+  const detailPanel = mountDetailPanel(shell.root);
   const globalShortcuts = mountGlobalShortcuts({
     searchInput: shell.searchInput,
     focusSearch: () => searchBar.focus(),
@@ -156,7 +149,7 @@ function createLibraryPageComponent(shell, actions) {
  * @returns {{ cleanup: () => void }}
  */
 export function mountLibraryPage(shell, actions) {
-  const pageHost = collectPageHost(shell.root);
+  const pageHost = requireElement(shell.root, "#page-host", "page-host");
 
   const libraryPage = createLibraryPageComponent(shell, actions);
   mount(libraryPage, pageHost);

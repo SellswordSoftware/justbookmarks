@@ -1,21 +1,8 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, listener, mount, requireRef, template, when } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, requireElement, requireRef, template, when } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
-
-/**
- * @param {ParentNode} root
- * @returns {{ container: HTMLElement }}
- */
-export function collectConfirmModalShell(root) {
-  const container = root.querySelector("#confirm-modal-container");
-  if (!(container instanceof HTMLElement)) {
-    throw new Error("Expected #confirm-modal-container element");
-  }
-
-  return { container };
-}
 
 /**
  * @param {ReturnType<typeof uiState.selectors.getModal>} modal
@@ -126,10 +113,11 @@ function createConfirmModal(modal) {
 }
 
 /**
- * @param {{ container: HTMLElement }} shell
+ * @param {ParentNode} root
  * @returns {{ cleanup: () => void }}
  */
-export function mountConfirmModal(shell) {
+export function mountConfirmModal(root) {
+  const container = /** @type {HTMLElement} */ (requireElement(root, "#confirm-modal-container", "confirm-modal-container"));
   const renderShell = /** @type {TemplateTag} */ (template);
 
   const component = renderShell`
@@ -140,7 +128,7 @@ export function mountConfirmModal(shell) {
     )}
   `;
 
-  mount(component, shell.container);
+  mount(component, container);
 
   return {
     cleanup() {

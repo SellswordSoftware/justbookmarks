@@ -55,31 +55,15 @@ const SEARCH_RESULT_HTML = /*html*/ `
 const ROW_HEIGHT = 32;
 
 /**
- * @typedef {object} BookmarkTreeShell
- * @property {HTMLElement} root
- * @property {HTMLElement} treeList
- * @property {HTMLElement} treePaneMeta
- */
-
-/**
  * @param {ParentNode} root
- * @returns {BookmarkTreeShell}
- */
-export function collectBookmarkTreeShell(root) {
-  return {
-    root: /** @type {HTMLElement} */ (root),
-    treeList: requireElement(root, "#tree-list", "tree-list"),
-    treePaneMeta: requireElement(root, "#tree-pane-meta", "tree-pane-meta"),
-  };
-}
-
-/**
- * @param {BookmarkTreeShell} shell
  * @returns {{ focusTree: () => void, cleanup: () => void }}
  */
-export function mountBookmarkTree(shell) {
+export function mountBookmarkTree(root) {
+  const treeRoot = /** @type {HTMLElement} */ (root);
+  const treeList = /** @type {HTMLElement} */ (requireElement(root, "#tree-list", "tree-list"));
+  const treePaneMeta = requireElement(root, "#tree-pane-meta", "tree-pane-meta");
   let stopList = () => {};
-  const dnd = createBookmarkTreeDndController({ treeList: shell.treeList });
+  const dnd = createBookmarkTreeDndController({ treeList });
   /**
    * @param {string} nodeId
    * @returns {void}
@@ -106,11 +90,11 @@ export function mountBookmarkTree(shell) {
    */
   function mountListForMode() {
     stopList();
-    shell.treeList.replaceChildren();
+    treeList.replaceChildren();
 
     if (getCurrentMode() === "search") {
       stopList = list(
-        shell.treeList,
+        treeList,
         SEARCH_RESULT_HTML,
         () => searchState.selectors.getResults(),
         (item) => item.nodeId,
@@ -127,7 +111,7 @@ export function mountBookmarkTree(shell) {
 
     // Tree mode
     stopList = list(
-      shell.treeList,
+      treeList,
       TREE_NODE_HTML,
       () => treeState.selectors.getVisibleNodeEntries(),
       (item) => item.id,
@@ -192,7 +176,7 @@ export function mountBookmarkTree(shell) {
       emptyStateComponent = renderEmptyTreeState`
         <div class="tree-empty-state">${content}</div>
       `;
-      emptyStateComponent.mount(shell.treeList);
+      emptyStateComponent.mount(treeList);
       emptyStateKind = nextEmptyStateKind;
     } else if (!nextEmptyStateKind && emptyStateComponent !== null) {
       emptyStateComponent.unmount?.();
@@ -206,12 +190,12 @@ export function mountBookmarkTree(shell) {
     if (searchState.selectors.isSearching()) {
       const count = searchState.selectors.getResults().length;
       const query = searchState.selectors.getQuery();
-      shell.treePaneMeta.textContent = `${count} result${count === 1 ? "" : "s"} for "${query}"`;
+      treePaneMeta.textContent = `${count} result${count === 1 ? "" : "s"} for "${query}"`;
       return;
     }
 
     const stats = treeState.selectors.getTreeStats();
-    shell.treePaneMeta.textContent =
+    treePaneMeta.textContent =
       `${stats.folders} folder${stats.folders === 1 ? "" : "s"}, ` +
       `${stats.bookmarks} bookmark${stats.bookmarks === 1 ? "" : "s"}`;
   });
@@ -236,18 +220,18 @@ export function mountBookmarkTree(shell) {
       return;
     }
     const scrollTop = treeState.selectors.getTreeScrollTop();
-    shell.treeList.scrollTop = scrollTop;
-    shell.treeList.dispatchEvent(new Event("scroll"));
+    treeList.scrollTop = scrollTop;
+    treeList.dispatchEvent(new Event("scroll"));
     consumedScrollVersion = currentVersion;
   });
 
   function handleTreeListScroll() {
-    treeState.actions.setTreeScrollTop(shell.treeList.scrollTop);
+    treeState.actions.setTreeScrollTop(treeList.scrollTop);
   }
 
   const cleanup = cleanupCollector(
-    listener(shell.root, "keydown", handleTreeKeydown),
-    listener(shell.treeList, "scroll", handleTreeListScroll),
+    listener(treeRoot, "keydown", handleTreeKeydown),
+    listener(treeList, "scroll", handleTreeListScroll),
     listener(document, "mousemove", dnd.handleDocumentMouseMove),
     listener(document, "mouseup", dnd.handleDocumentMouseUp),
     listener(document, "mouseleave", dnd.handleDocumentMouseLeave),
@@ -259,7 +243,7 @@ export function mountBookmarkTree(shell) {
 
   return {
     focusTree() {
-      shell.root.focus();
+      treeRoot.focus();
     },
     cleanup() {
       cleanup.run();

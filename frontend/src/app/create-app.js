@@ -1,21 +1,19 @@
 // @ts-check
 
-import { requireElement } from "../shared/runtime/naf.js";
+import { requireElement, setReactiveDebug } from "../shared/runtime/naf.js";
 import { mountAppLifecycle } from "./lifecycle.js";
 import { bootstrapSession } from "./session.js";
-import { collectConfirmModalShell, mountConfirmModal } from "../components/confirm-modal/confirm-modal.js";
-import { collectLayoutShell, mountLayout } from "../layouts/app-shell/app-shell-layout.js";
-import { collectMoveDialogShell, mountMoveDialog } from "../features/move/move-dialog.js";
+import { mountConfirmModal } from "../components/confirm-modal/confirm-modal.js";
+import { mountLayout } from "../layouts/app-shell/app-shell-layout.js";
+import { mountMoveDialog } from "../features/move/move-dialog.js";
 import {
-  collectKeyboardShortcutsDialogShell,
   mountKeyboardShortcutsDialog,
 } from "../components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.js";
 import {
-  collectImportMergeDialogShell,
   mountImportMergeDialog,
 } from "../features/import-merge/import-merge-dialog.js";
-import { collectToastContainerShell, mountToastContainer } from "../components/toast/toast-container.js";
-import { collectTitlebarShell, mountTitlebar } from "../components/titlebar/titlebar.js";
+import { mountToastContainer } from "../components/toast/toast-container.js";
+import { mountTitlebar } from "../components/titlebar/titlebar.js";
 import { mountPageHost } from "./page-host.js";
 
 /**
@@ -82,16 +80,14 @@ function collectShell(root) {
  * @returns {AppShell}
  */
 export function createApp(root) {
-  const cleanupTitlebar = mountTitlebar(collectTitlebarShell(root));
+  const cleanupTitlebar = mountTitlebar(root);
   const shell = collectShell(root);
-  const cleanupLayout = mountLayout(collectLayoutShell(root));
-  const toastContainer = mountToastContainer(collectToastContainerShell(root));
-  const confirmModal = mountConfirmModal(collectConfirmModalShell(root));
-  const importMergeDialog = mountImportMergeDialog(collectImportMergeDialogShell(root));
-  const moveDialog = mountMoveDialog(collectMoveDialogShell(root));
-  const shortcutsDialog = mountKeyboardShortcutsDialog(
-    collectKeyboardShortcutsDialogShell(root),
-  );
+  const cleanupLayout = mountLayout(root);
+  const toastContainer = mountToastContainer(root);
+  const confirmModal = mountConfirmModal(root);
+  const importMergeDialog = mountImportMergeDialog(root);
+  const moveDialog = mountMoveDialog(root);
+  const shortcutsDialog = mountKeyboardShortcutsDialog(root);
   const pageHost = mountPageHost(shell);
   const lifecycle = mountAppLifecycle({
     featureCleanups: [
@@ -107,5 +103,10 @@ export function createApp(root) {
   });
   void bootstrapSession();
   void lifecycle;
+  // setReactiveDebug({
+  //   enabled: true,
+  //   include: ["search"],
+  //   events: ["signal:set", "computed:recompute", "effect:run", "dependency:track"]
+  // })
   return shell;
 }

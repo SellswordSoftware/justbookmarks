@@ -14,7 +14,7 @@ import { signal } from "../../shared/runtime/naf.js";
 
 const DEFAULT_CONFIRM_LABEL = "OK";
 
-const toasts = signal(/** @type {Toast[]} */ ([]));
+const toasts = signal(/** @type {Toast[]} */ ([]), { label: "ui.toasts" });
 const modal = signal(
   /** @type {ConfirmModalState} */ ({
     open: false,
@@ -23,6 +23,7 @@ const modal = signal(
     confirmLabel: DEFAULT_CONFIRM_LABEL,
     onConfirm: null,
   }),
+  { label: "ui.modal" },
 );
 
 /** @type {Map<number, ReturnType<typeof setTimeout>>} */

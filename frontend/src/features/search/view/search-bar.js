@@ -4,37 +4,23 @@ import { cleanupCollector, effect, model, requireElement } from "../../../shared
 import { searchState } from "../state/search-state.js";
 
 /**
- * @typedef {object} SearchBarShell
- * @property {HTMLInputElement} input
- */
-
-/**
  * @param {ParentNode} root
- * @returns {SearchBarShell}
- */
-export function collectSearchBarShell(root) {
-  return {
-    input: /** @type {HTMLInputElement} */ (requireElement(root, "#search-input", "search-input")),
-  };
-}
-
-/**
- * @param {SearchBarShell} shell
  * @returns {{ focus: () => void, clear: () => void, cleanup: () => void }}
  */
-export function mountSearchBar(shell) {
+export function mountSearchBar(root) {
+  const input = /** @type {HTMLInputElement} */ (requireElement(root, "#search-input", "search-input"));
   let hasFocused = false;
-  const queryBinding = model(shell.input, searchState.signals.query, { reactive: true });
+  const queryBinding = model(input, searchState.signals.query, { reactive: true });
 
   /** @returns {void} */
   function focus() {
-    shell.input.focus();
-    shell.input.select();
+    input.focus();
+    input.select();
   }
 
   const stopEffect = effect(() => {
     if (!hasFocused) {
-      shell.input.focus();
+      input.focus();
       hasFocused = true;
     }
   });
@@ -48,7 +34,7 @@ export function mountSearchBar(shell) {
     focus,
     clear() {
       searchState.actions.clearQuery();
-      shell.input.focus();
+      input.focus();
     },
     cleanup() {
       cleanup.run();

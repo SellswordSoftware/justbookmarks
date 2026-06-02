@@ -11,15 +11,15 @@ import { computed, effect, signal } from "../../../shared/runtime/naf.js";
  * - derived filtered results
  */
 
-const query = signal("");
-const flatIndex = signal(/** @type {BookmarkIndexEntry[]} */ ([]));
+const query = signal("", { label: "search.query" });
+const flatIndex = signal(/** @type {BookmarkIndexEntry[]} */ ([]), { label: "search.flatIndex" });
 
 /**
  * Debounced query signal. Updates ~150ms after the last keystroke.
  * The `results` computed reads from this to avoid O(n) filter on every
  * character typed.
  */
-const _debouncedQuery = signal("");
+const _debouncedQuery = signal("", { label: "search.debouncedQuery" });
 
 /** @type {ReturnType<typeof setTimeout> | null} */
 let debounceTimer = null;
@@ -53,7 +53,7 @@ const results = computed(() => {
       entry.title.toLowerCase().includes(normalizedQuery) ||
       entry.url.toLowerCase().includes(normalizedQuery),
   );
-});
+}, { label: "search.results" });
 
 /**
  * @param {string} nodeId
@@ -131,7 +131,7 @@ function patchBookmarkFolderPathEntry(nodeId, folderPath) {
 const _debounceEffect = effect(() => {
   const nextQuery = query();
   scheduleDebouncedQuery(nextQuery);
-});
+}, { label: "search.debounceEffect" });
 
 export const searchState = {
   signals: {

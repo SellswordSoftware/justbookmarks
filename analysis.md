@@ -196,9 +196,13 @@ Every list row creates its own `effect()` via `fx()` that re-runs whenever any d
 
 The `syncingScrollFromState` flag pattern in `bookmark-tree.js` works but is a classic race-condition waiting to happen. A `requestAnimationFrame` guard helps but does not eliminate the problem entirely.
 
-### 3. The `collectShell` / `mount` two-phase pattern adds ceremony
+### 3. The `collectShell` / `mount` two-phase pattern adds ceremony -- [RESOLVED]
 
-Every module exports both `collectXxxShell()` and `mountXxx()`. The collect function just does querySelector + instanceof validation. This could be a single function that takes the root and returns the mount result. The two-phase pattern was useful during migration but adds a mechanical step now.
+**RESOLVED by merging shell collection into `mountXxx(root)` entrypoints.**
+
+The extra `collectXxxShell()` layer has been removed from the affected modules and callers now invoke mount functions directly with the root node. Stable DOM anchors are resolved inside each mount function with `requireElement()`, which keeps validation local without a separate shell-construction phase.
+
+This simplified the public module surface, removed mechanical caller wrapping, and left the app-level `AppShell` pattern intact where it is still useful.
 
 ### 4. No dev mode debugging
 

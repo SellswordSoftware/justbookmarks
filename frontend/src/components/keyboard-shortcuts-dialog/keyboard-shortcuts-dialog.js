@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, listener, mount, raw, requireRef, template, when } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, raw, requireElement, requireRef, template, when } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 
 const groups = [
@@ -62,19 +62,6 @@ const groups = [
     ],
   },
 ];
-
-/**
- * @param {ParentNode} root
- * @returns {{ container: HTMLElement }}
- */
-export function collectKeyboardShortcutsDialogShell(root) {
-  const container = root.querySelector("#keyboard-shortcuts-dialog-container");
-  if (!(container instanceof HTMLElement)) {
-    throw new Error("Expected #keyboard-shortcuts-dialog-container element");
-  }
-
-  return { container };
-}
 
 /**
  * @param {{ title: string, items: Array<{ keys: string, action: string }> }} group
@@ -197,10 +184,11 @@ function createKeyboardShortcutsDialog() {
 }
 
 /**
- * @param {{ container: HTMLElement }} shell
+ * @param {ParentNode} root
  * @returns {{ cleanup: () => void }}
  */
-export function mountKeyboardShortcutsDialog(shell) {
+export function mountKeyboardShortcutsDialog(root) {
+  const container = /** @type {HTMLElement} */ (requireElement(root, "#keyboard-shortcuts-dialog-container", "keyboard-shortcuts-dialog-container"));
   const renderShell = /** @type {TemplateTag} */ (template);
 
   const component = renderShell`
@@ -211,7 +199,7 @@ export function mountKeyboardShortcutsDialog(shell) {
     )}
   `;
 
-  mount(component, shell.container);
+  mount(component, container);
 
   return {
     cleanup() {

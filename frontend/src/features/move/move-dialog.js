@@ -11,6 +11,7 @@ import {
   list,
   listener,
   mount,
+  requireElement,
   requireRef,
   template,
   when,
@@ -18,19 +19,6 @@ import {
 import { moveDialogState } from "./move-dialog-state.js";
 import { treeState } from "../tree/state/tree-state.js";
 import { uiState } from "../../shared/state/ui-state.js";
-
-/**
- * @param {ParentNode} root
- * @returns {{ container: HTMLElement }}
- */
-export function collectMoveDialogShell(root) {
-  const container = root.querySelector("#move-dialog-container");
-  if (!(container instanceof HTMLElement)) {
-    throw new Error("Expected #move-dialog-container element");
-  }
-
-  return { container };
-}
 
 /** @type {string} */
 const MOVE_FOLDER_ROW_HTML = /*html*/ `
@@ -225,10 +213,11 @@ async function ensureFolderChildrenLoaded(folderId) {
 }
 
 /**
- * @param {{ container: HTMLElement }} shell
+ * @param {ParentNode} root
  * @returns {{ cleanup: () => void }}
  */
-export function mountMoveDialog(shell) {
+export function mountMoveDialog(root) {
+  const container = /** @type {HTMLElement} */ (requireElement(root, "#move-dialog-container", "move-dialog-container"));
   const renderShell = /** @type {TemplateTag} */ (template);
 
   const component = renderShell`
@@ -239,7 +228,7 @@ export function mountMoveDialog(shell) {
     )}
   `;
 
-  mount(component, shell.container);
+  mount(component, container);
 
   return {
     cleanup() {

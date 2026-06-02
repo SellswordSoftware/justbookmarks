@@ -33,27 +33,27 @@ import { syncTreeState, syncRootNodes } from "./load-workflow.js";
 /** @type {TreeNode[]} */
 const emptyTree = [];
 /** @type {Signal<TreeNode[]>} */
-export const tree = signal(emptyTree);
+export const tree = signal(emptyTree, { label: "tree.nodes" });
 /** @type {Signal<string>} */
-export const primarySelectedNodeId = signal("");
+export const primarySelectedNodeId = signal("", { label: "tree.primarySelectedNodeId" });
 /** @type {Signal<string[]>} */
-export const selectedNodeIds = signal(/** @type {string[]} */ ([]));
+export const selectedNodeIds = signal(/** @type {string[]} */ ([]), { label: "tree.selectedNodeIds" });
 /** @type {Signal<string>} */
-export const selectionAnchorNodeId = signal("");
+export const selectionAnchorNodeId = signal("", { label: "tree.selectionAnchorNodeId" });
 /** @type {Signal<string[]>} */
-export const expandedNodeIds = signal(/** @type {string[]} */ ([]));
-const treeScrollTop = signal(0);
+export const expandedNodeIds = signal(/** @type {string[]} */ ([]), { label: "tree.expandedNodeIds" });
+const treeScrollTop = signal(0, { label: "tree.scrollTop" });
 /** Monotonically incremented whenever restoreUIState requests a scroll restore. */
-const scrollRestoreVersion = signal(0);
-const loading = signal(false);
-const error = signal("");
+const scrollRestoreVersion = signal(0, { label: "tree.scrollRestoreVersion" });
+const loading = signal(false, { label: "tree.loading" });
+const error = signal("", { label: "tree.error" });
 /** @type {Signal<TreeStats>} */
-export const treeStats = signal(/** @type {TreeStats} */ ({ folders: 0, bookmarks: 0 }));
+export const treeStats = signal(/** @type {TreeStats} */ ({ folders: 0, bookmarks: 0 }), { label: "tree.stats" });
 
 // === Computed ===
 
-const selectionCount = computed(() => selectedNodeIds().length);
-const hasMultiSelection = computed(() => selectedNodeIds().length > 1);
+const selectionCount = computed(() => selectedNodeIds().length, { label: "tree.selectionCount" });
+const hasMultiSelection = computed(() => selectedNodeIds().length > 1, { label: "tree.hasMultiSelection" });
 
 /**
  * Flat Map index for O(1) node lookups.
@@ -74,7 +74,7 @@ export const nodeIndex = computed(() => {
   };
   index(tree());
   return map;
-});
+}, { label: "tree.nodeIndex" });
 
 // === Internal helpers ===
 

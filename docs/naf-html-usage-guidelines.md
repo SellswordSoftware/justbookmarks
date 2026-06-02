@@ -452,22 +452,18 @@ Returns `Element`. Callers that need type narrowing should use JSDoc type assert
 
 Query an element and throw if it is not found.
 
-Use in `collectShell` functions to replace the 3-line querySelector + instanceof validation pattern with a single call:
+Use in mount functions to replace the 3-line querySelector + instanceof validation pattern with a single call:
 
 ```js
-// Instead of:
-const titlebar = root.querySelector("#titlebar");
-if (!(titlebar instanceof HTMLElement)) {
-  throw new Error("Expected #titlebar element");
+export function mountTitlebar(root) {
+  const titlebar = requireElement(root, "#titlebar", "titlebar");
+  // ...
 }
-
-// Write:
-const titlebar = requireElement(root, "#titlebar", "titlebar");
 ```
 
 Good uses:
 
-- shell collection functions that query stable DOM anchors
+- mount functions that query stable DOM anchors
 - replacing querySelector + instanceof validation blocks
 
 Returns the queried element with a generic type for JSDoc narrowing.
@@ -483,6 +479,59 @@ Good uses:
 - text escaping when building HTML strings
 
 Do not build deep custom abstractions on top of them unless the pattern is genuinely repeated.
+
+### Reactive debugging
+
+Use `setReactiveDebug()` when debugging reactive flows that are hard to reason about from code inspection alone.
+
+The runtime supports:
+
+- labels on `signal()`, `computed()`, and `effect()`
+- global debug enable/disable
+- filtering by label prefix and event type
+- custom event sinks and value formatting
+
+Label important shared state when you create it:
+
+```js
+const query = signal("", { label: "search.query" });
+const results = computed(() => searchIndex(query()), { label: "search.results" });
+const stop = effect(() => {
+  renderResults(results());
+}, { label: "search.renderEffect" });
+```
+
+Enable tracing for the flow you care about:
+
+```js
+setReactiveDebug({
+  enabled: true,
+  include: ["search."],
+  events: ["signal:set", "computed:recompute", "effect:run", "dependency:track"],
+});
+```
+
+Useful event types:
+
+- `signal:get`
+- `signal:set`
+- `signal:set-same`
+- `signal:notify`
+- `computed:recompute`
+- `computed:dirty`
+- `effect:run`
+- `effect:dispose`
+- `dependency:track`
+
+Guidelines:
+
+- keep debugging off by default
+- label shared or high-churn state first
+- prefer narrow `include` filters instead of global tracing
+- use a custom `valueFormatter` if raw values are too noisy
+- treat this as a debugging aid, not app behavior
+
+The default sink writes to `console.debug`. If needed, provide a custom `sink(event)` to route events elsewhere.
 
 ## Shared State Versus Local State
 

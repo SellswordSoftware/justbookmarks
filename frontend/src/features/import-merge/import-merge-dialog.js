@@ -5,25 +5,13 @@ import {
   effect,
   mount,
   raw,
+  requireElement,
   requireRef,
   template,
 } from "../../shared/runtime/naf.js";
 import { importMergeState } from "./import-merge-state.js";
 import { bindImportMergeDialogInteractions } from "./import-merge-dialog-interactions.js";
 import { mountImportMergePreview } from "./import-merge-dialog-preview.js";
-
-/**
- * @param {ParentNode} root
- * @returns {{ container: HTMLElement }}
- */
-export function collectImportMergeDialogShell(root) {
-  const container = root.querySelector("#import-merge-dialog-container");
-  if (!(container instanceof HTMLElement)) {
-    throw new Error("Expected #import-merge-dialog-container element");
-  }
-
-  return { container };
-}
 
 /**
  * @typedef {object} ImportMergeDialogElements
@@ -159,17 +147,18 @@ function createImportMergeDialog(view, onMountElements) {
 }
 
 /**
- * @param {{ container: HTMLElement }} shell
+ * @param {ParentNode} root
  * @returns {{ cleanup: () => void }}
  */
-export function mountImportMergeDialog(shell) {
+export function mountImportMergeDialog(root) {
+  const container = /** @type {HTMLElement} */ (requireElement(root, "#import-merge-dialog-container", "import-merge-dialog-container"));
   /** @type {(() => void) | undefined} */
   let cleanupRendered;
 
   const stop = effect(() => {
     cleanupRendered?.();
     cleanupRendered = undefined;
-    shell.container.replaceChildren();
+    container.replaceChildren();
 
     if (!importMergeState.selectors.isImportMergeOpen()) {
       return;
@@ -190,7 +179,7 @@ export function mountImportMergeDialog(shell) {
       },
     );
 
-    mount(component, shell.container);
+    mount(component, container);
 
     if (!elements) {
       throw new Error("Expected import merge dialog elements after mount");
@@ -207,7 +196,7 @@ export function mountImportMergeDialog(shell) {
       interactionCleanup();
       previewCleanup();
       component.unmount?.();
-      shell.container.replaceChildren();
+      container.replaceChildren();
     };
   });
 

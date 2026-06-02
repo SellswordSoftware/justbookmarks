@@ -20,28 +20,291 @@
 
 /** @typedef {Set<() => void>} Subs */
 
+/**
+ * @typedef {"signal" | "computed" | "effect"} ReactiveKind
+ */
+
+/**
+ * @typedef {"signal:get" | "signal:set" | "signal:set-same" | "signal:notify" | "computed:get" | "computed:recompute" | "computed:dirty" | "computed:notify" | "effect:run" | "effect:dispose" | "dependency:track"} ReactiveDebugEventType
+ */
+
+/**
+ * @typedef {object} ReactiveDebugOptions
+ * @property {string} [label]
+ * @property {boolean} [debug]
+ */
+
+/**
+ * @typedef {object} ReactiveDebugConfig
+ * @property {boolean} enabled
+ * @property {ReactiveDebugEventType[]} [events]
+ * @property {string[]} [include]
+ * @property {string[]} [exclude]
+ * @property {(event: ReactiveDebugEvent) => void} [sink]
+ * @property {(value: unknown) => unknown} [valueFormatter]
+ */
+
+/**
+ * @typedef {object} ReactiveDebugMeta
+ * @property {number} id
+ * @property {ReactiveKind} kind
+ * @property {string} label
+ * @property {boolean} debug
+ */
+
+/**
+ * @typedef {object} ReactiveDebugEvent
+ * @property {number} seq
+ * @property {ReactiveDebugEventType} type
+ * @property {number} id
+ * @property {ReactiveKind} kind
+ * @property {string} label
+ * @property {number} timestamp
+ * @property {number} [subscriberCount]
+ * @property {unknown} [value]
+ * @property {unknown} [previousValue]
+ * @property {string} [observer]
+ * @property {string} [observerKind]
+ * @property {string} [source]
+ * @property {string} [sourceKind]
+ * @property {number} [dependencyCount]
+ * @property {string} [message]
+ * @property {Record<string, unknown>} [details]
+ */
+
 /** @type {(() => void) | undefined} */
 let activeSub;
 
 /** @type {Subs[] | undefined} */
 let activeSets;
 
+/** @type {ReactiveDebugMeta | undefined} */
+let activeObserver;
+
+let nextReactiveId = 1;
+let nextReactiveDebugSeq = 1;
+
+/** @type {ReactiveDebugConfig} */
+const reactiveDebugConfig = {
+  enabled: false,
+  sink(event) {
+    console.debug(`[naf:${event.type}] ${event.label}`, event);
+  },
+};
+
 /**
- * @param {Subs} subs
+ * @param {ReactiveKind} kind
+ * @param {ReactiveDebugOptions | undefined} options
+ * @returns {ReactiveDebugMeta}
+ */
+function createReactiveMeta(kind, options) {
+  const id = nextReactiveId;
+  nextReactiveId += 1;
+  return {
+    id,
+    kind,
+    label: options?.label?.trim() || `${kind}#${id}`,
+    debug: options?.debug === true,
+  };
+}
+
+/**
+ * @param {string} label
+ * @param {string[] | undefined} prefixes
+ * @returns {boolean}
+ */
+function matchesDebugPrefixes(label, prefixes) {
+  if (!Array.isArray(prefixes) || prefixes.length === 0) {
+    return true;
+  }
+  return prefixes.some((prefix) => label.startsWith(prefix));
+}
+
+/**
+ * @param {ReactiveDebugMeta} meta
+ * @param {ReactiveDebugEventType} type
+ * @returns {boolean}
+ */
+function shouldEmitReactiveDebug(meta, type) {
+  if (meta.debug && !reactiveDebugConfig.enabled) {
+    return true;
+  }
+
+  if (!reactiveDebugConfig.enabled) {
+    return false;
+  }
+
+  if (Array.isArray(reactiveDebugConfig.events) && reactiveDebugConfig.events.length > 0) {
+    if (!reactiveDebugConfig.events.includes(type)) {
+      return false;
+    }
+  }
+
+  if (!matchesDebugPrefixes(meta.label, reactiveDebugConfig.include)) {
+    return false;
+  }
+
+  if (
+    Array.isArray(reactiveDebugConfig.exclude) &&
+    reactiveDebugConfig.exclude.some((prefix) => meta.label.startsWith(prefix))
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * @param {unknown} value
+ * @returns {unknown}
+ */
+function formatReactiveDebugValue(value) {
+  if (reactiveDebugConfig.valueFormatter) {
+    try {
+      return reactiveDebugConfig.valueFormatter(value);
+    } catch {
+      return "[valueFormatter threw]";
+    }
+  }
+
+  if (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "undefined"
+  ) {
+    return value;
+  }
+
+  if (typeof value === "function") {
+    return `[Function ${value.name || "anonymous"}]`;
+  }
+
+  if (Array.isArray(value)) {
+    return `[Array(${value.length})]`;
+  }
+
+  if (value instanceof Map) {
+    return `[Map(${value.size})]`;
+  }
+
+  if (value instanceof Set) {
+    return `[Set(${value.size})]`;
+  }
+
+  if (typeof Element !== "undefined" && value instanceof Element) {
+    const id = value.id ? `#${value.id}` : "";
+    return `<${value.tagName.toLowerCase()}${id}>`;
+  }
+
+  if (typeof value === "object") {
+    const ctorName = value.constructor?.name;
+    if (ctorName && ctorName !== "Object") {
+      return `[${ctorName}]`;
+    }
+    const keys = Object.keys(/** @type {Record<string, unknown>} */ (value));
+    return `{${keys.slice(0, 3).join(", ")}${keys.length > 3 ? ", ..." : ""}}`;
+  }
+
+  return String(value);
+}
+
+/**
+ * @param {ReactiveDebugMeta | undefined} meta
+ * @param {ReactiveDebugEventType} type
+ * @param {Partial<ReactiveDebugEvent>} [extra]
  * @returns {void}
  */
-function track(subs) {
+function emitReactiveDebug(meta, type, extra = {}) {
+  if (!meta || !shouldEmitReactiveDebug(meta, type)) {
+    return;
+  }
+
+  const event = /** @type {ReactiveDebugEvent} */ ({
+    seq: nextReactiveDebugSeq,
+    type,
+    id: meta.id,
+    kind: meta.kind,
+    label: meta.label,
+    timestamp: Date.now(),
+    ...extra,
+  });
+  nextReactiveDebugSeq += 1;
+
+  try {
+    reactiveDebugConfig.sink?.(event);
+  } catch {
+    // Debug logging must never affect runtime behavior.
+  }
+}
+
+/**
+ * @param {boolean | Partial<ReactiveDebugConfig>} nextConfig
+ * @returns {ReactiveDebugConfig}
+ */
+export function setReactiveDebug(nextConfig) {
+  if (typeof nextConfig === "boolean") {
+    reactiveDebugConfig.enabled = nextConfig;
+    return getReactiveDebugConfig();
+  }
+
+  reactiveDebugConfig.enabled = nextConfig.enabled ?? reactiveDebugConfig.enabled;
+  reactiveDebugConfig.events = nextConfig.events ? [...nextConfig.events] : undefined;
+  reactiveDebugConfig.include = nextConfig.include ? [...nextConfig.include] : undefined;
+  reactiveDebugConfig.exclude = nextConfig.exclude ? [...nextConfig.exclude] : undefined;
+  reactiveDebugConfig.sink = nextConfig.sink ?? reactiveDebugConfig.sink;
+  reactiveDebugConfig.valueFormatter =
+    nextConfig.valueFormatter ?? reactiveDebugConfig.valueFormatter;
+  return getReactiveDebugConfig();
+}
+
+/**
+ * @returns {ReactiveDebugConfig}
+ */
+export function getReactiveDebugConfig() {
+  return {
+    enabled: reactiveDebugConfig.enabled,
+    events: reactiveDebugConfig.events ? [...reactiveDebugConfig.events] : undefined,
+    include: reactiveDebugConfig.include ? [...reactiveDebugConfig.include] : undefined,
+    exclude: reactiveDebugConfig.exclude ? [...reactiveDebugConfig.exclude] : undefined,
+    sink: reactiveDebugConfig.sink,
+    valueFormatter: reactiveDebugConfig.valueFormatter,
+  };
+}
+
+/**
+ * @param {Subs} subs
+ * @param {ReactiveDebugMeta | undefined} sourceMeta
+ * @returns {void}
+ */
+function track(subs, sourceMeta) {
   if (activeSub) {
+    const alreadyTracked = subs.has(activeSub);
     subs.add(activeSub);
     activeSets?.push(subs);
+    if (!alreadyTracked && sourceMeta && activeObserver) {
+      emitReactiveDebug(sourceMeta, "dependency:track", {
+        observer: activeObserver.label,
+        observerKind: activeObserver.kind,
+        source: sourceMeta.label,
+        sourceKind: sourceMeta.kind,
+      });
+    }
   }
 }
 
 /**
  * @param {Subs} subs
+ * @param {ReactiveDebugMeta | undefined} sourceMeta
  * @returns {void}
  */
-function notify(subs) {
+function notify(subs, sourceMeta) {
+  emitReactiveDebug(
+    sourceMeta,
+    sourceMeta?.kind === "computed" ? "computed:notify" : "signal:notify",
+    { subscriberCount: subs.size },
+  );
   [...subs].forEach((fn) => fn());
 }
 
@@ -50,24 +313,42 @@ function notify(subs) {
  *
  * @template T
  * @param {T} initialValue
+ * @param {ReactiveDebugOptions} [options]
  * @returns {Signal<T>}
  */
-export function signal(initialValue) {
+export function signal(initialValue, options) {
   let value = initialValue;
   /** @type {Subs} */
   const subs = new Set();
+  const meta = createReactiveMeta("signal", options);
 
   /** @type {Signal<T>} */
   const sig = /** @type {Signal<T>} */ (function (newValue) {
     if (arguments.length > 0) {
       if (value !== newValue) {
+        const previousValue = value;
         value = /** @type {T} */ (newValue);
-        notify(subs);
+        emitReactiveDebug(meta, "signal:set", {
+          previousValue: formatReactiveDebugValue(previousValue),
+          value: formatReactiveDebugValue(newValue),
+          subscriberCount: subs.size,
+        });
+        notify(subs, meta);
+      } else {
+        emitReactiveDebug(meta, "signal:set-same", {
+          value: formatReactiveDebugValue(newValue),
+          subscriberCount: subs.size,
+        });
       }
       return /** @type {T} */ (newValue);
     }
 
-    track(subs);
+    emitReactiveDebug(meta, "signal:get", {
+      value: formatReactiveDebugValue(value),
+      observer: activeObserver?.label,
+      observerKind: activeObserver?.kind,
+    });
+    track(subs, meta);
     return value;
   });
 
@@ -79,9 +360,10 @@ export function signal(initialValue) {
  *
  * @template T
  * @param {() => T} fn
+ * @param {ReactiveDebugOptions} [options]
  * @returns {Computed<T>}
  */
-export function computed(fn) {
+export function computed(fn, options) {
   /** @type {T} */
   let value;
   let dirty = true;
@@ -89,27 +371,42 @@ export function computed(fn) {
   const subs = new Set();
   /** @type {Subs[]} */
   const subscribedTo = [];
+  const meta = createReactiveMeta("computed", options);
 
   const markDirty = () => {
     dirty = true;
-    notify(subs);
+    emitReactiveDebug(meta, "computed:dirty", {
+      subscriberCount: subs.size,
+    });
+    notify(subs, meta);
   };
 
   return () => {
-    track(subs);
+    emitReactiveDebug(meta, "computed:get", {
+      observer: activeObserver?.label,
+      observerKind: activeObserver?.kind,
+    });
+    track(subs, meta);
     if (dirty) {
       const prevSub = activeSub;
       const prevSets = activeSets;
+      const prevObserver = activeObserver;
       subscribedTo.forEach((set) => set.delete(markDirty));
       subscribedTo.length = 0;
       activeSub = markDirty;
       activeSets = subscribedTo;
+      activeObserver = meta;
       try {
         value = fn();
         dirty = false;
+        emitReactiveDebug(meta, "computed:recompute", {
+          value: formatReactiveDebugValue(value),
+          dependencyCount: subscribedTo.length,
+        });
       } finally {
         activeSub = prevSub;
         activeSets = prevSets;
+        activeObserver = prevObserver;
       }
     }
     return value;
@@ -120,13 +417,15 @@ export function computed(fn) {
  * Runs a reactive effect immediately and whenever dependencies change.
  *
  * @param {() => void} fn
+ * @param {ReactiveDebugOptions} [options]
  * @returns {() => void}
  */
-export function effect(fn) {
+export function effect(fn, options) {
   let running = false;
   let disposed = false;
   /** @type {Subs[]} */
   const subscribedTo = [];
+  const meta = createReactiveMeta("effect", options);
 
   const run = () => {
     if (running || disposed) {
@@ -139,13 +438,19 @@ export function effect(fn) {
 
     const prevSub = activeSub;
     const prevSets = activeSets;
+    const prevObserver = activeObserver;
     activeSub = run;
     activeSets = subscribedTo;
+    activeObserver = meta;
     try {
+      emitReactiveDebug(meta, "effect:run", {
+        dependencyCount: subscribedTo.length,
+      });
       fn();
     } finally {
       activeSub = prevSub;
       activeSets = prevSets;
+      activeObserver = prevObserver;
       running = false;
     }
   };
@@ -154,6 +459,9 @@ export function effect(fn) {
 
   return () => {
     disposed = true;
+    emitReactiveDebug(meta, "effect:dispose", {
+      dependencyCount: subscribedTo.length,
+    });
     subscribedTo.forEach((set) => set.delete(run));
     subscribedTo.length = 0;
   };
