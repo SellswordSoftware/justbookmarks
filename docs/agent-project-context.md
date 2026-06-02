@@ -91,6 +91,9 @@ It currently owns both:
 - low-level helpers such as `signal`, `computed`, `effect`, `fx`, `model`, `list`, and `cleanupCollector`
 - shell composition helpers such as `template()`, `mount()`, and `when()`
 
+Note: `when()` is for simple two-way branches only. For multi-way branching,
+use an explicit `effect()` with if/else logic.
+
 Use NAF templates by default for:
 
 - pages

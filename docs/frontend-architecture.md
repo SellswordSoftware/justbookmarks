@@ -75,6 +75,7 @@ The runtime is intentionally small. It is not a router, virtual DOM, or general-
 Use the runtime at two levels:
 
 - shell composition with `template()`, `mount()`, and `when()`
+- `when()` is for simple two-way branches; use `effect()` for multi-way branching
 - fine-grained behavior with `signal()`, `computed()`, `effect()`, `fx()`, `model()`, `list()`, and `cleanupCollector()`
 
 Preferred shell authoring model:

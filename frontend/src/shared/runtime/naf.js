@@ -928,87 +928,63 @@ function createComponent(html, components, options) {
 let slotId = 0;
 const tempDiv = document.createElement("div");
 
-/**
- * @param {Comment} placeholder
- * @param {string} commentId
- * @param {string} html
- * @returns {void}
- */
-function updateSlotContent(placeholder, commentId, html) {
-  const parent = placeholder.parentNode;
-  if (!(parent instanceof Element)) {
-    throw new Error("Reactive slot placeholder is not attached to an element parent");
-  }
-
-  /** @type {ChildNode | null} */
-  let node = placeholder.nextSibling;
-  while (node && node.textContent !== `/naf-${commentId}`) {
-    node = node.nextSibling;
-  }
-
-  const end = node;
-  if (!(end instanceof Comment)) {
-    throw new Error(`Could not find end marker for reactive slot naf-${commentId}`);
-  }
-
-  node = placeholder.nextSibling;
-  while (node && node !== end) {
-    const next = node.nextSibling;
-    parent.removeChild(node);
-    node = next;
-  }
-
-  if (html) {
-    tempDiv.innerHTML = html;
-    while (tempDiv.firstChild) {
-      parent.insertBefore(tempDiv.firstChild, end);
-    }
-  }
-}
 
 /**
- * @param {(placeholder: Comment) => () => void} setupEffect
+ * Reactive conditional rendering.
+ *
+ * Returns a component that mounts into its parent and switches between
+ * a then-branch and else-branch based on a reactive condition.
+ * The parent element is the slot host -- no comment markers or tree walking.
+ *
+ * Example:
+ *   when(
+ *     () => isLoading(),
+ *     () => createLoadingSpinner(),
+ *     () => createContent(),
+ *   )
+ *
+ * @template T
+ * @param {() => T} condition
+ * @param {(value: T) => Component} thenBranch
+ * @param {(value: T) => Component=} elseBranch
  * @returns {Component}
  */
-function reactiveSlot(setupEffect) {
-  const id = slotId++;
-  /** @type {(() => void) | undefined} */
-  let cleanup;
-  const html = `<!--naf-${id}--><!--/naf-${id}-->`;
+export function when(condition, thenBranch, elseBranch) {
+  /** @type {Component | undefined} */
+  let currentComponent;
+  /** @type {unknown} */
+  let previousValue;
+  /** @type {boolean | undefined} */
+  let previousBranch;
 
   return {
-    html,
+    html: '',
     refs: {},
     mount(parent) {
-      if (!parent.innerHTML) {
-        parent.innerHTML = html;
-      }
+      effect(() => {
+        const value = condition();
+        const branch = Boolean(value);
 
-      const walker = document.createTreeWalker(parent, NodeFilter.SHOW_COMMENT);
-      /** @type {Comment | null} */
-      let start = null;
-      /** @type {Comment | null} */
-      let end = null;
-      /** @type {Node | null} */
-      let current;
-
-      while ((current = walker.nextNode())) {
-        if (current.textContent === `naf-${id}`) {
-          start = /** @type {Comment} */ (current);
-        } else if (current.textContent === `/naf-${id}`) {
-          end = /** @type {Comment} */ (current);
-          break;
+        if (previousBranch === branch && previousValue === value) {
+          return;
         }
-      }
 
-      if (!start || !end) {
-        throw new Error(`Could not find placeholder comments: naf-${id}`);
-      }
+        previousBranch = branch;
+        previousValue = value;
 
-      cleanup = setupEffect(start);
+        currentComponent?.unmount?.();
+        currentComponent = branch ? thenBranch(value) : elseBranch?.(value);
+
+        if (currentComponent) {
+          parent.replaceChildren();
+          currentComponent.mount(parent);
+        } else {
+          parent.replaceChildren();
+        }
+      });
     },
     unmount() {
-      cleanup?.();
+      currentComponent?.unmount?.();
     },
   };
 }
@@ -1054,72 +1030,6 @@ export function mount(component, host) {
   host.replaceChildren();
   component.mount(host);
   return component;
-}
-
-/**
- * @template T
- * @param {() => T} condition
- * @param {(value: T) => Component} thenBranch
- * @param {(value: T) => Component=} elseBranch
- * @returns {Component}
- */
-export function when(condition, thenBranch, elseBranch) {
-  /** @type {Component | undefined} */
-  let currentComponent;
-  /** @type {unknown} */
-  let previousValue;
-  /** @type {boolean | undefined} */
-  let previousBranch;
-  let initialized = false;
-
-  return reactiveSlot((placeholder) => {
-    const commentId = placeholder.textContent?.replace("naf-", "") || "0";
-    const whenSlotId = slotId++;
-
-    const stop = effect(() => {
-      const value = condition();
-      const branch = Boolean(value);
-
-      if (initialized && previousBranch === branch && previousValue === value) {
-        return;
-      }
-
-      initialized = true;
-      previousBranch = branch;
-      previousValue = value;
-
-      currentComponent?.unmount?.();
-      currentComponent = branch ? thenBranch(value) : elseBranch?.(value);
-      const parent = placeholder.parentNode;
-      if (!(parent instanceof Element)) {
-        throw new Error("Reactive slot placeholder is not attached to an element parent");
-      }
-      updateSlotContent(
-        placeholder,
-        commentId,
-        currentComponent
-          ? `<span data-naf-when-slot="${whenSlotId}" style="display: contents;"></span>`
-          : "",
-      );
-
-      if (!currentComponent) {
-        return;
-      }
-
-      const slotHost = parent.querySelector(
-        `[data-naf-when-slot="${whenSlotId}"]`,
-      );
-      if (!(slotHost instanceof HTMLElement)) {
-        throw new Error("Reactive slot host not found");
-      }
-      currentComponent.mount(slotHost);
-    });
-
-    return () => {
-      stop();
-      currentComponent?.unmount?.();
-    };
-  });
 }
 
 /**

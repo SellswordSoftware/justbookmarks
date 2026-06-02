@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, listener, mount, raw, requireRef, template } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, raw, requireRef, template, when } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 
 const groups = [
@@ -201,31 +201,31 @@ function createKeyboardShortcutsDialog() {
  * @returns {{ cleanup: () => void }}
  */
 export function mountKeyboardShortcutsDialog(shell) {
-  /** @type {(() => void) | undefined} */
-  let cleanupRendered;
+  const renderShell = /** @type {TemplateTag} */ (template);
 
-  const stop = effect(() => {
-    cleanupRendered?.();
-    cleanupRendered = undefined;
-    shell.container.replaceChildren();
+  const component = renderShell`
+    ${when(
+      () => appState.selectors.isKeyboardShortcutsOpen(),
+      () => createKeyboardShortcutsDialog(),
+      () => createEmptyComponent(),
+    )}
+  `;
 
-    if (!appState.selectors.isKeyboardShortcutsOpen()) {
-      return;
-    }
-
-    const component = createKeyboardShortcutsDialog();
-    mount(component, shell.container);
-
-    cleanupRendered = () => {
-      component.unmount?.();
-      shell.container.replaceChildren();
-    };
-  });
+  mount(component, shell.container);
 
   return {
     cleanup() {
-      cleanupRendered?.();
-      stop();
+      component.unmount?.();
     },
+  };
+}
+
+/** @returns {Component} */
+function createEmptyComponent() {
+  return {
+    html: '',
+    refs: {},
+    mount() {},
+    unmount() {},
   };
 }

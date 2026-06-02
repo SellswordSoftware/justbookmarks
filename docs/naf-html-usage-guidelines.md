@@ -130,16 +130,53 @@ Typical good fits:
 
 `template()` is not a goal by itself. It is one tool.
 
-### Use `when()` only when it genuinely simplifies branching
+### Use `when()` for simple two-way branches
 
 Good uses:
 
-- page branches
-- empty-state versus loaded-state branches
-- small conditional shell composition
+- loading versus loaded state
+- empty versus populated state
+- show versus hide a single component
+
+Example:
+
+```js
+when(
+  () => isLoading(),
+  () => createLoadingSpinner(),
+  () => createContent(),
+)
+```
+
+### Use an explicit effect for multi-way branching
+
+When you have 3+ branches or complex conditions, an explicit effect is
+clearer than nested `when()`:
+
+```js
+let currentComponent;
+
+effect(() => {
+  const mode = getMode();
+
+  currentComponent?.unmount?.();
+
+  if (mode === 'bulk') {
+    currentComponent = createBulkDetail();
+  } else if (mode === 'single') {
+    currentComponent = createSingleDetail();
+  } else {
+    currentComponent = createEmptyState();
+  }
+
+  host.replaceChildren();
+  currentComponent.mount(host);
+});
+```
 
 Avoid `when()` for:
 
+- multi-way branching (use an effect instead)
 - row rendering
 - drag-and-drop surfaces
 - cases where imperative mount and cleanup are already clearer

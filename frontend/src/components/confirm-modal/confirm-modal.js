@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, listener, mount, requireRef, template } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, requireRef, template, when } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /**
@@ -130,32 +130,31 @@ function createConfirmModal(modal) {
  * @returns {{ cleanup: () => void }}
  */
 export function mountConfirmModal(shell) {
-  /** @type {(() => void) | undefined} */
-  let cleanupRendered;
+  const renderShell = /** @type {TemplateTag} */ (template);
 
-  const stop = effect(() => {
-    cleanupRendered?.();
-    cleanupRendered = undefined;
-    shell.container.replaceChildren();
+  const component = renderShell`
+    ${when(
+      () => uiState.selectors.getModal(),
+      (modal) => modal.open ? createConfirmModal(modal) : createEmptyComponent(),
+      () => createEmptyComponent(),
+    )}
+  `;
 
-    const modal = uiState.selectors.getModal();
-    if (!modal.open) {
-      return;
-    }
-
-    const component = createConfirmModal(modal);
-    mount(component, shell.container);
-
-    cleanupRendered = () => {
-      component.unmount?.();
-      shell.container.replaceChildren();
-    };
-  });
+  mount(component, shell.container);
 
   return {
     cleanup() {
-      cleanupRendered?.();
-      stop();
+      component.unmount?.();
     },
+  };
+}
+
+/** @returns {Component} */
+function createEmptyComponent() {
+  return {
+    html: '',
+    refs: {},
+    mount() {},
+    unmount() {},
   };
 }
