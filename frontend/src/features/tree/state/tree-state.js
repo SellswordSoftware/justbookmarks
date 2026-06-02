@@ -43,6 +43,8 @@ export const selectionAnchorNodeId = signal("");
 /** @type {Signal<string[]>} */
 export const expandedNodeIds = signal(/** @type {string[]} */ ([]));
 const treeScrollTop = signal(0);
+/** Monotonically incremented whenever restoreUIState requests a scroll restore. */
+const scrollRestoreVersion = signal(0);
 const loading = signal(false);
 const error = signal("");
 /** @type {Signal<TreeStats>} */
@@ -194,6 +196,7 @@ async function loadFile(path) {
   tree(emptyTree);
   expandedNodeIds([]);
   treeScrollTop(0);
+  scrollRestoreVersion(0);
   selectionActions.clearSelection();
   try {
     await LoadFile(path);
@@ -230,7 +233,6 @@ async function restoreUIState(state) {
     expanded.add(ancestorId);
   }
   expandedNodeIds([...expanded]);
-  treeScrollTop(nextState.scrollTop);
   applySelectionState(nextState.selectionState);
 
   for (const folderId of expanded) {
@@ -239,6 +241,12 @@ async function restoreUIState(state) {
       await mutationActions.loadFolderChildren(folderId);
     }
   }
+
+  // Set scroll position AFTER async loading completes so the visible node
+  // count is final. Increment the restore version to signal the view layer
+  // to apply the saved scroll position.
+  treeScrollTop(nextState.scrollTop);
+  scrollRestoreVersion(scrollRestoreVersion() + 1);
 
   if (selectedId && getNode(selectedId)) {
     selectionActions.selectSingle(selectedId);
@@ -310,6 +318,7 @@ export const treeState = {
     selectionAnchorNodeId,
     expandedNodeIds,
     treeScrollTop,
+    scrollRestoreVersion,
     loading,
     error,
   },
@@ -412,6 +421,10 @@ export const treeState = {
     /** @returns {number} */
     getTreeScrollTop() {
       return treeScrollTop();
+    },
+    /** @returns {number} */
+    getScrollRestoreVersion() {
+      return scrollRestoreVersion();
     },
     /** @returns {boolean} */
     isLoading() {

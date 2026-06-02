@@ -80,8 +80,6 @@ export function collectBookmarkTreeShell(root) {
 export function mountBookmarkTree(shell) {
   let stopList = () => {};
   const dnd = createBookmarkTreeDndController({ treeList: shell.treeList });
-  let syncingScrollFromState = false;
-
   /**
    * @param {string} nodeId
    * @returns {void}
@@ -218,22 +216,32 @@ export function mountBookmarkTree(shell) {
       `${stats.bookmarks} bookmark${stats.bookmarks === 1 ? "" : "s"}`;
   });
 
+  // Scroll restore: version-based handshake with restoreUIState().
+  // restoreUIState() increments scrollRestoreVersion after async folder loading
+  // completes. This effect applies the saved scroll position only when the
+  // version changes and visible entries exist, then marks the version consumed.
+  /** @type {number} */
+  let consumedScrollVersion = 0;
+
   const stopScrollRestoreEffect = effect(() => {
-    const nextScrollTop = treeState.selectors.getTreeScrollTop();
-    if (Math.abs(shell.treeList.scrollTop - nextScrollTop) < 1) {
+    if (searchState.selectors.isSearching()) {
       return;
     }
-    syncingScrollFromState = true;
-    shell.treeList.scrollTop = nextScrollTop;
-    requestAnimationFrame(() => {
-      syncingScrollFromState = false;
-    });
+    const currentVersion = treeState.selectors.getScrollRestoreVersion();
+    if (currentVersion <= consumedScrollVersion) {
+      return;
+    }
+    const entries = treeState.selectors.getVisibleNodeEntries();
+    if (entries.length === 0) {
+      return;
+    }
+    const scrollTop = treeState.selectors.getTreeScrollTop();
+    shell.treeList.scrollTop = scrollTop;
+    shell.treeList.dispatchEvent(new Event("scroll"));
+    consumedScrollVersion = currentVersion;
   });
 
   function handleTreeListScroll() {
-    if (syncingScrollFromState) {
-      return;
-    }
     treeState.actions.setTreeScrollTop(shell.treeList.scrollTop);
   }
 
