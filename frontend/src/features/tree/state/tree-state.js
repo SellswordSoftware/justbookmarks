@@ -58,7 +58,8 @@ export const expandedNodeIds = signal(/** @type {string[]} */ ([]));
 const treeScrollTop = signal(0);
 const loading = signal(false);
 const error = signal("");
-const treeStats = signal(/** @type {TreeStats} */ ({ folders: 0, bookmarks: 0 }));
+/** @type {Signal<TreeStats>} */
+export const treeStats = signal(/** @type {TreeStats} */ ({ folders: 0, bookmarks: 0 }));
 
 const selectionCount = computed(() => selectedNodeIds().length);
 const hasMultiSelection = computed(() => selectedNodeIds().length > 1);
