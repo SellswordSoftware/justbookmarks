@@ -12,14 +12,13 @@ import {
   setWindowState,
 } from "../../shared/infra/persistence.js";
 import { signal } from "../../shared/runtime/naf.js";
-import { importMergeState } from "../../features/import-merge/import-merge-state.js";
+import { saving } from "./save-state.js";
 import {
   WindowGetSize,
   WindowIsMaximised,
   WindowIsNormal,
   WindowSetSize,
 } from "../../../wailsjs/runtime/runtime.js";
-import { saving } from "./save-state.js";
 
 /**
  * App/session state owner.
@@ -30,9 +29,11 @@ import { saving } from "./save-state.js";
  * - window/runtime integration
  * - persisted shell settings coordination
  *
- * Public shape is intentionally small for now so later tasks can fill in
- * signals/actions without changing the import surface.
+ * Uses the canonical signals/actions/computed/selectors pattern.
+ * See docs/frontend-architecture.md for the canonical shape.
  */
+
+// -- Private signals --
 
 const currentFilePath = signal("");
 const hasTriedLoad = signal(false);
@@ -41,6 +42,8 @@ const isMaximised = signal(false);
 const keyboardShortcutsOpen = signal(false);
 const theme = signal(loadPersistedUIState().theme ?? "light");
 const persistedState = signal(loadPersistedUIState());
+
+// -- Private helpers --
 
 /** @returns {boolean} */
 function hasWailsRuntime() {
@@ -89,24 +92,21 @@ function persistWindowState(windowState) {
   return nextState;
 }
 
+// -- Public export --
+
 export const appState = {
-  currentFilePath,
-  hasTriedLoad,
-  persistenceReady,
-  isMaximised,
-  keyboardShortcutsOpen,
-  saving,
-  persistedState,
-  hasWailsRuntime,
-  session: {
-    reloadPersistedState,
-    /**
-     * @param {string} path
-     * @returns {PersistedUIState}
-     */
-    rememberLoadedFile(path) {
-      return rememberLoadedFile(path);
-    },
+  signals: {
+    currentFilePath,
+    hasTriedLoad,
+    persistenceReady,
+    isMaximised,
+    keyboardShortcutsOpen,
+    saving,
+    persistedState,
+    theme,
+  },
+  computed: {},
+  actions: {
     /**
      * @param {string} path
      * @returns {string}
@@ -155,11 +155,17 @@ export const appState = {
         WindowSetSize(state.window.width, state.window.height);
       }
     },
-  },
-  window: {
-    theme,
-    hasRuntime: hasWailsRuntime,
-    sync: syncWindowState,
+    /**
+     * @param {string} path
+     * @returns {PersistedUIState}
+     */
+    rememberLoadedFile(path) {
+      return rememberLoadedFile(path);
+    },
+    /** @returns {PersistedUIState} */
+    reloadPersistedState() {
+      return reloadPersistedState();
+    },
     /**
      * @param {"light" | "dark"} value
      */
@@ -167,9 +173,11 @@ export const appState = {
       theme(value);
       setTheme(value);
     },
-    /**
-     * @returns {Promise<WindowState | null>}
-     */
+    /** @returns {Promise<void>} */
+    syncWindowState() {
+      return syncWindowState();
+    },
+    /** @returns {Promise<WindowState | null>} */
     async persistCurrentSize() {
       if (!persistenceReady() || !hasWailsRuntime()) {
         return null;
@@ -193,32 +201,61 @@ export const appState = {
      * @param {WindowState | null} windowState
      * @returns {PersistedUIState}
      */
-    persistState(windowState) {
+    persistWindowState(windowState) {
       return persistWindowState(windowState);
     },
-  },
-  keyboardShortcuts: {
     /**
      * @param {boolean} value
      * @returns {boolean}
      */
-    set(value) {
+    setKeyboardShortcutsOpen(value) {
       return keyboardShortcutsOpen(value);
     },
-    /**
-     * @returns {boolean}
-     */
-    open() {
+    /** @returns {boolean} */
+    openKeyboardShortcuts() {
       return keyboardShortcutsOpen(true);
     },
-    /**
-     * @returns {boolean}
-     */
-    close() {
+    /** @returns {boolean} */
+    closeKeyboardShortcuts() {
       return keyboardShortcutsOpen(false);
     },
   },
-  importMerge: {
-    openImportMerge: importMergeState.actions.openImportMerge,
+  selectors: {
+    /** @returns {string} */
+    getCurrentFilePath() {
+      return currentFilePath();
+    },
+    /** @returns {boolean} */
+    getHasTriedLoad() {
+      return hasTriedLoad();
+    },
+    /** @returns {boolean} */
+    getPersistenceReady() {
+      return persistenceReady();
+    },
+    /** @returns {boolean} */
+    isMaximised() {
+      return isMaximised();
+    },
+    /** @returns {boolean} */
+    isKeyboardShortcutsOpen() {
+      return keyboardShortcutsOpen();
+    },
+    /** @returns {boolean} */
+    isSaving() {
+      return saving();
+    },
+    /** @returns {PersistedUIState} */
+    getPersistedState() {
+      return persistedState();
+    },
+    /** @returns {"light" | "dark"} */
+    getTheme() {
+      return theme();
+    },
+    /** @returns {boolean} */
+    hasWailsRuntime() {
+      return hasWailsRuntime();
+    },
   },
 };

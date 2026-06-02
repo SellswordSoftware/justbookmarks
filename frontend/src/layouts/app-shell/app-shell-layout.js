@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, listener } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, requireElement } from "../../shared/runtime/naf.js";
 import { setLeftPaneWidth } from "../../shared/infra/persistence.js";
 import { appState } from "../../shared/state/app-state.js";
 
@@ -26,19 +26,6 @@ export function clampLeftPaneWidth(nextWidth, containerWidth) {
 
 /**
  * @param {ParentNode} root
- * @param {string} selector
- * @returns {HTMLElement}
- */
-function requireElement(root, selector) {
-  const el = root.querySelector(selector);
-  if (!(el instanceof HTMLElement)) {
-    throw new Error(`Expected element for selector: ${selector}`);
-  }
-  return el;
-}
-
-/**
- * @param {ParentNode} root
  * @returns {LayoutShell}
  */
 export function collectLayoutShell(root) {
@@ -46,15 +33,10 @@ export function collectLayoutShell(root) {
     throw new Error("Expected layout root element");
   }
 
-  const paneResizer = root.querySelector("#pane-resizer");
-  if (!(paneResizer instanceof HTMLButtonElement)) {
-    throw new Error("Expected #pane-resizer button");
-  }
-
   return {
     root,
-    mainContent: requireElement(root, "#main-content"),
-    paneResizer,
+    mainContent: requireElement(root, "#main-content", "main-content"),
+    paneResizer: /** @type {HTMLButtonElement} */ (requireElement(root, "#pane-resizer", "pane-resizer")),
   };
 }
 

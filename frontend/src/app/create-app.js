@@ -1,5 +1,6 @@
 // @ts-check
 
+import { requireElement } from "../shared/runtime/naf.js";
 import { mountAppLifecycle } from "./lifecycle.js";
 import { bootstrapSession } from "./session.js";
 import { collectConfirmModalShell, mountConfirmModal } from "../components/confirm-modal/confirm-modal.js";
@@ -43,52 +44,34 @@ import { mountPageHost } from "./page-host.js";
  */
 
 /**
- * @param {ParentNode} root
- * @param {string} selector
- * @returns {HTMLElement}
- */
-function requireElement(root, selector) {
-  const el = root.querySelector(selector);
-  if (!(el instanceof HTMLElement)) {
-    throw new Error(`Expected element for selector: ${selector}`);
-  }
-  return el;
-}
-
-/**
  * Collect the stable shell containers future modules bind into.
  *
  * @param {HTMLElement} root
  * @returns {AppShell}
  */
 function collectShell(root) {
-  const searchInput = root.querySelector("#search-input");
-  if (!(searchInput instanceof HTMLInputElement)) {
-    throw new Error("Expected #search-input to be an input element");
-  }
-
   return {
     root,
-    titlebar: requireElement(root, "#titlebar"),
-    titlebarMeta: requireElement(root, "#titlebar-meta"),
-    appToolbar: requireElement(root, ".app-toolbar"),
-    mainContent: requireElement(root, "#main-content"),
-    treePane: requireElement(root, "#tree-pane"),
-    detailPane: requireElement(root, "#detail-pane"),
-    paneResizer: /** @type {HTMLButtonElement} */ (requireElement(root, "#pane-resizer")),
-    searchInput,
-    treePaneContent: requireElement(root, "#tree-pane-content"),
-    treeList: requireElement(root, "#tree-list"),
-    treePaneMeta: requireElement(root, "#tree-pane-meta"),
-    treePaneActions: requireElement(root, "#tree-pane-actions"),
-    detailPaneContent: requireElement(root, "#detail-pane-content"),
-    detailPaneMeta: requireElement(root, "#detail-pane-meta"),
-    toolbarActions: requireElement(root, "#toolbar-actions"),
-    toastContainer: requireElement(root, "#toast-container"),
-    confirmModalContainer: requireElement(root, "#confirm-modal-container"),
-    moveDialogContainer: requireElement(root, "#move-dialog-container"),
-    importMergeDialogContainer: requireElement(root, "#import-merge-dialog-container"),
-    keyboardShortcutsDialogContainer: requireElement(root, "#keyboard-shortcuts-dialog-container"),
+    titlebar: requireElement(root, "#titlebar", "titlebar"),
+    titlebarMeta: requireElement(root, "#titlebar-meta", "titlebar-meta"),
+    appToolbar: requireElement(root, ".app-toolbar", "app-toolbar"),
+    mainContent: requireElement(root, "#main-content", "main-content"),
+    treePane: requireElement(root, "#tree-pane", "tree-pane"),
+    detailPane: requireElement(root, "#detail-pane", "detail-pane"),
+    paneResizer: /** @type {HTMLButtonElement} */ (requireElement(root, "#pane-resizer", "pane-resizer")),
+    searchInput: /** @type {HTMLInputElement} */ (requireElement(root, "#search-input", "search-input")),
+    treePaneContent: requireElement(root, "#tree-pane-content", "tree-pane-content"),
+    treeList: requireElement(root, "#tree-list", "tree-list"),
+    treePaneMeta: requireElement(root, "#tree-pane-meta", "tree-pane-meta"),
+    treePaneActions: requireElement(root, "#tree-pane-actions", "tree-pane-actions"),
+    detailPaneContent: requireElement(root, "#detail-pane-content", "detail-pane-content"),
+    detailPaneMeta: requireElement(root, "#detail-pane-meta", "detail-pane-meta"),
+    toolbarActions: requireElement(root, "#toolbar-actions", "toolbar-actions"),
+    toastContainer: requireElement(root, "#toast-container", "toast-container"),
+    confirmModalContainer: requireElement(root, "#confirm-modal-container", "confirm-modal-container"),
+    moveDialogContainer: requireElement(root, "#move-dialog-container", "move-dialog-container"),
+    importMergeDialogContainer: requireElement(root, "#import-merge-dialog-container", "import-merge-dialog-container"),
+    keyboardShortcutsDialogContainer: requireElement(root, "#keyboard-shortcuts-dialog-container", "keyboard-shortcuts-dialog-container"),
   };
 }
 

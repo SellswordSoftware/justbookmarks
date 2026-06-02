@@ -3,7 +3,7 @@
 import { createBookmarkDetail } from "./bookmark-detail.js";
 import { createBulkSelectionDetail } from "./bulk-selection-detail.js";
 import { createFolderDetail } from "./folder-detail.js";
-import { effect, mount, template, when } from "../../../shared/runtime/naf.js";
+import { effect, mount, requireElement, template, when } from "../../../shared/runtime/naf.js";
 import { treeState } from "../../tree/state/tree-state.js";
 
 /**
@@ -25,19 +25,9 @@ function isFolderNode(node) {
  * @returns {DetailPanelShell}
  */
 export function collectDetailPanelShell(root) {
-  const content = root.querySelector("#detail-pane-content");
-  const meta = root.querySelector("#detail-pane-meta");
-
-  if (!(content instanceof HTMLElement)) {
-    throw new Error("Expected #detail-pane-content element");
-  }
-  if (!(meta instanceof HTMLElement)) {
-    throw new Error("Expected #detail-pane-meta element");
-  }
-
   return {
-    content,
-    meta,
+    content: requireElement(root, "#detail-pane-content", "detail-pane-content"),
+    meta: requireElement(root, "#detail-pane-meta", "detail-pane-meta"),
   };
 }
 

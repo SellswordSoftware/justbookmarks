@@ -8,6 +8,7 @@ import {
   listener,
   model,
   raw,
+  requireRef,
   signal,
   show,
   template,
@@ -47,38 +48,18 @@ export function createAddFolderForm(options) {
     template({
       root: ".add-folder-launcher",
       onMount(_el, _parent, ctx) {
-        const trigger = ctx.refs.trigger;
-        const panel = ctx.refs.panel;
-        const input = ctx.refs.input;
-        const error = ctx.refs.error;
-        const submit = ctx.refs.submit;
-        const cancel = ctx.refs.cancel;
+        const trigger = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "trigger"));
+        const panel = /** @type {HTMLElement} */ (requireRef(ctx.refs, "panel"));
+        const input = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "input"));
+        const error = /** @type {HTMLElement} */ (requireRef(ctx.refs, "error"));
+        const submit = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "submit"));
+        const cancel = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancel"));
 
-        if (!(trigger instanceof HTMLButtonElement)) {
-          throw new Error("Expected add folder trigger button");
-        }
-        if (!(panel instanceof HTMLElement)) {
-          throw new Error("Expected add folder panel");
-        }
-        if (!(input instanceof HTMLInputElement)) {
-          throw new Error("Expected add folder input");
-        }
-        if (!(error instanceof HTMLElement)) {
-          throw new Error("Expected add folder error element");
-        }
-        if (!(submit instanceof HTMLButtonElement)) {
-          throw new Error("Expected add folder submit button");
-        }
-        if (!(cancel instanceof HTMLButtonElement)) {
-          throw new Error("Expected add folder cancel button");
-        }
-
-        const inputEl = input;
         const panelEl = panel;
         const detailPaneContent = panelEl.closest(".detail-pane__content");
         const treePane = panelEl.closest(".tree-pane");
         let isPositionListenerAttached = false;
-        const nameBinding = model(inputEl, name, { reactive: true });
+        const nameBinding = model(input, name, { reactive: true });
 
         /**
          * @param {number} value
@@ -179,7 +160,7 @@ export function createAddFolderForm(options) {
             attachPositionListeners();
             queueMicrotask(() => {
               positionPanel();
-              inputEl.focus();
+              input.focus();
             });
           } else {
             detachPositionListeners();
@@ -197,7 +178,7 @@ export function createAddFolderForm(options) {
           const nextName = name().trim();
           if (!nextName) {
             errorMessage("Folder name is required");
-            inputEl.focus();
+            input.focus();
             return;
           }
 
@@ -260,7 +241,7 @@ export function createAddFolderForm(options) {
           listener(trigger, "click", handleTriggerClick),
           listener(submit, "click", handleSubmitClick),
           listener(cancel, "click", handleCancelClick),
-          listener(inputEl, "keydown", handleInputKeydown),
+          listener(input, "keydown", handleInputKeydown),
           nameBinding.cleanup,
           effect(() => {
             const available = options.isAvailable

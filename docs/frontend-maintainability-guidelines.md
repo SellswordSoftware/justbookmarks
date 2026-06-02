@@ -221,7 +221,9 @@ When touching a frontend file, ask:
 
 For shared state modules, also ask:
 
-8. Is the public state surface direct enough, or is a wrapper layer hiding straightforward reads and writes?
+8. Does the module follow the canonical signals/actions/computed/selectors pattern?
+9. Are private signals kept module-scoped and only exposed via the signals namespace?
+10. Do selectors read state and actions write state, with no overlap?
 
 If those answers are weak, split the file or simplify the abstraction.
 

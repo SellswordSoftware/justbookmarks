@@ -5,6 +5,7 @@ import {
   cleanupCollector,
   listener,
   mount,
+  requireRef,
   template,
 } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
@@ -31,24 +32,10 @@ function createToolbarActionsComponent(actions) {
     /** @type {TemplateTag} */ (
       template({
         root: ".toolbar-actions-runtime",
-        onMount(el, _parent, ctx) {
-          if (!(el instanceof HTMLElement)) {
-            throw new Error("Expected toolbar actions root");
-          }
-
-          const openButton = ctx.refs.openButton;
-          const createButton = ctx.refs.createButton;
-          const importButton = ctx.refs.importButton;
-
-          if (!(openButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected open toolbar button");
-          }
-          if (!(createButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected create toolbar button");
-          }
-          if (!(importButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected import toolbar button");
-          }
+        onMount(_el, _parent, ctx) {
+          const openButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "openButton"));
+          const createButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "createButton"));
+          const importButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "importButton"));
 
           const handleOpenClick = () => {
             void actions.openFile();

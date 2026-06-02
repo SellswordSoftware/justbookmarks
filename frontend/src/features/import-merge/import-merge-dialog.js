@@ -5,6 +5,7 @@ import {
   effect,
   mount,
   raw,
+  requireRef,
   template,
 } from "../../shared/runtime/naf.js";
 import { importMergeState } from "./import-merge-state.js";
@@ -60,39 +61,14 @@ function createImportMergeDialog(view, onMountElements) {
   const renderDialog = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _parent, ctx) {
-        const backdrop = ctx.refs.backdrop;
-        const dialog = ctx.refs.dialog;
-        const body = ctx.refs.body;
-        const closeButton = ctx.refs.closeButton;
-        const chooseFileButton = ctx.refs.chooseFileButton;
-        const cancelButton = ctx.refs.cancelButton;
-        const applyButton = ctx.refs.applyButton;
-        const filePath = ctx.refs.filePath;
-
-        if (!(backdrop instanceof HTMLDivElement)) {
-          throw new Error("Expected import merge backdrop");
-        }
-        if (!(dialog instanceof HTMLDivElement)) {
-          throw new Error("Expected import merge dialog");
-        }
-        if (!(body instanceof HTMLDivElement)) {
-          throw new Error("Expected import merge dialog body");
-        }
-        if (!(closeButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected import merge close button");
-        }
-        if (!(chooseFileButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected import merge choose file button");
-        }
-        if (!(cancelButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected import merge cancel button");
-        }
-        if (!(applyButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected import merge apply button");
-        }
-        if (!(filePath instanceof HTMLElement)) {
-          throw new Error("Expected import merge file path");
-        }
+        const backdrop = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "backdrop"));
+        const dialog = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "dialog"));
+        const body = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "body"));
+        const closeButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "closeButton"));
+        const chooseFileButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "chooseFileButton"));
+        const cancelButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancelButton"));
+        const applyButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "applyButton"));
+        const filePath = /** @type {HTMLElement} */ (requireRef(ctx.refs, "filePath"));
 
         filePath.textContent = view.importPath || "No file selected";
         applyButton.textContent = applyLabel;

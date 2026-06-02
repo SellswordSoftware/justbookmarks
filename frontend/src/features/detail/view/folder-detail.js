@@ -10,6 +10,7 @@ import {
   hide,
   listener,
   model,
+  requireRef,
   signal,
   show,
   template,
@@ -61,58 +62,20 @@ export function createFolderDetail(folder) {
     template({
       root: ".folder-detail",
       onMount(_el, _parent, ctx) {
-        const title = ctx.refs.title;
-        const count = ctx.refs.count;
-        const created = ctx.refs.created;
-        const header = ctx.refs.header;
-        const editButton = ctx.refs.editButton;
-        const moveButton = ctx.refs.moveButton;
-        const deleteButton = ctx.refs.deleteButton;
-        const editPanel = ctx.refs.editPanel;
-        const nameInput = ctx.refs.nameInput;
-        const nameError = ctx.refs.nameError;
-        const saveButton = ctx.refs.saveButton;
-        const cancelButton = ctx.refs.cancelButton;
+        const title = /** @type {HTMLElement} */ (requireRef(ctx.refs, "title"));
+        const count = /** @type {HTMLElement} */ (requireRef(ctx.refs, "count"));
+        const created = /** @type {HTMLElement} */ (requireRef(ctx.refs, "created"));
+        const header = /** @type {HTMLElement} */ (requireRef(ctx.refs, "header"));
+        const editButton = requireRef(ctx.refs, "editButton");
+        const moveButton = requireRef(ctx.refs, "moveButton");
+        const deleteButton = requireRef(ctx.refs, "deleteButton");
+        const editPanel = /** @type {HTMLElement} */ (requireRef(ctx.refs, "editPanel"));
+        const nameInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "nameInput"));
+        const nameError = /** @type {HTMLElement} */ (requireRef(ctx.refs, "nameError"));
+        const saveButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "saveButton"));
+        const cancelButton = requireRef(ctx.refs, "cancelButton");
 
-        if (!(title instanceof HTMLElement)) {
-          throw new Error("Expected folder detail title");
-        }
-        if (!(count instanceof HTMLElement)) {
-          throw new Error("Expected folder detail count");
-        }
-        if (!(created instanceof HTMLElement)) {
-          throw new Error("Expected folder detail created label");
-        }
-        if (!(header instanceof HTMLElement)) {
-          throw new Error("Expected folder detail header");
-        }
-        if (!(editButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected folder detail edit button");
-        }
-        if (!(moveButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected folder detail move button");
-        }
-        if (!(deleteButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected folder detail delete button");
-        }
-        if (!(editPanel instanceof HTMLElement)) {
-          throw new Error("Expected folder detail edit panel");
-        }
-        if (!(nameInput instanceof HTMLInputElement)) {
-          throw new Error("Expected folder detail name input");
-        }
-        if (!(nameError instanceof HTMLElement)) {
-          throw new Error("Expected folder detail name error");
-        }
-        if (!(saveButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected folder detail save button");
-        }
-        if (!(cancelButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected folder detail cancel button");
-        }
-
-        const nameInputEl = nameInput;
-        const nameBinding = model(nameInputEl, currentName, { reactive: true });
+        const nameBinding = model(nameInput, currentName, { reactive: true });
 
         /**
          * @param {boolean} nextEditing
@@ -123,8 +86,8 @@ export function createFolderDetail(folder) {
           nameErrorMessage("");
           if (nextEditing) {
             queueMicrotask(() => {
-              nameInputEl.focus();
-              nameInputEl.select();
+              nameInput.focus();
+              nameInput.select();
             });
           }
         }
@@ -137,7 +100,7 @@ export function createFolderDetail(folder) {
           const nextName = currentName().trim();
           if (!nextName) {
             nameErrorMessage("Folder name is required");
-            nameInputEl.focus();
+            nameInput.focus();
             return;
           }
 
@@ -229,7 +192,7 @@ export function createFolderDetail(folder) {
           listener(deleteButton, "click", showDeleteConfirm),
           listener(saveButton, "click", handleSaveClick),
           listener(cancelButton, "click", handleCancelClick),
-          listener(nameInputEl, "keydown", handleNameKeydown),
+          listener(nameInput, "keydown", handleNameKeydown),
           nameBinding.cleanup,
           fx(title, (currentTitleEl) => {
             currentTitleEl.textContent = currentName() || "Untitled folder";

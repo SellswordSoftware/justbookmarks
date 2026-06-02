@@ -94,19 +94,25 @@ export function hide(el, condition) {
 }
 ```
 
-### 3. The onMount validation boilerplate is enormous
+### 3. The onMount validation boilerplate is enormous -- [RESOLVED]
 
-Every template component does exhaustive instanceof checks before accessing refs. In `bookmark-detail.js`, the onMount function is ~240 lines, and ~35 of those lines are just `if (!(ref instanceof Type)) throw new Error(...)`. With 178 instanceof checks across 59 files, this is a real tax.
+**RESOLVED via `requireRef()` and `requireElement()` helpers in NAF runtime.**
 
-The `data-ref` system is great for locating elements, but the validation ceremony is disproportionate. In a single-app context where you control both the template and the consumer, these checks are defensive coding that adds noise.
+Every template component used to do exhaustive instanceof checks before accessing refs. In `bookmark-detail.js`, the onMount function was ~240 lines, and ~35 of those lines were just `if (!(ref instanceof Type)) throw new Error(...)`. With 178 instanceof checks across 59 files, this was a real tax.
 
-**Suggestion:** Consider a `requireRef()` helper that does the check in one line:
+Two helpers were added to `frontend/src/shared/runtime/naf.js`:
 
-```js
-const titleInput = requireRef(ctx.refs, "titleInput", HTMLInputElement);
-```
+- `requireRef(refs, name)` -- replaces the 3-line ctx.refs + instanceof pattern in template onMount callbacks
+- `requireElement(root, selector, description)` -- replaces the querySelector + instanceof pattern in collectShell functions
 
-Or accept that in this codebase, refs are trusted and skip the validation in non-critical paths.
+Migration covered:
+- Phase 2: 12 files (template onMount refs) -- ~106 checks reduced from ~318 lines to ~106 lines
+- Phase 3: 8 files (shell collection) -- ~14 checks reduced from ~42 lines to ~14 lines
+- Non-candidates (runtime guards, list setup callbacks, NAF internal): ~18 checks unchanged
+
+Expected reduction: ~360 lines -> ~120 lines (67% reduction in validation boilerplate).
+
+See `painpoint3.md` for the full migration log.
 
 ### 4. State module pattern inconsistency
 

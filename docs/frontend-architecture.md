@@ -7,7 +7,7 @@ This frontend is a single-window Wails app built with:
 - one static HTML shell
 - plain JavaScript with `// @ts-check`
 - a local NAF runtime in `shared/runtime/naf.js`
-- direct signal/domain-group shared state modules
+- signals/actions/computed/selectors shared state modules
 - layered frontend modules instead of a framework component tree
 
 The goal of this document is to help an engineer place new code correctly and understand how the app is composed.
@@ -208,12 +208,31 @@ Current shared areas include:
 
 Shared state should expose the smallest clear surface that matches the domain.
 
-Current preferred shape:
+Shared state should expose the smallest clear surface that matches the domain.
 
-- direct signals for simple values such as `currentFilePath()` or `persistedState()`
-- small domain groups such as `session`, `window`, and `keyboardShortcuts`
+Canonical state module shape (signals/actions/computed/selectors):
 
-Avoid broad wrapper layers like `selectors` / `actions` / `signals` when a simpler surface is clear.
+```js
+// Private signals (module-scoped, not exported directly)
+const someValue = signal(initial);
+
+export const someState = {
+  signals: { someValue },
+  computed: { derived },
+  actions: { doSomething, setSomeValue },
+  selectors: { getSomeValue, getDerived },
+};
+```
+
+Rules:
+
+- signals are private module-scoped consts, exposed only via the `signals` namespace
+- actions mutate state and have clear JSDoc types
+- selectors read state by calling signals or computed values
+- computed values are exposed via the `computed` namespace for reactive reads
+- internal helpers stay as module-scoped functions (not exported)
+
+This pattern provides clear read vs write boundaries and prevents accidental signal mutation from outside the module. All state modules in this project follow this shape.
 
 Only put code in `shared/` when the abstraction is genuinely reused and still clear.
 

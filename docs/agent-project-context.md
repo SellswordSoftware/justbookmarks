@@ -36,7 +36,7 @@ Current model:
 - one Wails `index.html` shell
 - plain JavaScript with `// @ts-check`
 - one local runtime in `frontend/src/shared/runtime/naf.js`
-- direct signal/domain-group shared state model
+- signals/actions/computed/selectors shared state modules
 - layered frontend structure
 
 Current frontend layout:
@@ -114,9 +114,10 @@ Current preferred shell pattern:
 
 Current shared state pattern:
 
-- read app state through direct signals such as `appState.currentFilePath()`
-- use domain groups such as `appState.session`, `appState.window`, `appState.keyboardShortcuts`, and `appState.importMerge`
-- do not reintroduce broad `selectors/actions/signals` wrapper namespaces
+- read app state through selectors such as `appState.selectors.getCurrentFilePath()`
+- use actions for mutations such as `appState.actions.setCurrentFilePath(path)`
+- use the signals/actions/computed/selectors pattern consistently across all state modules
+- do not reintroduce flat domain-group patterns or broad `selectors/actions/signals` wrapper namespaces that differ from this shape
 
 Do not introduce a router for page switching.
 

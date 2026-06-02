@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, model } from "../../../shared/runtime/naf.js";
+import { cleanupCollector, effect, model, requireElement } from "../../../shared/runtime/naf.js";
 import { searchState } from "../state/search-state.js";
 
 /**
@@ -13,14 +13,8 @@ import { searchState } from "../state/search-state.js";
  * @returns {SearchBarShell}
  */
 export function collectSearchBarShell(root) {
-  const input = root.querySelector("#search-input");
-
-  if (!(input instanceof HTMLInputElement)) {
-    throw new Error("Expected #search-input element");
-  }
-
   return {
-    input,
+    input: /** @type {HTMLInputElement} */ (requireElement(root, "#search-input", "search-input")),
   };
 }
 

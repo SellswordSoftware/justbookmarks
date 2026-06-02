@@ -75,65 +75,71 @@ Expected reduction: ~360 lines -> ~120 lines (67% reduction in validation boiler
 
 ## Tasks
 
-### Phase 1: Add requireRef() to NAF runtime
+### Phase 1: Add requireRef() to NAF runtime [DONE]
 
-#### Task 1.1: Implement requireRef() in naf.js
-- Add `requireRef(refs, name)` function after `cleanupCollector()`
-- Include JSDoc with `@template`, `@param`, `@returns` annotations
-- Error message format: `"Missing required ref: {name}"`
+#### Task 1.1: Implement requireRef() in naf.js [DONE]
+- Added `requireRef(refs, name)` function after `cleanupCollector()`
+- Added `requireElement(root, selector, description)` function
+- Both include JSDoc annotations
 - File: `frontend/src/shared/runtime/naf.js`
 
-#### Task 1.2: Update NAF usage guidelines
-- Document `requireRef()` in `docs/naf-html-usage-guidelines.md`
-- Show the before/after pattern
-- Place it in the "Helper Guide" section near `data-ref` documentation
+#### Task 1.2: Update NAF usage guidelines [DONE]
+- Documented `requireRef()` and `requireElement()` in `docs/naf-html-usage-guidelines.md`
+- Added both to the runtime surface list
+- Added before/after examples in the Helper Guide section
 - File: `docs/naf-html-usage-guidelines.md`
 
-### Phase 2: Migrate template ref validations (onMount)
+### Phase 2: Migrate template ref validations (onMount) [DONE]
 
 These are the mechanical replacements inside `onMount` callbacks where refs come
 from `ctx.refs`. Each file replaces the 3-line validation block with a single
 `requireRef()` call.
 
-#### Task 2.1: Migrate bookmark-detail.js (22 checks)
-- Replace 22 instanceof blocks with `requireRef(ctx.refs, "...")` calls
+#### Task 2.1: Migrate bookmark-detail.js (22 checks) [DONE]
+- Replaced 22 instanceof blocks with `requireRef(ctx.refs, "...")` calls
+- Added JSDoc type casts where needed for type narrowing
 - File: `frontend/src/features/detail/view/bookmark-detail.js`
 
-#### Task 2.2: Migrate move-dialog.js (14 checks)
+#### Task 2.2: Migrate move-dialog.js (8 checks) [DONE]
 - File: `frontend/src/features/move/move-dialog.js`
 
-#### Task 2.3: Migrate folder-detail.js (12 checks)
+#### Task 2.3: Migrate folder-detail.js (12 checks) [DONE]
 - File: `frontend/src/features/detail/view/folder-detail.js`
 
-#### Task 2.4: Migrate add-bookmark-form.js (10 checks)
+#### Task 2.4: Migrate add-bookmark-form.js (10 checks) [DONE]
 - File: `frontend/src/features/editing/add-bookmark-form.js`
+- Remaining 4 `instanceof` checks are runtime guards (early returns), not validation
 
-#### Task 2.5: Migrate import-merge-dialog.js (9 checks)
+#### Task 2.5: Migrate import-merge-dialog.js (9 checks) [DONE]
 - File: `frontend/src/features/import-merge/import-merge-dialog.js`
+- Remaining 1 `instanceof` check is a `mount()` container guard
 
-#### Task 2.6: Migrate confirm-modal.js (8 checks)
+#### Task 2.6: Migrate confirm-modal.js (8 checks) [DONE]
 - File: `frontend/src/components/confirm-modal/confirm-modal.js`
+- Remaining 1 `instanceof` check is a `mount()` container guard
 
-#### Task 2.7: Migrate add-folder-form.js (8 checks)
+#### Task 2.7: Migrate add-folder-form.js (8 checks) [DONE]
 - File: `frontend/src/features/editing/add-folder-form.js`
+- Remaining 4 `instanceof` checks are runtime guards (early returns), not validation
 
-#### Task 2.8: Migrate bulk-selection-detail.js (6 checks)
+#### Task 2.8: Migrate bulk-selection-detail.js (6 checks) [DONE]
 - File: `frontend/src/features/detail/view/bulk-selection-detail.js`
 
-#### Task 2.9: Migrate empty-library-page.js (5 checks)
+#### Task 2.9: Migrate empty-library-page.js (5 checks) [DONE]
 - File: `frontend/src/pages/empty-library/empty-library-page.js`
+- Remaining 2 `instanceof` checks are in `mountEmptyLibraryPage` (Phase 3)
 
-#### Task 2.10: Migrate titlebar.js (4 checks in onMount)
+#### Task 2.10: Migrate titlebar.js (4 checks in onMount) [DONE]
 - File: `frontend/src/components/titlebar/titlebar.js`
-- Note: Only the 4 checks inside onMount. The collectShell check is in Phase 3.
+- Remaining 3 `instanceof` checks: 2 runtime guards + 1 collectShell (Phase 3)
 
-#### Task 2.11: Migrate toolbar-actions.js (4 checks)
+#### Task 2.11: Migrate toolbar-actions.js (4 checks) [DONE]
 - File: `frontend/src/components/toolbar/toolbar-actions.js`
 
-#### Task 2.12: Migrate keyboard-shortcuts-dialog.js (4 checks)
+#### Task 2.12: Migrate keyboard-shortcuts-dialog.js (4 checks) [DONE]
 - File: `frontend/src/components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.js`
 
-#### Task 2.13: Skip non-candidate patterns
+#### Task 2.13: Skip non-candidate patterns [DONE]
 - Files with runtime guards (not validation throws):
   - bookmark-search-result-row.js, bookmark-tree-keyboard.js, global-shortcuts-focus.js,
     import-merge-dialog-preview.js, toast-container.js, bookmark-tree-row.js
@@ -160,71 +166,50 @@ if (!(titlebar instanceof HTMLElement)) {
 }
 
 // After:
-const titlebar = /** @type {HTMLElement} */ (root.querySelector("#titlebar"));
-requireRef({ titlebar }, "titlebar");
-// Or simply:
 const titlebar = requireElement(root, "#titlebar", "titlebar");
 ```
 
-Actually, for shell collection, a better helper might be:
-
-```js
-/**
- * @template {Element} T
- * @param {ParentNode} root
- * @param {string} selector
- * @param {string} description
- * @returns {T}
- */
-export function requireElement(root, selector, description) {
-  const el = root.querySelector(selector);
-  if (!el) {
-    throw new Error(`Missing required element: ${description} (${selector})`);
-  }
-  return /** @type {T} */ (el);
-}
-```
-
-#### Task 3.1: Add requireElement() to NAF runtime
-- Add `requireElement(root, selector, description)` helper
-- Includes JSDoc with template type for type narrowing
-- Error message includes both description and selector
+#### Task 3.1: Add requireElement() to NAF runtime [DONE]
+- See Task 1.1 -- already implemented alongside `requireRef()`
 - File: `frontend/src/shared/runtime/naf.js`
 
-#### Task 3.2: Update guidelines for requireElement()
-- Document in `docs/naf-html-usage-guidelines.md`
+#### Task 3.2: Update guidelines for requireElement() [DONE]
+- See Task 1.2 -- already documented alongside `requireRef()`
 - File: `docs/naf-html-usage-guidelines.md`
 
-#### Task 3.3: Migrate app-shell-layout.js (3 checks)
+#### Task 3.3: Migrate app-shell-layout.js (3 checks) [DONE]
+- Removed local `requireElement()` function, imported from NAF
+- Migrated `collectLayoutShell()` to use `requireElement()`
 - File: `frontend/src/layouts/app-shell/app-shell-layout.js`
 
-#### Task 3.4: Migrate bookmark-tree.js (3 checks in collectShell)
+#### Task 3.4: Migrate bookmark-tree.js (3 checks in collectShell) [DONE]
+- Migrated `collectBookmarkTreeShell()` to use `requireElement()`
 - File: `frontend/src/features/tree/view/bookmark-tree.js`
-- Note: Only the 3 checks in collectBookmarkTreeShell (lines 72, 75, 78).
-  The 2 checks inside list() setup callbacks (lines 133, 150) validate elements
-  from the list renderer and are NOT candidates -- they use a different pattern.
 
-#### Task 3.5: Migrate create-app.js (2 checks)
+#### Task 3.5: Migrate create-app.js (2 checks) [DONE]
+- Removed local `requireElement()` function, imported from NAF
+- Migrated `collectShell()` to use `requireElement()` with description params
 - File: `frontend/src/app/create-app.js`
 
-#### Task 3.6: Migrate detail-panel.js (2 checks)
+#### Task 3.6: Migrate detail-panel.js (2 checks) [DONE]
+- Migrated `collectDetailPanelShell()` to use `requireElement()`
 - File: `frontend/src/features/detail/view/detail-panel.js`
 
-#### Task 3.7: Migrate bookmark-tree-dnd.js (1 check in collectShell)
-- File: `frontend/src/features/tree/interactions/bookmark-tree-dnd.js`
-- Note: Only the validation check in collectShell. The check at line 310 is
-  a compound guard (`if (!(target instanceof HTMLElement) || target.closest("button"))`)
-  that is not a simple validation throw.
+#### Task 3.7: Migrate bookmark-tree-dnd.js (1 check in collectShell) [DONE]
+- No collectShell function exists in this file -- the dnd controller
+  takes options directly (`createBookmarkTreeDndController({ treeList })`).
+  No migration needed.
 
-#### Task 3.8: Migrate titlebar.js (1 check in collectShell)
+#### Task 3.8: Migrate titlebar.js (1 check in collectShell) [DONE]
+- Migrated `collectTitlebarShell()` to use `requireElement()`
 - File: `frontend/src/components/titlebar/titlebar.js`
-- Note: The collectTitlebarShell function has 1 validation check (line 244).
-  The 4 checks in onMount (lines 97, 100, 103, 106) are in Phase 2.
 
-#### Task 3.9: Migrate search-bar.js (1 check)
+#### Task 3.9: Migrate search-bar.js (1 check) [DONE]
+- Migrated `collectSearchBarShell()` to use `requireElement()`
 - File: `frontend/src/features/search/view/search-bar.js`
 
-#### Task 3.10: Migrate page-frame.js (1 check)
+#### Task 3.10: Migrate page-frame.js (1 check) [DONE]
+- Migrated `collectPageHost()` to use `requireElement()`
 - File: `frontend/src/pages/page-frame.js`
 
 #### Task 3.11: Skip non-candidate shell files
@@ -234,20 +219,20 @@ export function requireElement(root, selector, description) {
 - `bookmark-tree-row.js` - row rendering guards
 - `bookmark-tree-keyboard.js` - runtime guard in isEditableTarget()
 
-### Phase 4: Verify
+### Phase 4: Verify [DONE]
 
-#### Task 4.1: Run typecheck and build
+#### Task 4.1: Run typecheck and build [DONE]
 ```bash
 cd frontend
 npm run typecheck
 npm run build
 ```
-- Verify no new type errors
-- Verify build succeeds
+- typecheck: passes with no errors
+- build: succeeds, 61 modules transformed, 122.81 kB output
 
-#### Task 4.2: Update analysis.md
-- Mark pain point 3 as addressed
-- Note the `requireRef()` and `requireElement()` additions to NAF
+#### Task 4.2: Update analysis.md [DONE]
+- Marked pain point 3 as [RESOLVED] with summary of changes
+- Noted `requireRef()` and `requireElement()` additions to NAF
 - File: `analysis.md`
 
 ## Migration Pattern

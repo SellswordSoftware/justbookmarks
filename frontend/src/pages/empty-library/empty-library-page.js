@@ -8,6 +8,7 @@ import {
   effect,
   listener,
   mount,
+  requireRef,
   template,
 } from "../../shared/runtime/naf.js";
 import {
@@ -41,19 +42,9 @@ function createEmptyLibrarySplash(actions) {
     /** @type {TemplateTag} */ (
       template({
         root: ".empty-library-page",
-        onMount(el, _parent, ctx) {
-          if (!(el instanceof HTMLElement)) {
-            throw new Error("Expected empty library page root");
-          }
-
-          const openButton = ctx.refs.openButton;
-          const createButton = ctx.refs.createButton;
-          if (!(openButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected empty library open button");
-          }
-          if (!(createButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected empty library create button");
-          }
+        onMount(_el, _parent, ctx) {
+          const openButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "openButton"));
+          const createButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "createButton"));
 
           const handleOpenClick = () => {
             void actions.openFile();

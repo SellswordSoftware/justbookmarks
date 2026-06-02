@@ -1,6 +1,6 @@
 // @ts-check
 
-import { attr, effect, listener, mount, template } from "../../shared/runtime/naf.js";
+import { attr, effect, listener, mount, requireElement, requireRef, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 import { saving } from "../../shared/state/save-state.js";
 import {
@@ -89,23 +89,10 @@ function createTitlebarWindowControlsComponent() {
     template({
       onMount(_el, _host, ctx) {
         const { refs, cleanup } = ctx;
-        const themeToggleButton = refs.themeToggleButton;
-        const minimizeButton = refs.minimizeButton;
-        const maximizeButton = refs.maximizeButton;
-        const closeButton = refs.closeButton;
-
-        if(!(themeToggleButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected theme button");
-        }
-        if (!(minimizeButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected minimize button");
-        }
-        if (!(maximizeButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected maximize button");
-        }
-        if (!(closeButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected close button");
-        }
+        const themeToggleButton = /** @type {HTMLButtonElement} */ (requireRef(refs, "themeToggleButton"));
+        const minimizeButton = /** @type {HTMLButtonElement} */ (requireRef(refs, "minimizeButton"));
+        const maximizeButton = /** @type {HTMLButtonElement} */ (requireRef(refs, "maximizeButton"));
+        const closeButton = /** @type {HTMLButtonElement} */ (requireRef(refs, "closeButton"));
 
         const handleMaximiseClick = () => {
           void toggleMaximiseWindow();
@@ -240,10 +227,5 @@ export function mountTitlebar(shell) {
  * @returns {TitlebarShell}
  */
 export function collectTitlebarShell(root) {
-  const titlebar = root.querySelector("#titlebar");
-  if (!(titlebar instanceof HTMLElement)) {
-    throw new Error("Expected #titlebar element");
-  }
-
-  return { titlebar };
+  return { titlebar: requireElement(root, "#titlebar", "titlebar") };
 }

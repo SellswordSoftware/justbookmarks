@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, listener, mount, template } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, requireRef, template } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /**
@@ -26,35 +26,13 @@ function createConfirmModal(modal) {
     /** @type {TemplateTag} */ (
       template({
         onMount(_el, _parent, ctx) {
-          const backdrop = ctx.refs.backdrop;
-          const dialog = ctx.refs.dialog;
-          const title = ctx.refs.title;
-          const message = ctx.refs.message;
-          const cancelButton = ctx.refs.cancelButton;
-          const confirmButton = ctx.refs.confirmButton;
-          const confirmLabel = ctx.refs.confirmLabel;
-
-          if (!(backdrop instanceof HTMLDivElement)) {
-            throw new Error("Expected confirm modal backdrop");
-          }
-          if (!(dialog instanceof HTMLDivElement)) {
-            throw new Error("Expected confirm modal dialog");
-          }
-          if (!(title instanceof HTMLElement)) {
-            throw new Error("Expected confirm modal title");
-          }
-          if (!(message instanceof HTMLElement)) {
-            throw new Error("Expected confirm modal message");
-          }
-          if (!(cancelButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected confirm modal cancel button");
-          }
-          if (!(confirmButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected confirm modal confirm button");
-          }
-          if (!(confirmLabel instanceof HTMLElement)) {
-            throw new Error("Expected confirm modal confirm label");
-          }
+          const backdrop = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "backdrop"));
+          const dialog = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "dialog"));
+          const title = /** @type {HTMLElement} */ (requireRef(ctx.refs, "title"));
+          const message = /** @type {HTMLElement} */ (requireRef(ctx.refs, "message"));
+          const cancelButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancelButton"));
+          const confirmButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "confirmButton"));
+          const confirmLabel = /** @type {HTMLElement} */ (requireRef(ctx.refs, "confirmLabel"));
 
           title.textContent = modal.title;
           message.textContent = modal.message;

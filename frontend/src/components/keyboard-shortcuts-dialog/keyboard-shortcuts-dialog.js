@@ -1,7 +1,7 @@
 // @ts-check
 
 import { trapFocusInContainer } from "../../shared/infra/focus.js";
-import { cleanupCollector, effect, listener, mount, raw, template } from "../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, mount, raw, requireRef, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 
 const groups = [
@@ -83,7 +83,7 @@ export function collectKeyboardShortcutsDialogShell(root) {
 function renderGroup(group) {
   const itemsHtml = group.items
     .map(
-      (item) => `
+      (item) => /*html*/ `
         <div class="shortcuts-dialog__row">
           <kbd class="shortcuts-dialog__kbd">${item.keys}</kbd>
           <span class="shortcuts-dialog__action">${item.action}</span>
@@ -92,7 +92,7 @@ function renderGroup(group) {
     )
     .join("");
 
-  return `
+  return /*html*/ `
     <section class="shortcuts-dialog__section">
       <div class="shortcuts-dialog__section-header">
         <h3 class="shortcuts-dialog__section-title">${group.title}</h3>
@@ -111,19 +111,9 @@ function createKeyboardShortcutsDialog() {
   const renderDialog = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _parent, ctx) {
-        const backdrop = ctx.refs.backdrop;
-        const dialog = ctx.refs.dialog;
-        const closeButton = ctx.refs.closeButton;
-
-        if (!(backdrop instanceof HTMLDivElement)) {
-          throw new Error("Expected shortcuts dialog backdrop");
-        }
-        if (!(dialog instanceof HTMLDivElement)) {
-          throw new Error("Expected shortcuts dialog element");
-        }
-        if (!(closeButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected shortcuts dialog close button");
-        }
+        const backdrop = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "backdrop"));
+        const dialog = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "dialog"));
+        const closeButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "closeButton"));
 
         const closeDialog = () => {
           appState.keyboardShortcuts.close();
@@ -175,7 +165,7 @@ function createKeyboardShortcutsDialog() {
     })
   );
 
-  return renderDialog`
+  return renderDialog /*html*/ `
     <div class="modal-backdrop" role="presentation" data-ref="backdrop">
       <div
         class="modal shortcuts-dialog"

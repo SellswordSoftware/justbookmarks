@@ -6,6 +6,7 @@ import {
   hide,
   listener,
   model,
+  requireRef,
   signal,
   show,
   template,
@@ -40,102 +41,32 @@ export function createBookmarkDetail(bookmark) {
     template({
       root: ".bookmark-detail",
       onMount(_el, _parent, ctx) {
-        const titleHeading = ctx.refs.titleHeading;
-        const titleInput = ctx.refs.titleInput;
-        const editButton = ctx.refs.editButton;
-        const moveButton = ctx.refs.moveButton;
-        const deleteButton = ctx.refs.deleteButton;
-        const saveButton = ctx.refs.saveButton;
-        const cancelButton = ctx.refs.cancelButton;
-        const urlLink = ctx.refs.urlLink;
-        const urlInputWrap = ctx.refs.urlInputWrap;
-        const urlInput = ctx.refs.urlInput;
-        const titleLoading = ctx.refs.titleLoading;
-        const actionRow = ctx.refs.actionRow;
-        const openButton = ctx.refs.openButton;
-        const faviconButton = ctx.refs.faviconButton;
-        const detailsError = ctx.refs.detailsError;
-        const iconImage = ctx.refs.iconImage;
-        const fallbackIcon = ctx.refs.fallbackIcon;
-        const addedDate = ctx.refs.addedDate;
-        const modifiedDate = ctx.refs.modifiedDate;
-        const notesText = ctx.refs.notesText;
-        const notesEmpty = ctx.refs.notesEmpty;
-        const notesInput = ctx.refs.notesInput;
+        const titleHeading = /** @type {HTMLHeadingElement} */ (requireRef(ctx.refs, "titleHeading"));
+        const titleInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "titleInput"));
+        const editButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "editButton"));
+        const moveButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "moveButton"));
+        const deleteButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "deleteButton"));
+        const saveButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "saveButton"));
+        const cancelButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancelButton"));
+        const urlLink = /** @type {HTMLAnchorElement} */ (requireRef(ctx.refs, "urlLink"));
+        const urlInputWrap = /** @type {HTMLElement} */ (requireRef(ctx.refs, "urlInputWrap"));
+        const urlInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "urlInput"));
+        const titleLoading = /** @type {HTMLElement} */ (requireRef(ctx.refs, "titleLoading"));
+        const actionRow = /** @type {HTMLElement} */ (requireRef(ctx.refs, "actionRow"));
+        const openButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "openButton"));
+        const faviconButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "faviconButton"));
+        const detailsError = /** @type {HTMLElement} */ (requireRef(ctx.refs, "detailsError"));
+        const iconImage = /** @type {HTMLImageElement} */ (requireRef(ctx.refs, "iconImage"));
+        const fallbackIcon = /** @type {HTMLElement} */ (requireRef(ctx.refs, "fallbackIcon"));
+        const addedDate = /** @type {HTMLElement} */ (requireRef(ctx.refs, "addedDate"));
+        const modifiedDate = /** @type {HTMLElement} */ (requireRef(ctx.refs, "modifiedDate"));
+        const notesText = /** @type {HTMLElement} */ (requireRef(ctx.refs, "notesText"));
+        const notesEmpty = /** @type {HTMLElement} */ (requireRef(ctx.refs, "notesEmpty"));
+        const notesInput = /** @type {HTMLTextAreaElement} */ (requireRef(ctx.refs, "notesInput"));
 
-        if (!(titleHeading instanceof HTMLHeadingElement)) {
-          throw new Error("Expected bookmark detail title heading");
-        }
-        if (!(titleInput instanceof HTMLInputElement)) {
-          throw new Error("Expected bookmark detail title input");
-        }
-        if (!(editButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail edit button");
-        }
-        if (!(moveButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail move button");
-        }
-        if (!(deleteButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail delete button");
-        }
-        if (!(saveButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail save button");
-        }
-        if (!(cancelButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail cancel button");
-        }
-        if (!(urlLink instanceof HTMLAnchorElement)) {
-          throw new Error("Expected bookmark detail URL link");
-        }
-        if (!(urlInputWrap instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail URL input wrap");
-        }
-        if (!(urlInput instanceof HTMLInputElement)) {
-          throw new Error("Expected bookmark detail URL input");
-        }
-        if (!(titleLoading instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail title loading indicator");
-        }
-        if (!(actionRow instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail action row");
-        }
-        if (!(openButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail open button");
-        }
-        if (!(faviconButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bookmark detail favicon button");
-        }
-        if (!(detailsError instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail error element");
-        }
-        if (!(iconImage instanceof HTMLImageElement)) {
-          throw new Error("Expected bookmark detail icon image");
-        }
-        if (!(fallbackIcon instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail fallback icon");
-        }
-        if (!(addedDate instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail added date");
-        }
-        if (!(modifiedDate instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail modified date");
-        }
-        if (!(notesText instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail notes text");
-        }
-        if (!(notesEmpty instanceof HTMLElement)) {
-          throw new Error("Expected bookmark detail empty notes label");
-        }
-        if (!(notesInput instanceof HTMLTextAreaElement)) {
-          throw new Error("Expected bookmark detail notes input");
-        }
-
-        const titleInputEl = titleInput;
-        const urlInputEl = urlInput;
-        const notesInputEl = notesInput;
-        const titleBinding = model(titleInputEl, currentTitle, { reactive: true });
-        const urlBinding = model(urlInputEl, currentURL, { reactive: true });
-        const metaBinding = model(notesInputEl, currentMeta, { reactive: true });
+        const titleBinding = model(titleInput, currentTitle, { reactive: true });
+        const urlBinding = model(urlInput, currentURL, { reactive: true });
+        const metaBinding = model(notesInput, currentMeta, { reactive: true });
         const metadata = createBookmarkMetadataWorkflow({
           isEditing: () => editing(),
           getCurrentURL: () => currentURL(),
@@ -168,8 +99,8 @@ export function createBookmarkDetail(bookmark) {
           }
           if (nextEditing) {
             queueMicrotask(() => {
-              titleInputEl.focus();
-              titleInputEl.select();
+              titleInput.focus();
+              titleInput.select();
             });
           }
         }
@@ -186,7 +117,7 @@ export function createBookmarkDetail(bookmark) {
           setFetchingFavicon: (value) => fetchingFavicon(value),
           setDetailError: (message) => detailError(message),
           focusInvalidURL() {
-            urlInputEl.focus();
+            urlInput.focus();
           },
           resetMetadataTracking: metadata.resetTracking,
         });
@@ -253,12 +184,12 @@ export function createBookmarkDetail(bookmark) {
           listener(openButton, "click", handleOpenClick),
           listener(faviconButton, "click", handleFetchFaviconClick),
           listener(urlLink, "click", handleOpenLinkClick),
-          listener(titleInputEl, "keydown", handleEditKeydown),
-          listener(urlInputEl, "keydown", handleEditKeydown),
-          listener(notesInputEl, "keydown", handleEditKeydown),
-          listener(titleInputEl, "input", handleTitleInput),
-          listener(urlInputEl, "input", handleURLInput),
-          listener(notesInputEl, "input", handleMetaInput),
+          listener(titleInput, "keydown", handleEditKeydown),
+          listener(urlInput, "keydown", handleEditKeydown),
+          listener(notesInput, "keydown", handleEditKeydown),
+          listener(titleInput, "input", handleTitleInput),
+          listener(urlInput, "input", handleURLInput),
+          listener(notesInput, "input", handleMetaInput),
         );
 
         cleanup.add(

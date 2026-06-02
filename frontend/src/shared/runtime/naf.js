@@ -620,6 +620,49 @@ export function cleanupCollector(...initial) {
 }
 
 /**
+ * Require a ref from a component's refs map and throw if it is missing.
+ *
+ * Use this inside `onMount` callbacks to replace the 3-line instanceof
+ * validation pattern with a single call. Add a JSDoc type cast for
+ * type narrowing where needed.
+ *
+ * @template {Element} T
+ * @param {Record<string, Element>} refs
+ * @param {string} name
+ * @returns {T}
+ */
+export function requireRef(refs, name) {
+  const el = refs[name];
+  if (!el) {
+    throw new Error(`Missing required ref: ${name}`);
+  }
+  return /** @type {T} */ (el);
+}
+
+/**
+ * Query an element and throw if it is not found.
+ *
+ * Use this in `collectShell` functions to replace the 3-line
+ * querySelector + instanceof validation pattern with a single call.
+ *
+ * Example:
+ *   const titlebar = requireElement(root, "#titlebar", "titlebar");
+ *
+ * @template {Element} T
+ * @param {ParentNode} root
+ * @param {string} selector
+ * @param {string} description
+ * @returns {T}
+ */
+export function requireElement(root, selector, description) {
+  const el = root.querySelector(selector);
+  if (!el) {
+    throw new Error(`Missing required element: ${description} (${selector})`);
+  }
+  return /** @type {T} */ (el);
+}
+
+/**
  * @template {Element} [T=Element]
  * @typedef {object} Component
  * @property {string} html

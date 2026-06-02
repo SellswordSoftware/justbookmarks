@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, listener, list, raw, template } from "../../../shared/runtime/naf.js";
+import { cleanupCollector, effect, listener, list, raw, requireElement, template } from "../../../shared/runtime/naf.js";
 import { searchState } from "../../search/state/search-state.js";
 import { treeState } from "../state/tree-state.js";
 import { createBookmarkTreeDndController } from "../interactions/bookmark-tree-dnd.js";
@@ -66,23 +66,10 @@ const ROW_HEIGHT = 32;
  * @returns {BookmarkTreeShell}
  */
 export function collectBookmarkTreeShell(root) {
-  const treeList = root.querySelector("#tree-list");
-  const treePaneMeta = root.querySelector("#tree-pane-meta");
-
-  if (!(root instanceof HTMLElement)) {
-    throw new Error("Expected bookmark tree root element");
-  }
-  if (!(treeList instanceof HTMLElement)) {
-    throw new Error("Expected #tree-list element");
-  }
-  if (!(treePaneMeta instanceof HTMLElement)) {
-    throw new Error("Expected #tree-pane-meta element");
-  }
-
   return {
-    root,
-    treeList,
-    treePaneMeta,
+    root: /** @type {HTMLElement} */ (root),
+    treeList: requireElement(root, "#tree-list", "tree-list"),
+    treePaneMeta: requireElement(root, "#tree-pane-meta", "tree-pane-meta"),
   };
 }
 

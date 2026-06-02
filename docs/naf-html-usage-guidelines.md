@@ -42,7 +42,6 @@ If plain DOM is clearer, keep plain DOM.
 Treat `naf.js` as the single runtime entrypoint.
 
 The current runtime surface includes:
-
 - `signal()`
 - `computed()`
 - `effect()`
@@ -56,6 +55,8 @@ The current runtime surface includes:
 - `list()`
 - `cleanupCollector()`
 - `listener()`
+- `requireRef()`
+- `requireElement()`
 - `$()`
 - `$$()`
 - `attr()`
@@ -346,6 +347,54 @@ Good uses:
 - any listener that needs cleanup on unmount
 
 Prefer `listener()` over manual addEventListener/removeEventListener pairing. It is null-safe (handles missing refs) and returns a cleanup function that works directly with `cleanupCollector()`.
+
+### `requireRef(refs, name)`
+
+Require a ref from a component's refs map and throw if it is missing.
+
+Use inside `onMount` callbacks to replace the 3-line instanceof validation pattern with a single call:
+
+```js
+// Instead of:
+const titleInput = ctx.refs.titleInput;
+if (!(titleInput instanceof HTMLInputElement)) {
+  throw new Error("Expected bookmark detail title input");
+}
+
+// Write:
+const titleInput = requireRef(ctx.refs, "titleInput");
+```
+
+Good uses:
+
+- validating refs from `ctx.refs` in template onMount callbacks
+- replacing repetitive instanceof checks
+
+Returns `Element`. Callers that need type narrowing should use JSDoc type assertions.
+
+### `requireElement(root, selector, description)`
+
+Query an element and throw if it is not found.
+
+Use in `collectShell` functions to replace the 3-line querySelector + instanceof validation pattern with a single call:
+
+```js
+// Instead of:
+const titlebar = root.querySelector("#titlebar");
+if (!(titlebar instanceof HTMLElement)) {
+  throw new Error("Expected #titlebar element");
+}
+
+// Write:
+const titlebar = requireElement(root, "#titlebar", "titlebar");
+```
+
+Good uses:
+
+- shell collection functions that query stable DOM anchors
+- replacing querySelector + instanceof validation blocks
+
+Returns the queried element with a generic type for JSDoc narrowing.
 
 ### `$()`, `$$()`, `attr()`, `setText()`, `text()`
 

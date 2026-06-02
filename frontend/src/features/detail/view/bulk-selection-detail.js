@@ -9,6 +9,7 @@ import {
   cleanupCollector,
   fx,
   listener,
+  requireRef,
   signal,
   template,
 } from "../../../shared/runtime/naf.js";
@@ -131,31 +132,12 @@ export function createBulkSelectionDetail() {
     template({
       root: ".bulk-selection-detail",
       onMount(_el, _parent, ctx) {
-        const title = ctx.refs.title;
-        const subtitle = ctx.refs.subtitle;
-        const clearButton = ctx.refs.clearButton;
-        const moveButton = ctx.refs.moveButton;
-        const deleteButton = ctx.refs.deleteButton;
-        const faviconButton = ctx.refs.faviconButton;
-
-        if (!(title instanceof HTMLElement)) {
-          throw new Error("Expected bulk selection detail title");
-        }
-        if (!(subtitle instanceof HTMLElement)) {
-          throw new Error("Expected bulk selection detail subtitle");
-        }
-        if (!(clearButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bulk selection clear button");
-        }
-        if (!(moveButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bulk selection move button");
-        }
-        if (!(deleteButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bulk selection delete button");
-        }
-        if (!(faviconButton instanceof HTMLButtonElement)) {
-          throw new Error("Expected bulk selection favicon button");
-        }
+        const title = /** @type {HTMLElement} */ (requireRef(ctx.refs, "title"));
+        const subtitle = /** @type {HTMLElement} */ (requireRef(ctx.refs, "subtitle"));
+        const clearButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "clearButton"));
+        const moveButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "moveButton"));
+        const deleteButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "deleteButton"));
+        const faviconButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "faviconButton"));
 
         function clearSelection() {
           treeState.actions.clearSelection();

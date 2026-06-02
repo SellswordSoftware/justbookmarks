@@ -12,6 +12,7 @@ import {
   listener,
   model,
   raw,
+  requireRef,
   signal,
   show,
   template,
@@ -100,48 +101,21 @@ export function createAddBookmarkForm(options) {
       template({
         root: ".add-bookmark-launcher",
         onMount(_el, _parent, ctx) {
-          const trigger = ctx.refs.trigger;
-          const panel = ctx.refs.panel;
-          const urlInput = ctx.refs.urlInput;
-          const titleInput = ctx.refs.titleInput;
-          const loading = ctx.refs.loading;
-          const error = ctx.refs.error;
-          const submit = ctx.refs.submit;
-          const cancel = ctx.refs.cancel;
+          const trigger = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "trigger"));
+          const panel = /** @type {HTMLElement} */ (requireRef(ctx.refs, "panel"));
+          const urlInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "urlInput"));
+          const titleInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "titleInput"));
+          const loading = /** @type {HTMLElement} */ (requireRef(ctx.refs, "loading"));
+          const error = /** @type {HTMLElement} */ (requireRef(ctx.refs, "error"));
+          const submit = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "submit"));
+          const cancel = requireRef(ctx.refs, "cancel");
 
-          if (!(trigger instanceof HTMLButtonElement)) {
-            throw new Error("Expected add bookmark trigger button");
-          }
-          if (!(panel instanceof HTMLElement)) {
-            throw new Error("Expected add bookmark panel");
-          }
-          if (!(urlInput instanceof HTMLInputElement)) {
-            throw new Error("Expected add bookmark URL input");
-          }
-          if (!(titleInput instanceof HTMLInputElement)) {
-            throw new Error("Expected add bookmark title input");
-          }
-          if (!(loading instanceof HTMLElement)) {
-            throw new Error("Expected add bookmark loading element");
-          }
-          if (!(error instanceof HTMLElement)) {
-            throw new Error("Expected add bookmark error element");
-          }
-          if (!(submit instanceof HTMLButtonElement)) {
-            throw new Error("Expected add bookmark submit button");
-          }
-          if (!(cancel instanceof HTMLButtonElement)) {
-            throw new Error("Expected add bookmark cancel button");
-          }
-
-          const urlInputEl = urlInput;
-          const titleInputEl = titleInput;
           const panelEl = panel;
           const detailPaneContent = panelEl.closest(".detail-pane__content");
           const treePane = panelEl.closest(".tree-pane");
           let isPositionListenerAttached = false;
-          const urlBinding = model(urlInputEl, url, { reactive: true });
-          const titleBinding = model(titleInputEl, titleValue, {
+          const urlBinding = model(urlInput, url, { reactive: true });
+          const titleBinding = model(titleInput, titleValue, {
             reactive: true,
           });
 
@@ -244,7 +218,7 @@ export function createAddBookmarkForm(options) {
               attachPositionListeners();
               queueMicrotask(() => {
                 positionPanel();
-                urlInputEl.focus();
+                urlInput.focus();
               });
               return;
             }
@@ -310,7 +284,7 @@ export function createAddBookmarkForm(options) {
             const nextURL = url().trim();
             if (!nextURL) {
               errorMessage("URL is required");
-              urlInputEl.focus();
+              urlInput.focus();
               return;
             }
 
@@ -381,9 +355,9 @@ export function createAddBookmarkForm(options) {
               return;
             }
 
-            if (event.key === "Enter" && event.target === urlInputEl) {
+            if (event.key === "Enter" && event.target === urlInput) {
               event.preventDefault();
-              titleInputEl.focus();
+              titleInput.focus();
             }
           }
 
@@ -400,10 +374,10 @@ export function createAddBookmarkForm(options) {
           listener(trigger, "click", handleTriggerClick),
           listener(submit, "click", handleSubmitClick),
           listener(cancel, "click", handleCancelClick),
-          listener(urlInputEl, "keydown", handleFieldKeydown),
-          listener(titleInputEl, "keydown", handleFieldKeydown),
-          listener(urlInputEl, "input", handleURLInput),
-          listener(titleInputEl, "input", handleTitleInput),
+          listener(urlInput, "keydown", handleFieldKeydown),
+          listener(titleInput, "keydown", handleFieldKeydown),
+          listener(urlInput, "input", handleURLInput),
+          listener(titleInput, "input", handleTitleInput),
         );
 
         cleanup.add(

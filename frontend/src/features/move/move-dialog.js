@@ -10,6 +10,7 @@ import {
   list,
   listener,
   mount,
+  requireRef,
   template,
 } from "../../shared/runtime/naf.js";
 import { moveDialogState } from "./move-dialog-state.js";
@@ -110,39 +111,14 @@ function createMoveDialog(view, onMountElements) {
     /** @type {TemplateTag} */ (
       template({
         onMount(_el, _parent, ctx) {
-          const backdrop = ctx.refs.backdrop;
-          const dialog = ctx.refs.dialog;
-          const title = ctx.refs.title;
-          const listbox = ctx.refs.listbox;
-          const emptyState = ctx.refs.emptyState;
-          const filterInput = ctx.refs.filterInput;
-          const cancelButton = ctx.refs.cancelButton;
-          const confirmButton = ctx.refs.confirmButton;
-
-          if (!(backdrop instanceof HTMLDivElement)) {
-            throw new Error("Expected move dialog backdrop");
-          }
-          if (!(dialog instanceof HTMLDivElement)) {
-            throw new Error("Expected move dialog");
-          }
-          if (!(title instanceof HTMLElement)) {
-            throw new Error("Expected move dialog title");
-          }
-          if (!(listbox instanceof HTMLDivElement)) {
-            throw new Error("Expected move dialog listbox");
-          }
-          if (!(emptyState instanceof HTMLDivElement)) {
-            throw new Error("Expected move dialog empty state");
-          }
-          if (!(filterInput instanceof HTMLInputElement)) {
-            throw new Error("Expected move dialog filter input");
-          }
-          if (!(cancelButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected move cancel button");
-          }
-          if (!(confirmButton instanceof HTMLButtonElement)) {
-            throw new Error("Expected move confirm button");
-          }
+          const backdrop = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "backdrop"));
+          const dialog = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "dialog"));
+          const title = /** @type {HTMLElement} */ (requireRef(ctx.refs, "title"));
+          const listbox = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "listbox"));
+          const emptyState = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "emptyState"));
+          const filterInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "filterInput"));
+          const cancelButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancelButton"));
+          const confirmButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "confirmButton"));
 
           title.textContent = `Move "${view.label}"`;
 

@@ -1,5 +1,7 @@
 // @ts-check
 
+import { requireElement } from "../shared/runtime/naf.js";
+
 /**
  * @typedef {object} PageFrameShell
  * @property {HTMLElement} appToolbar
@@ -40,9 +42,5 @@ export function showEmptyLibraryFrame(shell) {
  * @returns {HTMLElement}
  */
 export function collectPageHost(root) {
-  const pageHost = root.querySelector("#page-host");
-  if (!(pageHost instanceof HTMLElement)) {
-    throw new Error("Expected #page-host element");
-  }
-  return pageHost;
+  return requireElement(root, "#page-host", "page-host");
 }
