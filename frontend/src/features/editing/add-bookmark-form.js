@@ -13,6 +13,7 @@ import {
   model,
   raw,
   signal,
+  show,
   template,
 } from "../../shared/runtime/naf.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
@@ -417,9 +418,7 @@ export function createAddBookmarkForm(options) {
               setOpen(false);
             }
           }),
-          fx(panel, (currentPanel) => {
-            currentPanel.hidden = !open();
-          }),
+          show(panel, open),
           fx(loading, (currentLoading) => {
             const active = loadingState();
             currentLoading.hidden = !active;
