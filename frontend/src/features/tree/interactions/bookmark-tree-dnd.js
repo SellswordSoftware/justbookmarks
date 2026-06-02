@@ -165,9 +165,9 @@ export function createBookmarkTreeDndController(options) {
       return null;
     }
 
-    const visibleEntry = treeState.selectors
-      .getVisibleNodeEntries()
-      .find((entry) => entry.id === entryId);
+    /** @type {VisibleTreeNodeEntry[]} */
+    const visibleEntries = /** @type {VisibleTreeNodeEntry[]} */ (treeState.selectors.getVisibleNodeEntries());
+    const visibleEntry = visibleEntries.find((entry) => entry.id === entryId);
     if (!visibleEntry) {
       return null;
     }

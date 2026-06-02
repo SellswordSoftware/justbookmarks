@@ -94,7 +94,8 @@ export function createBookmarkTreeKeydownHandler(activateSearchNode) {
       return;
     }
 
-    const visibleNodes = treeState.selectors.getVisibleNodeEntries();
+    /** @type {VisibleTreeNodeEntry[]} */
+    const visibleNodes = /** @type {VisibleTreeNodeEntry[]} */ (treeState.selectors.getVisibleNodeEntries());
     if (visibleNodes.length === 0) {
       return;
     }
