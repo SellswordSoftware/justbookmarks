@@ -197,7 +197,6 @@ If you are starting cold, read in this order:
 - forcing `template()` into tree or detail modules just for consistency
 - putting product workflows into `components/`
 - growing `index.html` with page or dialog markup
-- reintroducing `appState.selectors` / `appState.actions` style wrappers
 - promoting unstable code into `shared/`
 - mixing architectural migration with unrelated cleanup
 

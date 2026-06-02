@@ -106,7 +106,7 @@ function mountLibraryToolbarAndFeatures(shell, actions) {
  */
 function mountLibraryTitlebarMeta(shell) {
   return effect(() => {
-    const filePath = appState.currentFilePath();
+    const filePath = appState.selectors.getCurrentFilePath();
     const treeError = treeState.selectors.getError();
     const loading = treeState.selectors.isLoading();
 

@@ -51,7 +51,7 @@ function createToolbarActionsComponent(actions) {
             listener(openButton, "click", handleOpenClick),
             listener(createButton, "click", handleCreateClick),
             listener(importButton, "click", handleImportClick),
-            attr(importButton, "disabled", () => !appState.currentFilePath()),
+            attr(importButton, "disabled", () => !appState.selectors.getCurrentFilePath()),
           );
         },
         onUnmount() {

@@ -76,7 +76,7 @@ export const importMergeState = {
      * @returns {Promise<void>}
      */
     async openImportMerge() {
-      if (!appState.currentFilePath()) {
+      if (!appState.selectors.getCurrentFilePath()) {
         uiState.actions.showToast("Open a bookmark file before importing", "info");
         return;
       }

@@ -213,25 +213,25 @@ export const appState = {
 
 ## Task Checklist
 
-- [x ] **Phase 0:** Update docs (frontend-architecture.md, frontend-maintainability-guidelines.md, agent-project-context.md)
+- [x ] **Phase 0:** Update docs (frontend-architecture.md, frontend-maintainability-guidelines.md, agent-project-context.md, naf-html-usage-guidelines.md)
 - [x ] **Phase 1:** Rewrite app-state.js to canonical pattern
-- [ ] **Phase 2.1:** Update app/session.js call sites
-- [ ] **Phase 2.2:** Update app/lifecycle.js call sites
-- [ ] **Phase 2.3:** Update app/page-host.js call sites
-- [ ] **Phase 2.4:** Update components/titlebar/titlebar.js call sites
-- [ ] **Phase 2.5:** Update components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.js call sites
-- [ ] **Phase 2.6:** Update features/shortcuts/global-shortcuts.js call sites
-- [ ] **Phase 2.7:** Update features/shortcuts/global-shortcuts-history.js call sites
-- [ ] **Phase 2.8:** Update features/editing/add-bookmark-form.js call sites
-- [ ] **Phase 2.9:** Update features/editing/add-folder-form.js call sites
-- [ ] **Phase 2.10:** Update components/toolbar/toolbar-actions.js call sites
-- [ ] **Phase 2.11:** Update features/import-merge/import-merge-state.js call sites
-- [ ] **Phase 2.12:** Update layouts/app-shell/app-shell-layout.js call sites
-- [ ] **Phase 2.13:** Update pages/library/library-page.js call sites
-- [ ] **Phase 2.14:** Update pages/empty-library/empty-library-page.js call sites
-- [ ] **Phase 3.1:** Run typecheck -- must pass
-- [ ] **Phase 3.2:** Run build -- must pass
-- [ ] **Phase 3.3:** Final review for dead code / stale imports
+- [x ] **Phase 2.1:** Update app/session.js call sites
+- [x ] **Phase 2.2:** Update app/lifecycle.js call sites
+- [x ] **Phase 2.3:** Update app/page-host.js call sites
+- [x ] **Phase 2.4:** Update components/titlebar/titlebar.js call sites
+- [x ] **Phase 2.5:** Update components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.js call sites
+- [x ] **Phase 2.6:** Update features/shortcuts/global-shortcuts.js call sites
+- [x ] **Phase 2.7:** Update features/shortcuts/global-shortcuts-history.js call sites
+- [x ] **Phase 2.8:** Update features/editing/add-bookmark-form.js call sites
+- [x ] **Phase 2.9:** Update features/editing/add-folder-form.js call sites
+- [x ] **Phase 2.10:** Update components/toolbar/toolbar-actions.js call sites
+- [x ] **Phase 2.11:** Update features/import-merge/import-merge-state.js call sites
+- [x ] **Phase 2.12:** Update layouts/app-shell/app-shell-layout.js call sites
+- [x ] **Phase 2.13:** Update pages/library/library-page.js call sites
+- [x ] **Phase 2.14:** Update pages/empty-library/empty-library-page.js call sites (no changes needed)
+- [x ] **Phase 3.1:** Run typecheck -- passes
+- [x ] **Phase 3.2:** Run build -- passes
+- [x ] **Phase 3.3:** Final review for dead code / stale imports
 
 ## Notes
 

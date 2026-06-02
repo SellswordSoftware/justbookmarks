@@ -4,6 +4,7 @@ import { effect } from "../shared/runtime/naf.js";
 import { createFile, openFile } from "./session.js";
 import { mountEmptyLibraryPage } from "../pages/empty-library/empty-library-page.js";
 import { mountLibraryPage } from "../pages/library/library-page.js";
+import { importMergeState } from "../features/import-merge/import-merge-state.js";
 import { treeState } from "../features/tree/state/tree-state.js";
 import { appState } from "../shared/state/app-state.js";
 
@@ -29,7 +30,7 @@ import { appState } from "../shared/state/app-state.js";
  * @returns {PageKind}
  */
 function resolvePageKind(currentPageKind) {
-  const filePath = appState.currentFilePath();
+  const filePath = appState.selectors.getCurrentFilePath();
   const loading = treeState.selectors.isLoading();
   const shouldKeepLibraryPage =
     currentPageKind === "library" &&
@@ -66,7 +67,7 @@ export function mountPageHost(shell) {
   const pageActions = {
     openFile: () => openFile(shell),
     createFile: () => createFile(shell),
-    importFile: () => appState.importMerge.openImportMerge(),
+    importFile: () => importMergeState.actions.openImportMerge(),
   };
 
   currentPage = mountPage(shell, pageActions, currentPageKind);

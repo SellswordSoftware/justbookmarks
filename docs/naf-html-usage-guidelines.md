@@ -67,11 +67,11 @@ Use one runtime import surface per module. Do not split runtime imports across m
 
 The current app-state style alongside NAF is:
 
-- direct signal reads such as `appState.currentFilePath()`
-- direct signal writes when the module truly owns them
-- small domain groups such as `appState.session`, `appState.window`, `appState.keyboardShortcuts`, and `appState.importMerge`
+- read state through selectors such as `appState.selectors.getCurrentFilePath()`
+- write state through actions such as `appState.actions.setCurrentFilePath(path)`
+- all state modules follow the signals/actions/computed/selectors pattern
 
-Do not add a second wrapper layer like `appState.selectors` or `appState.actions`.
+See `docs/frontend-architecture.md` for the canonical state module shape.
 
 ## Choosing The Right Level
 
@@ -427,8 +427,9 @@ Use the smallest ownership scope that still matches the real behavior.
 
 For shared state surfaces:
 
-- prefer direct signals for simple app/session values
-- prefer small domain groups for related workflows
+- use the canonical signals/actions/computed/selectors pattern
+- keep private signals module-scoped
+- expose reads via selectors and writes via actions
 - avoid parallel APIs that expose the same value through multiple naming schemes
 
 ## Recommended Module Shapes

@@ -16,7 +16,7 @@ import {
 
 /** @returns {void} */
 function minimiseWindow() {
-  if (!appState.hasWailsRuntime()) {
+  if (!appState.selectors.hasWailsRuntime()) {
     return;
   }
   WindowMinimise();
@@ -24,16 +24,16 @@ function minimiseWindow() {
 
 /** @returns {Promise<void>} */
 async function toggleMaximiseWindow() {
-  if (!appState.hasWailsRuntime()) {
+  if (!appState.selectors.hasWailsRuntime()) {
     return;
   }
   WindowToggleMaximise();
-  await appState.window.sync();
+  await appState.actions.syncWindowState();
 }
 
 /** @returns {void} */
 function closeWindow() {
-  if (!appState.hasWailsRuntime()) {
+  if (!appState.selectors.hasWailsRuntime()) {
     return;
   }
   Quit();
@@ -98,26 +98,26 @@ function createTitlebarWindowControlsComponent() {
           void toggleMaximiseWindow();
         };
         const handleFocus = () => {
-          void appState.window.sync();
+          void appState.actions.syncWindowState();
         };
 
         themeToggleButton.addEventListener("click", () => {
-          const current = appState.window.theme();
-          appState.window.setTheme(current === "light" ? "dark" : "light");
+          const current = appState.selectors.getTheme();
+          appState.actions.setTheme(current === "light" ? "dark" : "light");
           themeToggleButton.innerHTML = current === "light" ? "🌞" : "🌙";
         });
-        themeToggleButton.innerHTML = appState.window.theme() === "light" ? "🌙" : "🌞";
+        themeToggleButton.innerHTML = appState.selectors.getTheme() === "light" ? "🌙" : "🌞";
 
         cleanup.add(
           listener(minimizeButton, "click", minimiseWindow),
           listener(maximizeButton, "click", handleMaximiseClick),
           listener(closeButton, "click", closeWindow),
           listener(window, "focus", handleFocus),
-          attr(minimizeButton, "disabled", () => !appState.hasWailsRuntime()),
-          attr(maximizeButton, "disabled", () => !appState.hasWailsRuntime()),
-          attr(closeButton, "disabled", () => !appState.hasWailsRuntime()),
+          attr(minimizeButton, "disabled", () => !appState.selectors.hasWailsRuntime()),
+          attr(maximizeButton, "disabled", () => !appState.selectors.hasWailsRuntime()),
+          attr(closeButton, "disabled", () => !appState.selectors.hasWailsRuntime()),
           effect(() => {
-            const maximised = appState.isMaximised();
+            const maximised = appState.selectors.isMaximised();
 
             maximizeButton.textContent = maximised ? "❐" : "□";
             maximizeButton.setAttribute(
@@ -128,7 +128,7 @@ function createTitlebarWindowControlsComponent() {
           }),
         );
 
-        void appState.window.sync();
+        void appState.actions.syncWindowState();
       },
     })
   );

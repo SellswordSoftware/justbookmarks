@@ -45,7 +45,7 @@ export function collectLayoutShell(root) {
  * @returns {() => void}
  */
 export function mountLayout(shell) {
-  let leftPaneWidth = appState.persistedState().leftPaneWidth;
+  let leftPaneWidth = appState.selectors.getPersistedState().leftPaneWidth;
   let isResizing = false;
 
   /**
@@ -59,7 +59,7 @@ export function mountLayout(shell) {
     shell.root.style.setProperty("--left-pane-width", `${leftPaneWidth}px`);
     if (persist) {
       const nextState = setLeftPaneWidth(leftPaneWidth);
-      appState.persistedState(nextState);
+      appState.signals.persistedState(nextState);
     }
   }
 
@@ -103,7 +103,7 @@ export function mountLayout(shell) {
   }
 
   const stopEffect = effect(() => {
-    applyLeftPaneWidth(appState.persistedState().leftPaneWidth);
+    applyLeftPaneWidth(appState.selectors.getPersistedState().leftPaneWidth);
   });
 
   applyLeftPaneWidth(leftPaneWidth);

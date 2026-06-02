@@ -33,7 +33,7 @@ export function mountAppLifecycle(options) {
     }
 
     saveWindowSizeTimer = setTimeout(() => {
-      void appState.window.persistCurrentSize();
+      void appState.actions.persistCurrentSize();
     }, 150);
   }
 
@@ -41,7 +41,7 @@ export function mountAppLifecycle(options) {
     schedulePersistWindowSize();
   };
   const stopTreePersistence = effect(() => {
-    const currentFilePath = appState.currentFilePath();
+    const currentFilePath = appState.selectors.getCurrentFilePath();
     if (!currentFilePath) {
       return;
     }
@@ -52,7 +52,7 @@ export function mountAppLifecycle(options) {
   const stopThemeSync = effect(() => {
     const appShell = document.querySelector(".app-shell");
     if (appShell) {
-      appShell.setAttribute("data-theme", appState.window.theme());
+      appShell.setAttribute("data-theme", appState.selectors.getTheme());
     }
   });
   const cleanupFeatures = combineCleanups(options.featureCleanups);
@@ -63,7 +63,7 @@ export function mountAppLifecycle(options) {
       if (saveWindowSizeTimer) {
         clearTimeout(saveWindowSizeTimer);
       }
-      void appState.window.persistCurrentSize();
+      void appState.actions.persistCurrentSize();
       searchState.dispose();
       cleanup.run();
     }),
@@ -77,7 +77,7 @@ export function mountAppLifecycle(options) {
       if (saveWindowSizeTimer) {
         clearTimeout(saveWindowSizeTimer);
       }
-      void appState.window.persistCurrentSize();
+      void appState.actions.persistCurrentSize();
       searchState.dispose();
       cleanup.run();
     },

@@ -62,7 +62,7 @@ export function mountGlobalShortcuts(options) {
     if (!editableTarget && !modifierPressed && !event.altKey) {
       if (key === "f1" || (key === "?" && event.shiftKey)) {
         event.preventDefault();
-        appState.keyboardShortcuts.open();
+        appState.actions.openKeyboardShortcuts();
         return;
       }
 
@@ -89,9 +89,9 @@ export function mountGlobalShortcuts(options) {
       }
 
       if (key === "escape") {
-        if (appState.keyboardShortcutsOpen()) {
+        if (appState.selectors.isKeyboardShortcutsOpen()) {
           event.preventDefault();
-          appState.keyboardShortcuts.close();
+          appState.actions.closeKeyboardShortcuts();
           return;
         }
         if (uiState.selectors.getModal().open) {
@@ -113,7 +113,7 @@ export function mountGlobalShortcuts(options) {
       return;
     }
 
-    if (!modifierPressed && !event.altKey && appState.currentFilePath()) {
+    if (!modifierPressed && !event.altKey && appState.selectors.getCurrentFilePath()) {
       if (key === "a" && !event.shiftKey) {
         event.preventDefault();
         void openAddBookmarkShortcut(options);

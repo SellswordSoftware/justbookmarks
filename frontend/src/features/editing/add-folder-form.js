@@ -246,7 +246,7 @@ export function createAddFolderForm(options) {
           effect(() => {
             const available = options.isAvailable
               ? options.isAvailable()
-              : Boolean(appState.currentFilePath());
+              : Boolean(appState.selectors.getCurrentFilePath());
             trigger.disabled = !available;
             if (!available) {
               setOpen(false);

@@ -116,7 +116,7 @@ function createKeyboardShortcutsDialog() {
         const closeButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "closeButton"));
 
         const closeDialog = () => {
-          appState.keyboardShortcuts.close();
+          appState.actions.closeKeyboardShortcuts();
         };
         /** @param {MouseEvent} event */
         const handleBackdropClick = (event) => {
@@ -209,7 +209,7 @@ export function mountKeyboardShortcutsDialog(shell) {
     cleanupRendered = undefined;
     shell.container.replaceChildren();
 
-    if (!appState.keyboardShortcutsOpen()) {
+    if (!appState.selectors.isKeyboardShortcutsOpen()) {
       return;
     }
 
