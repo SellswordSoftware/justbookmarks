@@ -1,3 +1,101 @@
 [data-theme="dark"] {
   color-scheme: dark;
+
+  /* ── Base palette ───────────────────────────────────── */
+  --color-base-100: #1f1f1f;
+  --color-base-200: #252526;
+  --color-base-content: #e7e9ee;
+
+  /* ── Brand colors ───────────────────────────────────── */
+  --color-primary: #2563eb;
+  --color-primary-content: #eff6ff;
+  --color-secondary: #2f3640;
+  --color-secondary-content: #f3f4f6;
+  --color-accent: #2563eb;
+  --color-accent-content: #eff6ff;
+
+  /* ── Neutrals ───────────────────────────────────────── */
+  --color-neutral: #171717;
+  --color-neutral-content: #d1d5db;
+  --color-muted: #9ca3af;
+
+  /* ── Semantic colors ────────────────────────────────── */
+  --color-info: #60a5fa;
+  --color-info-content: oklch(12.523% 0.028 240.033);
+  --color-success: #10b981;
+  --color-success-content: oklch(14.045% 0.018 156.596);
+  --color-warning: #f59e0b;
+  --color-warning-content: oklch(15.496% 0.023 81.519);
+  --color-error: #ef4444;
+  --color-error-content: oklch(90.322% 0.029 29.674);
+
+  /* ── Surfaces ───────────────────────────────────────── */
+  --color-surface-1: #202225;
+  --color-surface-2: #1b1c1f;
+  --color-surface-3: #2a2c31;
+
+  /* ── Borders ────────────────────────────────────────── */
+  --color-border-soft: rgba(255, 255, 255, 0.12);
+  --color-border-faint: rgba(255, 255, 255, 0.08);
+  --color-border-quiet: rgba(255, 255, 255, 0.1);
+  --color-ring: rgba(96, 165, 250, 0.34);
+
+  /* ── Gradients ──────────────────────────────────────── */
+  --shell-gradient: var(--color-base-200);
+
+  /* ── Interactive states ─────────────────────────────── */
+  --color-hover-subtle: rgba(255, 255, 255, 0.04);
+  --color-hover-bg: rgba(255, 255, 255, 0.06);
+  --color-hover-card: rgba(255, 255, 255, 0.05);
+  --color-active-bg: rgba(37, 99, 235, 0.18);
+  --color-selection-bg: rgba(59, 130, 246, 0.1);
+  --color-selection-multi-bg: rgba(59, 130, 246, 0.2);
+  --color-selection-text: var(--color-base-content);
+
+  /* ── Focus ──────────────────────────────────────────── */
+  --color-focus-border: rgba(59, 130, 246, 0.75);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 0 1px rgba(59, 130, 246, 0.18);
+
+  /* ── Danger ─────────────────────────────────────────── */
+  --color-danger-text: #f87171;
+  --color-danger-bg: rgba(239, 68, 68, 0.08);
+  --color-danger-border: rgba(239, 68, 68, 0.55);
+  --color-danger-hover-border: rgba(239, 68, 68, 0.8);
+  --color-danger-hover-bg: rgba(239, 68, 68, 0.88);
+
+  /* ── Alerts ─────────────────────────────────────────── */
+  --color-alert-info-bg: rgba(96, 165, 250, 0.12);
+  --color-alert-info-border: rgba(96, 165, 250, 0.35);
+  --color-alert-success-bg: rgba(16, 185, 129, 0.12);
+  --color-alert-success-border: rgba(16, 185, 129, 0.35);
+  --color-alert-warning-bg: rgba(245, 158, 11, 0.12);
+  --color-alert-warning-border: rgba(245, 158, 11, 0.35);
+  --color-alert-error-bg: rgba(239, 68, 68, 0.12);
+  --color-alert-error-border: rgba(239, 68, 68, 0.35);
+
+  /* ── Drag & drop ────────────────────────────────────── */
+  --color-dnd-inside-bg: rgba(34, 197, 94, 0.14);
+  --color-dnd-inside-border: rgba(74, 222, 128, 0.8);
+  --color-dnd-line: #4ade80;
+
+  /* ── Icons ──────────────────────────────────────────── */
+  --color-icon: #d7dbe2;
+  --color-icon-toggle: #d1d5db;
+  --color-icon-selected: #eef6ff;
+
+  /* ── Form ───────────────────────────────────────────── */
+  --color-placeholder: #8b9098;
+
+  /* ── Modal / overlay ────────────────────────────────── */
+  --color-modal-backdrop: rgba(12, 12, 14, 0.62);
+
+  /* ── Spinner ────────────────────────────────────────── */
+  --color-spinner-track: rgba(145, 160, 184, 0.3);
+
+  /* ── Misc surfaces ──────────────────────────────────── */
+  --color-section-bg: rgba(23, 32, 51, 0.5);
+  --color-icon-fallback-bg: rgba(255, 255, 255, 0.04);
+  --color-stat-bg: rgba(255, 255, 255, 0.03);
 }

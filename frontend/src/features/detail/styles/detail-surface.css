@@ -315,6 +315,7 @@
   place-items: center;
   min-height: 100%;
   text-align: center;
+  color: var(--color-base-content);
 }
 
 .detail-empty-state__title {
@@ -324,4 +325,5 @@
 .detail-empty-state__subtitle {
   margin-top: 0.35rem;
   font-size: 0.8rem;
+  color: var(--color-muted);
 }

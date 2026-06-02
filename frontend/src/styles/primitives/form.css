@@ -5,7 +5,7 @@
   border: var(--border) solid var(--color-border-soft);
   border-radius: var(--radius-selector);
   background: var(--color-base-100);
-  color: inherit;
+  color: var(--color-base-content);
   transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 

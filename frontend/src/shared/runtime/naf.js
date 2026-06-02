@@ -468,6 +468,29 @@ export function effect(fn, options) {
 }
 
 /**
+ * Run a callback without collecting reactive dependencies into the current observer.
+ *
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function untrack(fn) {
+  const prevSub = activeSub;
+  const prevSets = activeSets;
+  const prevObserver = activeObserver;
+  activeSub = undefined;
+  activeSets = undefined;
+  activeObserver = undefined;
+  try {
+    return fn();
+  } finally {
+    activeSub = prevSub;
+    activeSets = prevSets;
+    activeObserver = prevObserver;
+  }
+}
+
+/**
  * Escapes HTML for safe text insertion.
  *
  * @param {string} s

@@ -1,6 +1,6 @@
 // @ts-check
 
-import { requireElement, setReactiveDebug } from "../shared/runtime/naf.js";
+import { requireElement } from "../shared/runtime/naf.js";
 import { mountAppLifecycle } from "./lifecycle.js";
 import { bootstrapSession } from "./session.js";
 import { mountConfirmModal } from "../components/confirm-modal/confirm-modal.js";
@@ -103,10 +103,5 @@ export function createApp(root) {
   });
   void bootstrapSession();
   void lifecycle;
-  // setReactiveDebug({
-  //   enabled: true,
-  //   include: ["search"],
-  //   events: ["signal:set", "computed:recompute", "effect:run", "dependency:track"]
-  // })
   return shell;
 }

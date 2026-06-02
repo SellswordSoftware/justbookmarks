@@ -7,8 +7,6 @@
 }
 
 :root {
-  color-scheme: dark;
-
   /* ── Typography ─────────────────────────────────────── */
   --font-sans:
     "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
@@ -27,109 +25,6 @@
   --radius-box: 0.5rem;
   --border: 1px;
 
-  /* ── Shadows ────────────────────────────────────────── */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
-  --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 0 1px rgba(59, 130, 246, 0.18);
-
-  /* ── Base palette ───────────────────────────────────── */
-  --color-base-100: #1f1f1f;
-  --color-base-200: #252526;
-  --color-base-content: #e7e9ee;
-
-  /* ── Brand colors ───────────────────────────────────── */
-  --color-primary: #2563eb;
-  --color-primary-content: #eff6ff;
-  --color-secondary: #2f3640;
-  --color-secondary-content: #f3f4f6;
-  --color-accent: #2563eb;
-  --color-accent-content: #eff6ff;
-
-  /* ── Neutrals ───────────────────────────────────────── */
-  --color-neutral: #171717;
-  --color-neutral-content: #d1d5db;
-  --color-muted: #9ca3af;
-
-  /* ── Semantic colors ────────────────────────────────── */
-  --color-info: #60a5fa;
-  --color-info-content: oklch(12.523% 0.028 240.033);
-  --color-success: #10b981;
-  --color-success-content: oklch(14.045% 0.018 156.596);
-  --color-warning: #f59e0b;
-  --color-warning-content: oklch(15.496% 0.023 81.519);
-  --color-error: #ef4444;
-  --color-error-content: oklch(90.322% 0.029 29.674);
-
-  /* ── Surfaces ───────────────────────────────────────── */
-  --color-surface-1: #202225;
-  --color-surface-2: #1b1c1f;
-  --color-surface-3: #2a2c31;
-
-  /* ── Borders ────────────────────────────────────────── */
-  --color-border-soft: rgba(255, 255, 255, 0.12);
-  --color-border-faint: rgba(255, 255, 255, 0.08);
-  --color-border-quiet: rgba(255, 255, 255, 0.1);
-  --color-ring: rgba(96, 165, 250, 0.34);
-
-  /* ── Gradients ──────────────────────────────────────── */
-  --shell-gradient: var(--color-base-200);
-
-  /* ── Interactive states ─────────────────────────────── */
-  --color-hover-subtle: rgba(255, 255, 255, 0.04);
-  --color-hover-bg: rgba(255, 255, 255, 0.06);
-  --color-hover-card: rgba(255, 255, 255, 0.05);
-  --color-active-bg: rgba(37, 99, 235, 0.18);
-  --color-selection-bg: rgba(59, 130, 246, 0.1);
-  --color-selection-multi-bg: rgba(59, 130, 246, 0.2);
-  --color-selection-text: var(--color-base-content);
-
-  /* ── Focus ──────────────────────────────────────────── */
-  --color-focus-border: rgba(59, 130, 246, 0.75);
-
-  /* ── Danger ─────────────────────────────────────────── */
-  --color-danger-text: #f87171;
-  --color-danger-bg: rgba(239, 68, 68, 0.08);
-  --color-danger-border: rgba(239, 68, 68, 0.55);
-  --color-danger-hover-border: rgba(239, 68, 68, 0.8);
-  --color-danger-hover-bg: rgba(239, 68, 68, 0.88);
-
-  /* ── Alerts ─────────────────────────────────────────── */
-  --color-alert-info-bg: rgba(96, 165, 250, 0.12);
-  --color-alert-info-border: rgba(96, 165, 250, 0.35);
-  --color-alert-success-bg: rgba(16, 185, 129, 0.12);
-  --color-alert-success-border: rgba(16, 185, 129, 0.35);
-  --color-alert-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-alert-warning-border: rgba(245, 158, 11, 0.35);
-  --color-alert-error-bg: rgba(239, 68, 68, 0.12);
-  --color-alert-error-border: rgba(239, 68, 68, 0.35);
-
-  /* ── Drag & drop ────────────────────────────────────── */
-  --color-dnd-inside-bg: rgba(34, 197, 94, 0.14);
-  --color-dnd-inside-border: rgba(74, 222, 128, 0.8);
-  --color-dnd-line: #4ade80;
-
-  /* ── Icons ──────────────────────────────────────────── */
-  --color-icon: #d7dbe2;
-  --color-icon-toggle: #d1d5db;
-  --color-icon-selected: #eef6ff;
-
-  /* ── Tree pane actions ──────────────────────────────── */
-  /* (moved to tree-pane.css as local values) */
-
-  /* ── Form ───────────────────────────────────────────── */
-  --color-placeholder: #8b9098;
-
-  /* ── Modal / overlay ────────────────────────────────── */
-  --color-modal-backdrop: rgba(12, 12, 14, 0.62);
-
-  /* ── Spinner ────────────────────────────────────────── */
-  --color-spinner-track: rgba(145, 160, 184, 0.3);
-
-  /* ── Misc surfaces ──────────────────────────────────── */
-  --color-section-bg: rgba(23, 32, 51, 0.5);
-  --color-icon-fallback-bg: rgba(255, 255, 255, 0.04);
-  --color-stat-bg: rgba(255, 255, 255, 0.03);
-
   /* ── Icon masks ─────────────────────────────────────── */
   --mask-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M128 512L512 512C547.3 512 576 483.3 576 448L576 208C576 172.7 547.3 144 512 144L362.7 144C355.8 144 349 141.8 343.5 137.6L305.1 108.8C294 100.5 280.5 96 266.7 96L128 96C92.7 96 64 124.7 64 160L64 448C64 483.3 92.7 512 128 512z'/%3E%3C/svg%3E");
   --mask-folder-open: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M88 289.6L64.4 360.2L64.4 160C64.4 124.7 93.1 96 128.4 96L267.1 96C280.9 96 294.4 100.5 305.5 108.8L343.9 137.6C349.4 141.8 356.2 144 363.1 144L480.4 144C515.7 144 544.4 172.7 544.4 208L544.4 224L179 224C137.7 224 101 250.4 87.9 289.6zM509.8 512L131 512C98.2 512 75.1 479.9 85.5 448.8L133.5 304.8C140 285.2 158.4 272 179 272L557.8 272C590.6 272 613.7 304.1 603.3 335.2L555.3 479.2C548.8 498.8 530.4 512 509.8 512z'/%3E%3C/svg%3E");
@@ -139,5 +34,69 @@
   --mask-trash: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M232 80C218.7 80 208 90.7 208 104L208 128L128 128C114.7 128 104 138.7 104 152C104 165.3 114.7 176 128 176L144 176L169.7 515.3C171.6 540.6 192.6 560 218 560L422 560C447.4 560 468.4 540.6 470.3 515.3L496 176L512 176C525.3 176 536 165.3 536 152C536 138.7 525.3 128 512 128L432 128L432 104C432 90.7 421.3 80 408 80L232 80zM256 128L384 128L384 128L256 128zM272 248C272 234.7 282.7 224 296 224C309.3 224 320 234.7 320 248L320 472C320 485.3 309.3 496 296 496C282.7 496 272 485.3 272 472L272 248zM368 248C368 234.7 378.7 224 392 224C405.3 224 416 234.7 416 248L416 472C416 485.3 405.3 496 392 496C378.7 496 368 485.3 368 472L368 248z'/%3E%3C/svg%3E");
   --mask-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 5v14m7-7H5' stroke='black' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E");
 
-  /* ── Titlebar ───────────────────────────────────────── */
+  /* ── Theme-owned semantic variables ─────────────────── */
+  --shadow-sm: 0 0 0 transparent;
+  --shadow-md: 0 0 0 transparent;
+  --shadow-glow: 0 0 0 transparent;
+  --color-base-100: transparent;
+  --color-base-200: transparent;
+  --color-base-content: currentColor;
+  --color-primary: currentColor;
+  --color-primary-content: currentColor;
+  --color-secondary: currentColor;
+  --color-secondary-content: currentColor;
+  --color-accent: currentColor;
+  --color-accent-content: currentColor;
+  --color-neutral: currentColor;
+  --color-neutral-content: currentColor;
+  --color-muted: currentColor;
+  --color-info: currentColor;
+  --color-info-content: currentColor;
+  --color-success: currentColor;
+  --color-success-content: currentColor;
+  --color-warning: currentColor;
+  --color-warning-content: currentColor;
+  --color-error: currentColor;
+  --color-error-content: currentColor;
+  --color-surface-1: transparent;
+  --color-surface-2: transparent;
+  --color-surface-3: transparent;
+  --color-border-soft: transparent;
+  --color-border-faint: transparent;
+  --color-border-quiet: transparent;
+  --color-ring: transparent;
+  --shell-gradient: transparent;
+  --color-hover-subtle: transparent;
+  --color-hover-bg: transparent;
+  --color-hover-card: transparent;
+  --color-active-bg: transparent;
+  --color-selection-bg: transparent;
+  --color-selection-multi-bg: transparent;
+  --color-selection-text: currentColor;
+  --color-focus-border: transparent;
+  --color-danger-text: currentColor;
+  --color-danger-bg: transparent;
+  --color-danger-border: transparent;
+  --color-danger-hover-border: transparent;
+  --color-danger-hover-bg: transparent;
+  --color-alert-info-bg: transparent;
+  --color-alert-info-border: transparent;
+  --color-alert-success-bg: transparent;
+  --color-alert-success-border: transparent;
+  --color-alert-warning-bg: transparent;
+  --color-alert-warning-border: transparent;
+  --color-alert-error-bg: transparent;
+  --color-alert-error-border: transparent;
+  --color-dnd-inside-bg: transparent;
+  --color-dnd-inside-border: transparent;
+  --color-dnd-line: currentColor;
+  --color-icon: currentColor;
+  --color-icon-toggle: currentColor;
+  --color-icon-selected: currentColor;
+  --color-placeholder: currentColor;
+  --color-modal-backdrop: transparent;
+  --color-spinner-track: transparent;
+  --color-section-bg: transparent;
+  --color-icon-fallback-bg: transparent;
+  --color-stat-bg: transparent;
 }

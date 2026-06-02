@@ -28,6 +28,7 @@
 .shell-panel__title {
   font-size: 0.95rem;
   font-weight: 700;
+  color: var(--color-base-content);
 }
 
 .shell-panel__subtitle {

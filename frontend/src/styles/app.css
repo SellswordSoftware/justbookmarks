@@ -1,31 +1,34 @@
-@import "./reset.css";
-@import "./tokens.css";
-@import "./themes/light.css";
-@import "./themes/dark.css";
-@import "./base.css";
-@import "./layout.css";
+@layer reset, tokens, themes, base, primitives, components, features, utilities;
 
-@import "./primitives/button.css";
-@import "./primitives/icon-mask.css";
-@import "./primitives/form.css";
-@import "./primitives/card.css";
-@import "./primitives/modal.css";
-@import "./primitives/alert.css";
-@import "./primitives/badge.css";
-@import "./primitives/menu.css";
-@import "./primitives/spinner.css";
+@import "./reset.css" layer(reset);
+@import "./tokens.css" layer(tokens);
+@import "./themes/light.css" layer(themes);
+@import "./themes/dark.css" layer(themes);
+@import "./base.css" layer(base);
+@import "./layout.css" layer(base);
 
-@import "../components/titlebar/titlebar.css";
-@import "../components/toast/toast.css";
-@import "../components/toolbar/toolbar.css";
-@import "../components/shell-panel/shell-panel.css";
-@import "../components/confirm-modal/confirm-modal.css";
-@import "../components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.css";
+@import "./primitives/button.css" layer(primitives);
+@import "./primitives/icon-mask.css" layer(primitives);
+@import "./primitives/form.css" layer(primitives);
+@import "./primitives/card.css" layer(primitives);
+@import "./primitives/modal.css" layer(primitives);
+@import "./primitives/alert.css" layer(primitives);
+@import "./primitives/badge.css" layer(primitives);
+@import "./primitives/menu.css" layer(primitives);
+@import "./primitives/spinner.css" layer(primitives);
 
-@import "../pages/empty-library/empty-library-page.css";
-@import "../features/tree/styles/tree-list.css";
-@import "../features/tree/styles/tree-pane.css";
-@import "../features/search/styles/search-shell.css";
-@import "../features/detail/styles/detail-surface.css";
-@import "../features/move/move-dialog.css";
-@import "../features/import-merge/import-merge-dialog.css";
+@import "../components/titlebar/titlebar.css" layer(components);
+@import "../components/toast/toast.css" layer(components);
+@import "../components/toolbar/toolbar.css" layer(components);
+@import "../components/shell-panel/shell-panel.css" layer(components);
+@import "../components/confirm-modal/confirm-modal.css" layer(components);
+@import "../components/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.css"
+  layer(components);
+
+@import "../pages/empty-library/empty-library-page.css" layer(features);
+@import "../features/tree/styles/tree-list.css" layer(features);
+@import "../features/tree/styles/tree-pane.css" layer(features);
+@import "../features/search/styles/search-shell.css" layer(features);
+@import "../features/detail/styles/detail-surface.css" layer(features);
+@import "../features/move/move-dialog.css" layer(features);
+@import "../features/import-merge/import-merge-dialog.css" layer(features);

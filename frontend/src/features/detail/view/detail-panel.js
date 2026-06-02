@@ -3,7 +3,7 @@
 import { createBookmarkDetail } from "./bookmark-detail.js";
 import { createBulkSelectionDetail } from "./bulk-selection-detail.js";
 import { createFolderDetail } from "./folder-detail.js";
-import { effect, requireElement, template } from "../../../shared/runtime/naf.js";
+import { effect, requireElement, template, untrack } from "../../../shared/runtime/naf.js";
 import { treeState } from "../../tree/state/tree-state.js";
 
 /**
@@ -47,18 +47,27 @@ export function mountDetailPanel(root) {
 
     currentComponent?.unmount?.();
 
-    if (selectionCount > 1) {
-      currentComponent = createBulkSelectionDetail();
-    } else if (selectedNode) {
-      currentComponent = isFolderNode(selectedNode)
-        ? createFolderDetail(selectedNode)
-        : createBookmarkDetail(selectedNode);
-    } else {
-      currentComponent = createDetailEmptyState();
-    }
+    // Mounting a detail child inside the parent effect must stay untracked.
+    // The child mount reads local signals like editing/form state; if those reads
+    // are captured here, typing into any detail input re-triggers this parent
+    // render effect and immediately unmounts the active editor.
+    const nextComponent = untrack(() => {
+      if (selectionCount > 1) {
+        return createBulkSelectionDetail();
+      }
+      if (selectedNode) {
+        return isFolderNode(selectedNode)
+          ? createFolderDetail(selectedNode)
+          : createBookmarkDetail(selectedNode);
+      }
+      return createDetailEmptyState();
+    });
+    currentComponent = nextComponent;
 
     content.replaceChildren();
-    currentComponent.mount(content);
+    // Keep the actual mount untracked for the same reason as component creation:
+    // child-local reactive reads must not subscribe the parent detail host effect.
+    untrack(() => nextComponent.mount(content));
 
     // Update meta text inline -- avoids a second effect.
     if (selectionCount > 1) {
