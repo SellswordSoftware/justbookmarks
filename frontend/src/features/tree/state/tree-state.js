@@ -43,13 +43,16 @@ import { normalizeFlatInWorker } from "../workers/tree-worker-client.js";
 
 /** Tree state owner for normalized tree data, selection, expansion, and load/restore workflows. */
 
-/** @typedef {import("./selection.js").SelectionSnapshot} SelectionSnapshot */
 /** @type {TreeNode[]} */
 const emptyTree = [];
-const tree = signal(emptyTree);
-const primarySelectedNodeId = signal("");
-const selectedNodeIds = signal(/** @type {string[]} */ ([]));
-const selectionAnchorNodeId = signal("");
+/** @type {Signal<TreeNode[]>} */
+export const tree = signal(emptyTree);
+/** @type {Signal<string>} */
+export const primarySelectedNodeId = signal("");
+/** @type {Signal<string[]>} */
+export const selectedNodeIds = signal(/** @type {string[]} */ ([]));
+/** @type {Signal<string>} */
+export const selectionAnchorNodeId = signal("");
 const expandedNodeIds = signal(/** @type {string[]} */ ([]));
 const treeScrollTop = signal(0);
 const loading = signal(false);
@@ -64,7 +67,7 @@ const hasMultiSelection = computed(() => selectedNodeIds().length > 1);
  * Rebuilt whenever the tree signal changes.
  * @type {Computed<Map<string, TreeNode>>}
  */
-const nodeIndex = computed(() => {
+export const nodeIndex = computed(() => {
   /** @type {Map<string, TreeNode>} */
   const map = new Map();
   /** @param {TreeNode[]} nodes */

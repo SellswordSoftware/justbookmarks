@@ -31,7 +31,7 @@ declare global {
     unmount?: () => void;
   }
 
-  type Signal<T> = () => T;
+  type Signal<T> = (() => T) & ((value: T) => T);
 
   type Computed<T> = Signal<T>;
 
@@ -225,6 +225,12 @@ declare global {
     expandedNodeIds: string[];
     selectedNodeId: string;
     scrollTop: number;
+  }
+
+  interface SelectionSnapshot {
+    selectedNodeIds: string[];
+    primaryNodeId: string;
+    ancestorIds: string[];
   }
 
   interface WindowState {
