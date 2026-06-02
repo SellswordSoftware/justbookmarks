@@ -1,0 +1,7 @@
+.eyebrow {
+  color: var(--eyebrow-color, var(--color-muted));
+  font-size: var(--eyebrow-font-size, var(--text-caption));
+  font-weight: var(--eyebrow-font-weight, 700);
+  letter-spacing: var(--eyebrow-letter-spacing, 0.08em);
+  text-transform: uppercase;
+}

@@ -193,9 +193,9 @@ export function createBulkSelectionDetail() {
 
   return renderBulkSelectionDetail/*html*/`
     <div class="bulk-selection-detail">
-      <div class="bulk-selection-detail__header">
+      <div class="panel bulk-selection-detail__header">
         <div>
-          <p class="bulk-selection-detail__eyebrow">Bulk Selection</p>
+          <p class="eyebrow bulk-selection-detail__eyebrow">Bulk Selection</p>
           <h3 class="bulk-selection-detail__title" data-ref="title"></h3>
           <p class="bulk-selection-detail__subtitle" data-ref="subtitle"></p>
         </div>
@@ -234,7 +234,7 @@ export function createBulkSelectionDetail() {
           Fetch Favicons
         </button>
       </div>
-      <div class="bulk-selection-detail__footer">
+      <div class="panel bulk-selection-detail__footer">
         <p class="bulk-selection-detail__footer-text">
           Bulk actions operate on the current sibling selection and save once when the command
           completes.

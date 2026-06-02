@@ -52,6 +52,6 @@
 }
 
 .titlebar__window-button--close:hover {
-    color: #ffffff;
+    color: var(--color-danger-content);
     background: var(--color-danger-hover-bg);
 }

@@ -110,7 +110,7 @@ function createImportMergeDialog(view, onMountElements) {
           </div>
           <div class="import-merge-dialog__file-bar">
             <div class="import-merge-dialog__file-meta">
-              <div class="import-merge-dialog__file-label">Import file</div>
+              <div class="eyebrow import-merge-dialog__file-label">Import file</div>
               <div class="import-merge-dialog__file-value" data-ref="filePath"></div>
             </div>
             <button

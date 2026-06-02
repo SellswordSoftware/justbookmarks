@@ -279,7 +279,7 @@ export function createBookmarkDetail(bookmark) {
 
   return renderBookmarkDetail/*html*/`
     <div class="bookmark-detail">
-      <div class="bookmark-detail__header">
+      <div class="panel bookmark-detail__header">
         <div class="bookmark-detail__top-row">
           <div class="bookmark-detail__identity">
             <img class="bookmark-detail__icon-image" alt="" hidden data-ref="iconImage" />
@@ -394,8 +394,8 @@ export function createBookmarkDetail(bookmark) {
           <p data-ref="modifiedDate"></p>
         </div>
       </div>
-      <div class="bookmark-detail__notes">
-        <label class="label" for="bookmark-notes-${bookmark.id}">Notes</label>
+      <div class="panel bookmark-detail__notes">
+        <label class="eyebrow label" for="bookmark-notes-${bookmark.id}">Notes</label>
         <p class="bookmark-detail__notes-text" data-ref="notesText"></p>
         <p class="bookmark-detail__notes-empty" data-ref="notesEmpty">No notes</p>
         <textarea

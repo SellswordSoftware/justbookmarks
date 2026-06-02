@@ -8,7 +8,7 @@
 
 .search-shell__label {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-support);
   font-weight: 500;
 }
 

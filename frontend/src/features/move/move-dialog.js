@@ -144,7 +144,7 @@ function createMoveDialog(view, onMountElements) {
         </div>
         <div class="modal__body">
           <div class="move-dialog__list-shell">
-            <div class="move-dialog__list-header">Folder Tree</div>
+            <div class="eyebrow move-dialog__list-header">Folder Tree</div>
             <div class="move-dialog__filter-shell">
               <input
                 type="text"

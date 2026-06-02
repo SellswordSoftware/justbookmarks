@@ -21,7 +21,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel-header);
 }
 
 .modal__header {
@@ -33,5 +33,5 @@
 }
 
 .modal__body {
-  padding: 0.875rem 1rem 1rem;
+  padding: var(--padding-panel-body);
 }

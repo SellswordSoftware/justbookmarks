@@ -19,7 +19,7 @@
 .shortcuts-dialog__subtitle {
   margin-top: 0.25rem;
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
 }
 
 .shortcuts-dialog__body {
@@ -32,12 +32,12 @@
 .shortcuts-dialog__section {
   overflow: hidden;
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-panel);
   background: var(--color-section-bg);
 }
 
 .shortcuts-dialog__section-header {
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel);
   border-bottom: var(--border) solid var(--color-border-faint);
 }
 
@@ -55,7 +55,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel);
   border-top: var(--border) solid var(--color-border-faint);
 }
 
@@ -68,13 +68,13 @@
   border: var(--border) solid var(--color-border-soft);
   border-radius: var(--radius-selector);
   background: var(--color-hover-card);
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   font-weight: 600;
 }
 
 .shortcuts-dialog__action {
   color: var(--color-muted);
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
   text-align: right;
 }
 

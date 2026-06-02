@@ -228,7 +228,7 @@ export function createFolderDetail(folder) {
 
   return renderFolderDetail/*html*/`
     <div class="folder-detail">
-      <div class="folder-detail__header" data-ref="header">
+      <div class="panel folder-detail__header" data-ref="header">
         <div class="folder-detail__top-row">
           <div class="folder-detail__title-block">
             <h3 class="folder-detail__title" data-ref="title"></h3>
@@ -272,9 +272,9 @@ export function createFolderDetail(folder) {
         </div>
       </div>
 
-      <div class="folder-detail__edit" hidden data-ref="editPanel">
+      <div class="panel folder-detail__edit" hidden data-ref="editPanel">
         <div class="field">
-          <label class="label" for="folder-detail-name-${folder.id}">Folder name</label>
+          <label class="eyebrow label" for="folder-detail-name-${folder.id}">Folder name</label>
           <input
             id="folder-detail-name-${folder.id}"
             type="text"

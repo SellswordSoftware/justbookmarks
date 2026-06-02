@@ -284,8 +284,8 @@ export function createAddFolderForm(options) {
           ? `<span class="${options.triggerIconClassName}" aria-hidden="true"></span>`
           : options.triggerLabel)}
       </button>
-      <div class="add-folder-panel" hidden data-ref="panel">
-        <p class="label">${options.formTitle ?? "Create folder"}</p>
+      <div class="panel add-folder-panel" hidden data-ref="panel">
+        <p class="eyebrow label">${options.formTitle ?? "Create folder"}</p>
         <div class="field">
           <input
             type="text"

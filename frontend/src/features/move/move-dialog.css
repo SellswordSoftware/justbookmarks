@@ -9,18 +9,14 @@
 .move-dialog__list-shell {
   overflow: hidden;
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.375rem;
+  border-radius: var(--radius-box);
   background: var(--color-base-100);
 }
 
 .move-dialog__list-header {
-  padding: 0.75rem 0.875rem;
+  padding: var(--padding-compact);
   border-bottom: var(--border) solid var(--color-border-faint);
-  color: var(--color-muted);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  --eyebrow-letter-spacing: 0.14em;
 }
 
 .move-dialog__filter-shell {
@@ -43,10 +39,10 @@
 }
 
 .move-dialog__empty {
-  padding: 1.5rem 0.75rem;
+  padding: var(--padding-empty);
   color: var(--color-muted);
   text-align: center;
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
 }
 
 .move-dialog__tree-node {
@@ -76,10 +72,10 @@
 .move-dialog__tree-path {
   margin-left: auto;
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   text-align: right;
 }
 
 .move-dialog__tree-row.is-primary .move-dialog__tree-path {
-  color: rgba(248, 250, 252, 0.78);
+  color: var(--color-selected-muted-text);
 }

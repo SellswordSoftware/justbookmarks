@@ -11,19 +11,27 @@
   --font-sans:
     "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     sans-serif;
+  --text-caption: 0.75rem;
+  --text-support: 0.8125rem;
+  --text-body-sm: 0.875rem;
 
   /* ── Spacing / radii ────────────────────────────────── */
-  --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
   --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
   --radius-selector: 0.25rem;
   --radius-field: 0.375rem;
   --radius-box: 0.5rem;
+  --radius-panel: 0.875rem;
   --border: 1px;
+  --padding-compact: 0.75rem 0.875rem;
+  --padding-panel: 0.875rem 1rem;
+  --padding-panel-body: 0.875rem 1rem 1rem;
+  --padding-panel-header: var(--padding-panel);
+  --padding-shell-header: 0.75rem 0.875rem 0.65rem;
+  --padding-shell-body: 0.75rem 0.875rem 0.875rem;
+  --padding-dialog-spacious: 1.5rem;
+  --padding-empty: 1.5rem 0.75rem;
 
   /* ── Icon masks ─────────────────────────────────────── */
   --mask-folder: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 640'%3E%3Cpath d='M128 512L512 512C547.3 512 576 483.3 576 448L576 208C576 172.7 547.3 144 512 144L362.7 144C355.8 144 349 141.8 343.5 137.6L305.1 108.8C294 100.5 280.5 96 266.7 96L128 96C92.7 96 64 124.7 64 160L64 448C64 483.3 92.7 512 128 512z'/%3E%3C/svg%3E");
@@ -45,22 +53,13 @@
   --color-primary-content: currentColor;
   --color-secondary: currentColor;
   --color-secondary-content: currentColor;
-  --color-accent: currentColor;
-  --color-accent-content: currentColor;
-  --color-neutral: currentColor;
-  --color-neutral-content: currentColor;
   --color-muted: currentColor;
-  --color-info: currentColor;
   --color-info-content: currentColor;
-  --color-success: currentColor;
   --color-success-content: currentColor;
-  --color-warning: currentColor;
   --color-warning-content: currentColor;
   --color-error: currentColor;
   --color-error-content: currentColor;
   --color-surface-1: transparent;
-  --color-surface-2: transparent;
-  --color-surface-3: transparent;
   --color-border-soft: transparent;
   --color-border-faint: transparent;
   --color-border-quiet: transparent;
@@ -72,9 +71,11 @@
   --color-active-bg: transparent;
   --color-selection-bg: transparent;
   --color-selection-multi-bg: transparent;
-  --color-selection-text: currentColor;
+  --color-selected-strong-outline: transparent;
+  --color-selected-muted-text: currentColor;
   --color-focus-border: transparent;
   --color-danger-text: currentColor;
+  --color-danger-content: currentColor;
   --color-danger-bg: transparent;
   --color-danger-border: transparent;
   --color-danger-hover-border: transparent;
@@ -91,8 +92,11 @@
   --color-dnd-inside-border: transparent;
   --color-dnd-line: currentColor;
   --color-icon: currentColor;
-  --color-icon-toggle: currentColor;
   --color-icon-selected: currentColor;
+  --color-btn-primary-border: transparent;
+  --color-btn-primary-hover-bg: transparent;
+  --color-btn-secondary-border: transparent;
+  --color-btn-secondary-hover-bg: transparent;
   --color-placeholder: currentColor;
   --color-modal-backdrop: transparent;
   --color-spinner-track: transparent;

@@ -5,7 +5,7 @@
 }
 
 .card-body {
-  padding: 0.75rem 0.875rem;
+  padding: var(--padding-compact);
 }
 
 .card-title {
@@ -14,19 +14,19 @@
 }
 
 .placeholder-card {
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel);
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.375rem;
+  border-radius: var(--radius-box);
   background: var(--color-surface-1);
 }
 
 .placeholder-card strong {
   display: block;
   margin-bottom: 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
 }
 
 .placeholder-card span {
   color: var(--color-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-support);
 }

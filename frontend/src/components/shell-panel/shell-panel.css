@@ -11,18 +11,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 0.75rem 0.875rem 0.65rem;
+  padding: var(--shell-panel-header-padding, var(--padding-shell-header));
   border-bottom: var(--border) solid var(--color-border-faint);
 }
 
 .shell-panel__eyebrow {
   display: block;
   margin-bottom: 0.125rem;
-  color: var(--color-muted);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .shell-panel__title {
@@ -33,9 +28,9 @@
 
 .shell-panel__subtitle {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
 }
 
 .shell-panel__body {
-  padding: 0.75rem 0.875rem 0.875rem;
+  padding: var(--shell-panel-body-padding, var(--padding-shell-body));
 }

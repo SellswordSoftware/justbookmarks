@@ -35,7 +35,7 @@
 
 .import-merge-dialog__subtitle {
   margin-top: 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
 }
 
 .import-merge-dialog__file-bar {
@@ -44,9 +44,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel);
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-panel);
   background: var(--color-stat-bg);
 }
 
@@ -55,17 +55,13 @@
 }
 
 .import-merge-dialog__file-label {
-  color: var(--color-muted);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  --eyebrow-letter-spacing: 0.14em;
 }
 
 .import-merge-dialog__file-value {
   margin-top: 0.25rem;
   overflow: hidden;
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -74,9 +70,9 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.5rem;
+  padding: var(--padding-dialog-spacious);
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-panel);
 }
 
 .import-merge-dialog__stats {
@@ -86,15 +82,15 @@
 }
 
 .import-merge-dialog__stat {
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel);
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-panel);
   background: var(--color-stat-bg);
 }
 
 .import-merge-dialog__stat-label {
   color: var(--color-muted);
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
 }
 
 .import-merge-dialog__stat-value {
@@ -105,7 +101,7 @@
 
 .import-merge-dialog__stat-desc {
   margin-top: 0.125rem;
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
 }
 
 .import-merge-dialog__sections {
@@ -119,7 +115,7 @@
 .import-merge-dialog__section {
   overflow: hidden;
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: 0.875rem;
+  border-radius: var(--radius-panel);
 }
 
 .import-merge-dialog__section-header {
@@ -127,7 +123,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel-header);
   border-bottom: var(--border) solid var(--color-border-faint);
 }
 
@@ -141,7 +137,7 @@
 }
 
 .import-merge-dialog__row {
-  padding: 0.875rem 1rem;
+  padding: var(--padding-panel);
   border-top: var(--border) solid var(--color-border-faint);
 }
 
@@ -150,20 +146,20 @@
 }
 
 .import-merge-dialog__row-title {
-  font-size: 0.875rem;
+  font-size: var(--text-body-sm);
   font-weight: 600;
   overflow-wrap: anywhere;
 }
 
 .import-merge-dialog__row-subtitle {
   margin-top: 0.125rem;
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   overflow-wrap: anywhere;
 }
 
 .import-merge-dialog__empty {
-  padding: 0.875rem 1rem;
-  font-size: 0.875rem;
+  padding: var(--padding-panel);
+  font-size: var(--text-body-sm);
 }
 
 @media (max-width: 900px) {

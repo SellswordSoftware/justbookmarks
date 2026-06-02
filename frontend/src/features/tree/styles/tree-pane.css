@@ -1,5 +1,7 @@
 .tree-pane {
     border-right: var(--border) solid var(--color-border-faint);
+    --shell-panel-header-padding: 0.5rem 0.875rem 0.45rem;
+    --shell-panel-body-padding: 0.45rem 0.35rem 0.75rem;
 }
 
 .tree-pane__heading {
@@ -42,7 +44,7 @@
 }
 
 .tree-pane__action-btn:hover {
-    color: #f3f4f6;
+    color: var(--color-icon-selected);
 }
 
 .tree-pane__action-icon {
@@ -79,20 +81,3 @@
     mask-image: var(--mask-plus);
     -webkit-mask-image: var(--mask-plus);
 }
-
-.tree-pane .shell-panel__header {
-    padding-top: 0.5rem;
-    padding-bottom: 0.45rem;
-}
-
-.tree-pane .shell-panel__body {
-    padding: 0.45rem 0.35rem 0.75rem;
-}
-
-/* [data-theme="light"] .tree-pane__action-btn:hover {
-    color: #1e293b;
-} */
-
-/* [data-theme="light"] .tree-pane__action-icon::after {
-    background-color: #ffffff;
-} */

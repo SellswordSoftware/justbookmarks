@@ -435,8 +435,8 @@ export function createAddBookmarkForm(options) {
             : options.triggerLabel
         )}
       </button>
-      <div class="add-bookmark-panel" hidden data-ref="panel">
-        <p class="label">${options.formTitle ?? "Create bookmark"}</p>
+      <div class="panel add-bookmark-panel" hidden data-ref="panel">
+        <p class="eyebrow label">${options.formTitle ?? "Create bookmark"}</p>
         <div class="field">
           <div class="add-bookmark-panel__url-row">
             <input

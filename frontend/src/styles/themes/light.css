@@ -11,29 +11,17 @@
   --color-primary-content: oklch(100% 0 0);
   --color-secondary: oklch(55% 0.046 257.417);
   --color-secondary-content: oklch(100% 0 0);
-  --color-accent: oklch(60% 0.118 184.704);
-  --color-accent-content: oklch(100% 0 0);
-
-  /* ── Neutrals ───────────────────────────────────────── */
-  --color-neutral: oklch(0% 0 0);
-  --color-neutral-content: oklch(100% 0 0);
   --color-muted: #5a6a82;
 
   /* ── Semantic colors ────────────────────────────────── */
-  --color-info: oklch(60% 0.126 221.723);
   --color-info-content: oklch(100% 0 0);
-  --color-success: oklch(62% 0.194 149.214);
   --color-success-content: oklch(100% 0 0);
-  --color-warning: oklch(85% 0.199 91.936);
   --color-warning-content: oklch(0% 0 0);
   --color-error: oklch(70% 0.191 22.216);
   --color-error-content: oklch(0% 0 0);
 
   /* ── Surfaces ───────────────────────────────────────── */
   --color-surface-1: rgba(255, 255, 255, 0.92);
-  --color-surface-2: rgba(241, 246, 252, 0.96);
-  --color-surface-3: rgba(23, 32, 51, 0.03);
-
   /* ── Borders ────────────────────────────────────────── */
   --color-border-soft: rgba(90, 106, 130, 0.22);
   --color-border-faint: rgba(90, 106, 130, 0.14);
@@ -56,13 +44,18 @@
   --color-active-bg: rgba(37, 99, 235, 0.1);
   --color-selection-bg: rgba(37, 99, 235, 0.08);
   --color-selection-multi-bg: rgba(37, 99, 235, 0.17);
-  --color-selection-text: var(--color-base-content);
 
   /* ── Focus ──────────────────────────────────────────── */
   --color-focus-border: rgba(37, 99, 235, 0.8);
+  --color-selected-strong-outline: rgba(147, 197, 253, 0.2);
+  --color-selected-muted-text: rgba(255, 255, 255, 0.78);
+  --shadow-sm: 0 1px 2px rgba(90, 106, 130, 0.12);
+  --shadow-md: 0 18px 40px rgba(90, 106, 130, 0.18);
+  --shadow-glow: 0 0 0 1px rgba(37, 99, 235, 0.12);
 
   /* ── Danger ─────────────────────────────────────────── */
   --color-danger-text: #dc2626;
+  --color-danger-content: #ffffff;
   --color-danger-bg: rgba(239, 68, 68, 0.06);
   --color-danger-border: rgba(239, 68, 68, 0.4);
   --color-danger-hover-border: rgba(239, 68, 68, 0.7);
@@ -85,8 +78,13 @@
 
   /* ── Icons ──────────────────────────────────────────── */
   --color-icon: #475569;
-  --color-icon-toggle: #64748b;
   --color-icon-selected: #1e3a5f;
+
+  /* ── Buttons ────────────────────────────────────────── */
+  --color-btn-primary-border: rgba(37, 99, 235, 0.5);
+  --color-btn-primary-hover-bg: #1d4ed8;
+  --color-btn-secondary-border: rgba(0, 0, 0, 0.12);
+  --color-btn-secondary-hover-bg: #e2e8f0;
 
   /* ── Tree / list helpers ────────────────────────────── */
   /* (moved to tree-list.css as local values) */
