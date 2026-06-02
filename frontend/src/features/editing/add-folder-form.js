@@ -9,6 +9,7 @@ import {
   model,
   raw,
   signal,
+  show,
   template,
 } from "../../shared/runtime/naf.js";
 import { getErrorMessage } from "../../shared/infra/errors.js";
@@ -270,9 +271,7 @@ export function createAddFolderForm(options) {
               setOpen(false);
             }
           }),
-          fx(panel, (currentPanel) => {
-            currentPanel.hidden = !open();
-          }),
+          show(panel, open),
           fx(error, (currentError) => {
             const message = errorMessage();
             currentError.hidden = message.length === 0;
