@@ -1,6 +1,6 @@
 // @ts-check
 
-import { cleanupCollector, effect, list } from "../../shared/runtime/naf.js";
+import { collectRowRefs, cleanupCollector, effect, list } from "../../shared/runtime/naf.js";
 
 /**
  * @typedef {{ title: string, subtitle: string }} ImportMergePreviewRow
@@ -138,10 +138,11 @@ export function mountImportMergePreview(body, preview, previewLoading) {
         throw new Error("Import merge section template must render an element");
       }
 
-      const titleEl = el.querySelector('[data-ref="title"]');
-      const badgeEl = el.querySelector('[data-ref="badge"]');
-      const emptyEl = el.querySelector('[data-ref="empty"]');
-      const rowsEl = el.querySelector('[data-ref="rows"]');
+      const refs = collectRowRefs(el);
+      const titleEl = /** @type {HTMLElement} */ (refs.title);
+      const badgeEl = /** @type {HTMLElement} */ (refs.badge);
+      const emptyEl = /** @type {HTMLElement} */ (refs.empty);
+      const rowsEl = /** @type {HTMLElement} */ (refs.rows);
       if (!(rowsEl instanceof HTMLElement)) {
         throw new Error(
           "Import merge section template must include a rows container",
@@ -151,15 +152,9 @@ export function mountImportMergePreview(body, preview, previewLoading) {
       const cleanup = cleanupCollector(
         effect(() => {
           const currentSection = section();
-          if (titleEl instanceof HTMLElement) {
-            titleEl.textContent = currentSection.title;
-          }
-          if (badgeEl instanceof HTMLElement) {
-            badgeEl.textContent = String(currentSection.count);
-          }
-          if (emptyEl instanceof HTMLElement) {
-            emptyEl.hidden = currentSection.rows.length > 0;
-          }
+          titleEl.textContent = currentSection.title;
+          badgeEl.textContent = String(currentSection.count);
+          emptyEl.hidden = currentSection.rows.length > 0;
           rowsEl.hidden = currentSection.rows.length === 0;
         }),
         list(
@@ -174,16 +169,13 @@ export function mountImportMergePreview(body, preview, previewLoading) {
               );
             }
 
-            const rowTitle = rowEl.querySelector('[data-ref="title"]');
-            const rowSubtitle = rowEl.querySelector('[data-ref="subtitle"]');
+            const rowRefs = collectRowRefs(rowEl);
+            const rowTitle = /** @type {HTMLElement} */ (rowRefs.title);
+            const rowSubtitle = /** @type {HTMLElement} */ (rowRefs.subtitle);
             return effect(() => {
               const currentRow = row();
-              if (rowTitle instanceof HTMLElement) {
-                rowTitle.textContent = currentRow.title;
-              }
-              if (rowSubtitle instanceof HTMLElement) {
-                rowSubtitle.textContent = currentRow.subtitle;
-              }
+              rowTitle.textContent = currentRow.title;
+              rowSubtitle.textContent = currentRow.subtitle;
             });
           },
         ),

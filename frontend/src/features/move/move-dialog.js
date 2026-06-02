@@ -6,6 +6,7 @@ import { trapFocusInContainer } from "../../shared/infra/focus.js";
 import {
   attr,
   cleanupCollector,
+  collectRowRefs,
   effect,
   list,
   listener,
@@ -34,7 +35,7 @@ export function collectMoveDialogShell(root) {
 /** @type {string} */
 const MOVE_FOLDER_ROW_HTML = /*html*/ `
   <article class="move-dialog__tree-node">
-    <div class="move-dialog__tree-row tree-row menu-item" role="treeitem" tabindex="-1" aria-selected="false">
+    <div class="move-dialog__tree-row tree-row menu-item" role="treeitem" tabindex="-1" aria-selected="false" data-ref="row">
       <button
         type="button"
         class="tree-row__toggle btn btn-ghost btn-sm btn-square"
@@ -329,21 +330,12 @@ function createMoveDialogComponent() {
               throw new Error("Move folder template must render an element");
             }
 
-            const row = el.querySelector(".move-dialog__tree-row");
-            const toggle = el.querySelector('[data-ref="toggle"]');
-            const folderIcon = el.querySelector('[data-ref="folderIcon"]');
-            const name = el.querySelector('[data-ref="name"]');
-            const path = el.querySelector('[data-ref="path"]');
-
-            if (!(row instanceof HTMLElement)) {
-              throw new Error("Expected move dialog tree row");
-            }
-            if (!(toggle instanceof HTMLButtonElement)) {
-              throw new Error("Expected move dialog tree row toggle");
-            }
-            if (!(folderIcon instanceof HTMLElement)) {
-              throw new Error("Expected move dialog folder icon");
-            }
+            const refs = collectRowRefs(el);
+            const row = /** @type {HTMLElement} */ (refs.row);
+            const toggle = /** @type {HTMLButtonElement} */ (refs.toggle);
+            const folderIcon = /** @type {HTMLElement} */ (refs.folderIcon);
+            const name = /** @type {HTMLElement} */ (refs.name);
+            const path = /** @type {HTMLElement} */ (refs.path);
 
             const handleRowClick = () => {
               moveDialogState.actions.setSelectedTarget(folder().id);
@@ -385,14 +377,10 @@ function createMoveDialogComponent() {
 
               folderIcon.classList.toggle("is-open", Boolean(currentFolder.expanded));
 
-              if (name instanceof HTMLElement) {
-                name.textContent = currentFolder.name;
-                name.title = currentFolder.name;
-              }
-              if (path instanceof HTMLElement) {
-                path.textContent = currentFolder.pathLabel;
-                path.title = currentFolder.pathLabel;
-              }
+              name.textContent = currentFolder.name;
+              name.title = currentFolder.name;
+              path.textContent = currentFolder.pathLabel;
+              path.title = currentFolder.pathLabel;
             });
 
             const rowCleanup = cleanupCollector(

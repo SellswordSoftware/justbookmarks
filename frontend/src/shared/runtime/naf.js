@@ -806,6 +806,43 @@ function collectRefs(elements) {
 }
 
 /**
+ * Collect data-ref elements from a row element.
+ *
+ * Use this inside list() setup callbacks to replace querySelector calls
+ * with a single refs map lookup. Similar to what template() does internally
+ * via collectRefs(), but scoped to a single row element.
+ *
+ * Example:
+ *   list(container, ROW_HTML, items, key, (el, item) => {
+ *     const refs = collectRowRefs(el);
+ *     const label = refs.label;
+ *     const icon = refs.icon;
+ *     // ...
+ *   });
+ *
+ * @param {Element} el
+ * @returns {Record<string, Element>}
+ */
+export function collectRowRefs(el) {
+  /** @type {Record<string, Element>} */
+  const refs = {};
+
+  const name = el.getAttribute("data-ref");
+  if (name) {
+    refs[name] = el;
+  }
+
+  for (const child of el.querySelectorAll("[data-ref]")) {
+    const childName = child.getAttribute("data-ref");
+    if (childName) {
+      refs[childName] = child;
+    }
+  }
+
+  return refs;
+}
+
+/**
  * @param {string} html
  * @returns {DocumentFragment}
  */

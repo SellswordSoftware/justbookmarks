@@ -54,6 +54,7 @@ The current runtime surface includes:
 - `model()`
 - `list()`
 - `cleanupCollector()`
+- `collectRowRefs()`
 - `listener()`
 - `requireRef()`
 - `requireElement()`
@@ -307,6 +308,11 @@ Prefer `list()` over rebuilding `replaceChildren()` loops when:
 
 Avoid `list()` for static or one-off markup.
 
+Inside the setup callback, use `collectRowRefs(el)` to access `data-ref`
+elements defined in the row template, or use direct child access
+(`el.children[0]`) when the template structure is fixed and controlled by
+the same module.
+
 ### `cleanupCollector(...)`
 
 Use when a module registers several cleanups.
@@ -320,6 +326,39 @@ Good uses:
 - timers
 
 Prefer one obvious cleanup path per module.
+
+### `collectRowRefs(el)`
+
+Collect `data-ref` elements from a list row element.
+
+Use inside `list()` setup callbacks to replace `querySelector('[data-ref="..."]')`
+calls with a single refs map lookup:
+
+```js
+// Instead of:
+const label = el.querySelector('[data-ref="label"]');
+const icon = el.querySelector('[data-ref="icon"]');
+
+// Write:
+const refs = collectRowRefs(el);
+const label = refs.label;
+const icon = refs.icon;
+```
+
+Good uses:
+
+- list() setup callbacks that need multiple row elements
+- replacing querySelector calls inside list rows
+
+Prefer `collectRowRefs()` over `querySelector('[data-ref="..."]')` inside list
+setup callbacks. The `data-ref` attribute in list row templates is functional
+when used with `collectRowRefs()`.
+
+Prefer `children[0]`, `children[1]` direct access only when:
+
+- the template structure is fixed and controlled by the same module
+- performance is critical (e.g., thousands of tree rows)
+- the module documents the child indices in a code comment
 
 ### `mount(component, host)`
 

@@ -1,6 +1,6 @@
 // @ts-check
 
-import { effect, list, mount, template, when } from "../../shared/runtime/naf.js";
+import { collectRowRefs, effect, list, mount, template, when } from "../../shared/runtime/naf.js";
 import { uiState } from "../../shared/state/ui-state.js";
 
 /**
@@ -149,23 +149,18 @@ function createToastStack(container) {
             throw new Error("Toast template must have a first element child");
           }
 
-          const alertWrapper = el.querySelector('[data-ref="alert-wrapper"]');
-          const icon = el.querySelector('[data-ref="icon"]');
-          const message = el.querySelector('[data-ref="message"]');
+          const refs = collectRowRefs(el);
+          const alertWrapper = /** @type {HTMLElement} */ (refs["alert-wrapper"]);
+          const icon = /** @type {HTMLElement} */ (refs.icon);
+          const message = /** @type {HTMLElement} */ (refs.message);
 
           return effect(() => {
             const currentToast = toast();
             el.setAttribute("role", "alert");
 
-            if (alertWrapper instanceof HTMLElement) {
-              alertWrapper.className = `alert ${getToastTypeClass(currentToast.type)}`;
-            }
-            if (icon instanceof HTMLElement) {
-              icon.innerHTML = getToastIcon(currentToast.type);
-            }
-            if (message instanceof HTMLElement) {
-              message.textContent = currentToast.message;
-            }
+            alertWrapper.className = `alert ${getToastTypeClass(currentToast.type)}`;
+            icon.innerHTML = getToastIcon(currentToast.type);
+            message.textContent = currentToast.message;
           });
         },
       );
