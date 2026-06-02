@@ -53,7 +53,8 @@ export const primarySelectedNodeId = signal("");
 export const selectedNodeIds = signal(/** @type {string[]} */ ([]));
 /** @type {Signal<string>} */
 export const selectionAnchorNodeId = signal("");
-const expandedNodeIds = signal(/** @type {string[]} */ ([]));
+/** @type {Signal<string[]>} */
+export const expandedNodeIds = signal(/** @type {string[]} */ ([]));
 const treeScrollTop = signal(0);
 const loading = signal(false);
 const error = signal("");
