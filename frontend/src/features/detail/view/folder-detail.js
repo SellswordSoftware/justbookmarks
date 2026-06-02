@@ -7,9 +7,11 @@ import { getErrorMessage } from "../../../shared/infra/errors.js";
 import {
   cleanupCollector,
   fx,
+  hide,
   listener,
   model,
   signal,
+  show,
   template,
 } from "../../../shared/runtime/naf.js";
 import { moveDialogState } from "../../move/move-dialog-state.js";
@@ -243,12 +245,8 @@ export function createFolderDetail(folder) {
               ? `Created: ${new Date(folder.folder.addDate).toLocaleDateString()}`
               : "";
           }),
-          fx(header, (currentHeader) => {
-            currentHeader.hidden = editing();
-          }),
-          fx(editPanel, (currentEditPanel) => {
-            currentEditPanel.hidden = !editing();
-          }),
+          hide(header, editing),
+          show(editPanel, editing),
           fx(saveButton, (currentSaveButton) => {
             currentSaveButton.disabled = busy();
           }),
