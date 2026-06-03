@@ -88,11 +88,14 @@ The single runtime entrypoint is:
 
 It currently owns both:
 
-- low-level helpers such as `signal`, `computed`, `effect`, `fx`, `model`, `list`, and `cleanupCollector`
-- shell composition helpers such as `template()`, `mount()`, and `when()`
+- low-level helpers: `signal`, `computed`, `effect`, `fx`, `model`, `list`, `cleanupCollector`, `listener`, `show`, `hide`, `requireRef`, `requireElement`, `collectRowRefs`, `$`, `$$`, `attr`, `setText`, `text`
+- shell composition helpers: `template()`, `mount()`, and `when()`
 
 Note: `when()` is for simple two-way branches only. For multi-way branching,
 use an explicit `effect()` with if/else logic.
+
+Note: `list()` accepts string template constants (e.g., `` `...` ``) in addition
+to `HTMLTemplateElement` -- strings are converted internally.
 
 Use NAF templates by default for:
 

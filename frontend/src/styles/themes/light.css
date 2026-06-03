@@ -86,12 +86,6 @@
   --color-btn-secondary-border: rgba(0, 0, 0, 0.12);
   --color-btn-secondary-hover-bg: #e2e8f0;
 
-  /* ── Tree / list helpers ────────────────────────────── */
-  /* (moved to tree-list.css as local values) */
-
-  /* ── Tree pane actions ──────────────────────────────── */
-  /* (moved to tree-pane.css as local values) */
-
   /* ── Form ───────────────────────────────────────────── */
   --color-placeholder: #94a3b8;
 
@@ -106,5 +100,4 @@
   --color-icon-fallback-bg: rgba(0, 0, 0, 0.04);
   --color-stat-bg: rgba(241, 245, 249, 0.6);
 
-  /* ── Titlebar ───────────────────────────────────────── */
 }

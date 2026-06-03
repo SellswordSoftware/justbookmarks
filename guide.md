@@ -99,6 +99,22 @@ The runtime has two halves:
 - reactive state primitives
 - component and DOM helpers
 
+### Runtime Surface
+
+The current runtime exports:
+
+- `signal()`, `computed()`, `effect()` -- reactive state
+- `fx()`, `show()`, `hide()` -- element bindings
+- `model()` -- form control binding
+- `list()` -- keyed list rendering
+- `template()`, `mount()`, `when()` -- component composition
+- `listener()` -- event listener with cleanup
+- `requireRef()`, `requireElement()` -- validated element lookup
+- `collectRowRefs()` -- ref collection for list rows
+- `cleanupCollector()` -- centralized cleanup
+- `$()`, `$$()` -- DOM query helpers
+- `attr()`, `setText()`, `text()` -- DOM manipulation helpers
+
 ### Signals
 
 A `signal` is both a getter and a setter.
@@ -329,27 +345,14 @@ Two important rules:
 
 ```js
 onMount(_el, _parent, ctx) {
-  const toggleButton = ctx.refs.toggleButton;
-  const body = ctx.refs.body;
-  const queryInput = ctx.refs.queryInput;
-  const error = ctx.refs.error;
-
-  if (!(toggleButton instanceof HTMLButtonElement)) {
-    throw new Error("Expected filter toggle button");
-  }
-  if (!(body instanceof HTMLElement)) {
-    throw new Error("Expected filter body");
-  }
-  if (!(queryInput instanceof HTMLInputElement)) {
-    throw new Error("Expected filter query input");
-  }
-  if (!(error instanceof HTMLElement)) {
-    throw new Error("Expected filter error element");
-  }
+  const toggleButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "toggleButton"));
+  const body = /** @type {HTMLElement} */ (requireRef(ctx.refs, "body"));
+  const queryInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "queryInput"));
+  const error = /** @type {HTMLElement} */ (requireRef(ctx.refs, "error"));
 }
 ```
 
-Do the runtime type checks once, early, and close to the refs.
+`requireRef()` replaces the 3-line `ctx.refs` + `instanceof` pattern. Use inline JSDoc casts for type narrowing.
 
 ### Step 6: Bind Inputs With `model`
 
@@ -378,9 +381,6 @@ function handleQueryInput() {
   errorMessage("");
   options.onFilterChange(nextQuery);
 }
-
-toggleButton.addEventListener("click", handleToggleClick);
-queryInputEl.addEventListener("input", handleQueryInput);
 ```
 
 The rule here is simple:
@@ -388,21 +388,18 @@ The rule here is simple:
 - signals hold state
 - event handlers update signals or call outward callbacks
 
-### Step 8: Push State Into The DOM With `fx`
+### Step 8: Push State Into The DOM
 
 ```js
 cleanup.add(
   queryBinding.cleanup,
-  fx(body, (currentBody) => {
-    currentBody.hidden = !open();
-  }),
+  show(body, open),
+  show(error, () => errorMessage().length > 0),
   fx(error, (currentError) => {
-    const message = errorMessage();
-    currentError.hidden = message.length === 0;
-    currentError.textContent = message;
+    currentError.textContent = errorMessage();
   }),
-  () => toggleButton.removeEventListener("click", handleToggleClick),
-  () => queryInputEl.removeEventListener("input", handleQueryInput),
+  listener(toggleButton, "click", handleToggleClick),
+  listener(queryInputEl, "input", handleQueryInput),
 );
 ```
 
@@ -410,8 +407,10 @@ This is the key `naf` habit:
 
 - the signal state changes first
 - the UI follows through narrow bindings
+- `show()`/`hide()` replace `.hidden` toggling
+- `listener()` replaces manual addEventListener/removeEventListener pairing
 
-Avoid large manual “rerender everything” logic.
+Avoid large manual "rerender everything" logic.
 
 ### Step 9: Mount It From The Owning Page Or Feature
 
@@ -543,7 +542,10 @@ Signals are cheap. Keep state local until there is a real cross-module need.
 - Reach for `template` first when adding a bounded surface.
 - Reach for `signal` first when the state is local.
 - Use `model` for form controls.
-- Use `fx` for narrow DOM bindings.
+- Use `listener()` for event listeners (not manual addEventListener/removeEventListener).
+- Use `show()`/`hide()` for visibility toggling (not `.hidden` in `fx()`).
+- Use `requireRef()` for ref validation (not manual instanceof checks).
+- Use `fx` for narrow DOM bindings that set properties beyond `.hidden`.
 - Use `effect` for coordination, not bulk rendering.
 - Use one obvious cleanup path per mounted surface.
 - If a module is hard to explain in one sentence, the boundary is probably wrong.
