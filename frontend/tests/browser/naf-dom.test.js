@@ -66,7 +66,9 @@ describe("template", () => {
   test("supports raw HTML injection", () => {
     const html = "<span class='raw'>Raw</span>";
     const comp = template`<div>${raw(html)}</div>`;
-    ok(comp.html.includes('<span class="raw">Raw</span>'));
+    // raw() inserts the string as-is (single quotes preserved)
+    ok(comp.html.includes("class='raw'"));
+    ok(comp.html.includes("Raw"));
   });
 
   test("skips null/undefined/false values", () => {
@@ -91,7 +93,8 @@ describe("template", () => {
     const child = template`<span class="child">Child</span>`;
     const parent = template`<div class="parent">${child}</div>`;
     ok(parent.html.includes("parent"));
-    ok(parent.html.includes("child"));
+    // Nested components become slot markers, not inlined HTML
+    ok(parent.html.includes("data-naf-component-slot"));
   });
 
   test("supports options with root selector", () => {
@@ -789,7 +792,6 @@ describe("when", () => {
       () => template`<div class="else">Else</div>`,
     );
 
-    host.appendChild(comp);
     comp.mount(host);
     ok(host.querySelector(".then"));
     ok(!host.querySelector(".else"));
@@ -805,7 +807,6 @@ describe("when", () => {
       () => template`<div class="else">Else</div>`,
     );
 
-    host.appendChild(comp);
     comp.mount(host);
     ok(!host.querySelector(".then"));
     ok(host.querySelector(".else"));
