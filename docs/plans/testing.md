@@ -74,6 +74,17 @@ For script consumption, use a headless browser to fetch `/#test-json`
 and read the page body text. The `#test-json` hash renders plain JSON
 to `document.body.textContent` instead of HTML.
 
+Example with chrome-headless-shell:
+```bash
+cd frontend && npm run dev &
+sleep 3
+chrome-headless-shell --dump-dom "http://localhost:5173/#test-json" | \
+  python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(1 if d['failed'] else 0)"
+```
+
+The JSON output includes `passed`, `failed`, `skipped` counts and
+a `results` array with individual test details.
+
 Production verification still works:
 
 ```bash
