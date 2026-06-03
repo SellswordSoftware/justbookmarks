@@ -2,10 +2,12 @@
   "name": "frontend",
   "private": true,
   "version": "0.2.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint:styles": "node ./scripts/lint-styles.mjs",
+    "test": "node tests/run.js",
     "typecheck": "tsc -p jsconfig.json --noEmit",
     "preview": "vite preview"
   },
