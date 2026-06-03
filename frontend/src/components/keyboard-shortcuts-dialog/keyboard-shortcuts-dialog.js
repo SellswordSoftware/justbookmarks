@@ -170,11 +170,11 @@ function createKeyboardShortcutsDialog() {
           </div>
           <button
             type="button"
-            class="btn btn-ghost btn-sm"
+            class="btn btn-ghost btn-sm btn-square titlebar__window-button titlebar__window-button--close"
             data-keyboard-action="shortcuts-close"
             data-ref="closeButton"
           >
-            Close
+            &#10005;
           </button>
         </div>
         <div class="modal__body shortcuts-dialog__body">${raw(groupsHtml)}</div>
