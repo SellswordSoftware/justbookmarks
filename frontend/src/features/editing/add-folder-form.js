@@ -47,13 +47,14 @@ export function createAddFolderForm(options) {
   const renderAddFolderForm = /** @type {TemplateTag} */ (
     template({
       root: ".add-folder-launcher",
-      onMount(_el, _parent, ctx) {
+      onMount(el, _parent, ctx) {
         const trigger = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "trigger"));
         const panel = /** @type {HTMLElement} */ (requireRef(ctx.refs, "panel"));
         const input = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "input"));
         const error = /** @type {HTMLElement} */ (requireRef(ctx.refs, "error"));
         const submit = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "submit"));
         const cancel = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancel"));
+        const launcher = /** @type {HTMLElement} */ (el);
 
         const panelEl = panel;
         const detailPaneContent = panelEl.closest(".detail-pane__content");
@@ -237,11 +238,41 @@ export function createAddFolderForm(options) {
           }
         }
 
+        /** @param {FocusEvent} event */
+        function handleLauncherFocusOut(event) {
+          if (!open()) {
+            return;
+          }
+
+          const nextTarget = event.relatedTarget;
+          if (nextTarget instanceof Node && launcher.contains(nextTarget)) {
+            return;
+          }
+
+          setOpen(false);
+        }
+
+        /** @param {PointerEvent} event */
+        function handleDocumentPointerDown(event) {
+          if (!open()) {
+            return;
+          }
+
+          const target = event.target;
+          if (target instanceof Node && launcher.contains(target)) {
+            return;
+          }
+
+          setOpen(false);
+        }
+
         cleanup.add(
           listener(trigger, "click", handleTriggerClick),
           listener(submit, "click", handleSubmitClick),
           listener(cancel, "click", handleCancelClick),
           listener(input, "keydown", handleInputKeydown),
+          listener(launcher, "focusout", handleLauncherFocusOut),
+          listener(document, "pointerdown", handleDocumentPointerDown),
           nameBinding.cleanup,
           effect(() => {
             const available = options.isAvailable

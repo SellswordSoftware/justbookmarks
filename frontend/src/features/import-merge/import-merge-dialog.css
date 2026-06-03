@@ -1,35 +1,31 @@
-
 .import-merge-dialog {
   display: flex;
   flex-direction: column;
-  width: min(64rem, 100%);
+  width: min(72rem, 100%);
   max-height: calc(100vh - 2rem);
-}
-
-.import-merge-dialog__body {
-  display: grid;
-  gap: 1rem;
-  overflow-y: auto;
-  color: var(--color-base-content);
+  overflow: hidden;
 }
 
 .import-merge-dialog__header {
-  display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .import-merge-dialog__title {
   font-size: 1.25rem;
   font-weight: 700;
+  color: var(--color-base-content);
 }
 
 .import-merge-dialog__subtitle,
 .import-merge-dialog__loading-text,
+.import-merge-dialog__summary-copy,
+.import-merge-dialog__nav-button-desc,
+.import-merge-dialog__section-copy,
 .import-merge-dialog__empty,
-.import-merge-dialog__stat-desc,
-.import-merge-dialog__row-subtitle {
+.import-merge-dialog__row-subtitle,
+.import-merge-dialog__row-meta,
+.import-merge-dialog__update-label,
+.import-merge-dialog__empty-copy {
   color: var(--color-muted);
 }
 
@@ -38,132 +34,370 @@
   font-size: var(--text-body-sm);
 }
 
-.import-merge-dialog__file-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: var(--padding-panel);
-  border: var(--border) solid var(--color-border-quiet);
-  border-radius: var(--radius-panel);
-  background: var(--color-stat-bg);
+.import-merge-dialog__body {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 0.875rem;
+  min-height: 0;
+  overflow-y: auto;
+  color: var(--color-base-content);
 }
 
-.import-merge-dialog__file-meta {
+.import-merge-dialog__source-panel {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.875rem;
+}
+
+.import-merge-dialog__source-copy {
   min-width: 0;
 }
 
-.import-merge-dialog__file-label {
+.import-merge-dialog__file-label,
+.import-merge-dialog__nav-eyebrow,
+.import-merge-dialog__section-eyebrow,
+.import-merge-dialog__empty-eyebrow {
   --eyebrow-letter-spacing: 0.14em;
 }
 
 .import-merge-dialog__file-value {
-  margin-top: 0.25rem;
-  overflow: hidden;
+  margin-top: 0.35rem;
   font-size: var(--text-body-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.import-merge-dialog__loading {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: var(--padding-dialog-spacious);
-  border: var(--border) solid var(--color-border-quiet);
-  border-radius: var(--radius-panel);
+.import-merge-dialog__preview-host {
+  min-height: 0;
 }
 
-.import-merge-dialog__stats {
+.import-merge-dialog__workspace {
+  display: grid;
+  gap: 0.875rem;
+  min-height: 0;
+}
+
+.import-merge-dialog__summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
 }
 
-.import-merge-dialog__stat {
-  padding: var(--padding-panel);
+.import-merge-dialog__summary-card {
+  padding: 0.75rem 0.875rem;
   border: var(--border) solid var(--color-border-quiet);
-  border-radius: var(--radius-panel);
+  border-radius: var(--radius-field);
   background: var(--color-stat-bg);
 }
 
-.import-merge-dialog__stat-label {
-  color: var(--color-muted);
-  font-size: var(--text-caption);
+.import-merge-dialog__summary-card--success {
+  border-color: var(--color-border-quiet);
 }
 
-.import-merge-dialog__stat-value {
-  margin-top: 0.25rem;
-  font-size: 1.5rem;
+.import-merge-dialog__summary-card--muted {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.import-merge-dialog__summary-card--warning {
+  border-color: var(--color-border-quiet);
+}
+
+.import-merge-dialog__summary-label {
+  font-size: var(--text-caption);
+  color: var(--color-muted);
+}
+
+.import-merge-dialog__summary-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.import-merge-dialog__summary-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.3rem;
+}
+
+.import-merge-dialog__summary-copy {
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+
+.import-merge-dialog__review-shell {
+  display: grid;
+  grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
+  gap: 0.875rem;
+  min-height: 0;
+}
+
+.import-merge-dialog__nav,
+.import-merge-dialog__section-panel,
+.import-merge-dialog__loading,
+.import-merge-dialog__empty-state {
+  border: var(--border) solid var(--color-border-quiet);
+  border-radius: var(--radius-field);
+  background: var(--color-surface-1);
+}
+
+.import-merge-dialog__nav {
+  display: grid;
+  align-content: start;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.import-merge-dialog__nav-header {
+  padding: 0.75rem 0.875rem;
+  border-bottom: var(--border) solid var(--color-border-faint);
+}
+
+.import-merge-dialog__nav-title {
+  margin-top: 0.2rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
-.import-merge-dialog__stat-desc {
-  margin-top: 0.125rem;
-  font-size: var(--text-caption);
-}
-
-.import-merge-dialog__sections {
+.import-merge-dialog__nav-list {
   display: grid;
-  gap: 0.75rem;
-  max-height: 24rem;
-  overflow-y: auto;
-  padding-right: 0.125rem;
+  gap: 0.35rem;
+  padding: 0.4rem;
 }
 
-.import-merge-dialog__section {
-  overflow: hidden;
-  border: var(--border) solid var(--color-border-quiet);
-  border-radius: var(--radius-panel);
-}
-
-.import-merge-dialog__section-header {
+.import-merge-dialog__nav-button {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: var(--padding-panel-header);
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: var(--border) solid transparent;
+  border-radius: var(--radius-field);
+  background: transparent;
+  color: var(--color-base-content);
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.import-merge-dialog__nav-button:hover {
+  background: var(--color-hover-card);
+  border-color: var(--color-border-faint);
+}
+
+.import-merge-dialog__nav-button:focus-visible {
+  outline: none;
+  border-color: var(--color-focus-border);
+  box-shadow: var(--shadow-glow);
+}
+
+.import-merge-dialog__nav-button.is-active {
+  border-color: var(--color-btn-primary-border);
+  background: var(--color-active-bg);
+  transform: translateX(0.1rem);
+}
+
+.import-merge-dialog__nav-button-copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.import-merge-dialog__nav-button-title {
+  font-size: var(--text-body-sm);
+  font-weight: 600;
+}
+
+.import-merge-dialog__nav-button-desc {
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+
+.import-merge-dialog__nav-button-badge,
+.import-merge-dialog__section-badge {
+  flex-shrink: 0;
+}
+
+.import-merge-dialog__content {
+  min-height: 0;
+}
+
+.import-merge-dialog__section-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.import-merge-dialog__section-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
   border-bottom: var(--border) solid var(--color-border-faint);
 }
 
 .import-merge-dialog__section-title {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  margin-top: 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.import-merge-dialog__section-copy {
+  margin-top: 0.25rem;
+  font-size: var(--text-body-sm);
 }
 
 .import-merge-dialog__rows {
   display: grid;
+  min-height: 0;
+  max-height: min(24rem, calc(100vh - 28rem));
+  overflow-y: auto;
 }
 
 .import-merge-dialog__row {
-  padding: var(--padding-panel);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 12rem);
+  gap: 0.875rem;
+  padding: 0.75rem 0.875rem;
   border-top: var(--border) solid var(--color-border-faint);
 }
 
-.import-merge-dialog__row:first-child {
+.import-merge-dialog__row:first-child,
+.import-merge-dialog__empty:first-child {
   border-top: 0;
+}
+
+.import-merge-dialog__row-main {
+  min-width: 0;
 }
 
 .import-merge-dialog__row-title {
   font-size: var(--text-body-sm);
   font-weight: 600;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
 .import-merge-dialog__row-subtitle {
-  margin-top: 0.125rem;
+  margin-top: 0.2rem;
   font-size: var(--text-caption);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.import-merge-dialog__row-meta {
+  font-size: var(--text-caption);
+  line-height: 1.45;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.import-merge-dialog__row--update {
+  grid-template-columns: 1fr;
+}
+
+.import-merge-dialog__update-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.import-merge-dialog__update-side {
+  padding: 0.7rem 0.8rem;
+  border: var(--border) solid var(--color-border-faint);
+  border-radius: var(--radius-field);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.import-merge-dialog__update-label {
+  font-size: var(--text-caption);
+}
+
+.import-merge-dialog__update-value {
+  margin-top: 0.2rem;
+  font-size: var(--text-body-sm);
+  line-height: 1.45;
   overflow-wrap: anywhere;
 }
 
 .import-merge-dialog__empty {
-  padding: var(--padding-panel);
+  padding: 0.75rem 0.875rem;
   font-size: var(--text-body-sm);
 }
 
-@media (max-width: 900px) {
-  .import-merge-dialog__stats {
+.import-merge-dialog__loading {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: var(--padding-dialog-spacious);
+}
+
+.import-merge-dialog__loading-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.import-merge-dialog__loading-title {
+  font-size: var(--text-body-sm);
+}
+
+.import-merge-dialog__empty-state {
+  padding: var(--padding-dialog-spacious);
+}
+
+.import-merge-dialog__empty-title {
+  margin-top: 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.import-merge-dialog__empty-copy {
+  margin-top: 0.5rem;
+  font-size: var(--text-body-sm);
+  max-width: 42rem;
+}
+
+@media (max-width: 980px) {
+  .import-merge-dialog__summary {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .import-merge-dialog__review-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .import-merge-dialog__nav-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .import-merge-dialog__source-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .import-merge-dialog__summary,
+  .import-merge-dialog__nav-list,
+  .import-merge-dialog__update-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .import-merge-dialog__row {
+    grid-template-columns: 1fr;
+  }
+
+  .import-merge-dialog__row-meta {
+    text-align: left;
+  }
+
+  .import-merge-dialog__rows {
+    max-height: min(18rem, calc(100vh - 24rem));
   }
 }

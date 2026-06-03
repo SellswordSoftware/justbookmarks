@@ -14,11 +14,11 @@
   --color-muted: #9ca3af;
 
   /* ── Semantic colors ────────────────────────────────── */
-  --color-info-content: oklch(12.523% 0.028 240.033);
-  --color-success-content: oklch(14.045% 0.018 156.596);
-  --color-warning-content: oklch(15.496% 0.023 81.519);
+  --color-info-content: #d7ebff;
+  --color-success-content: #d9f8ec;
+  --color-warning-content: #fff0ca;
   --color-error: #ef4444;
-  --color-error-content: oklch(90.322% 0.029 29.674);
+  --color-error-content: #ffe2e7;
 
   /* ── Surfaces ───────────────────────────────────────── */
   --color-surface-1: #202225;
@@ -56,14 +56,14 @@
   --color-danger-hover-bg: rgba(239, 68, 68, 0.88);
 
   /* ── Alerts ─────────────────────────────────────────── */
-  --color-alert-info-bg: rgba(96, 165, 250, 0.12);
-  --color-alert-info-border: rgba(96, 165, 250, 0.35);
-  --color-alert-success-bg: rgba(16, 185, 129, 0.12);
-  --color-alert-success-border: rgba(16, 185, 129, 0.35);
-  --color-alert-warning-bg: rgba(245, 158, 11, 0.12);
-  --color-alert-warning-border: rgba(245, 158, 11, 0.35);
-  --color-alert-error-bg: rgba(239, 68, 68, 0.12);
-  --color-alert-error-border: rgba(239, 68, 68, 0.35);
+  --color-alert-info-bg: rgba(33, 74, 128, 0.62);
+  --color-alert-info-border: rgba(120, 174, 235, 0.38);
+  --color-alert-success-bg: rgba(24, 86, 68, 0.64);
+  --color-alert-success-border: rgba(92, 182, 151, 0.36);
+  --color-alert-warning-bg: rgba(109, 76, 26, 0.62);
+  --color-alert-warning-border: rgba(219, 172, 88, 0.38);
+  --color-alert-error-bg: rgba(123, 41, 55, 0.66);
+  --color-alert-error-border: rgba(230, 118, 133, 0.36);
 
   /* ── Drag & drop ────────────────────────────────────── */
   --color-dnd-inside-bg: rgba(34, 197, 94, 0.14);

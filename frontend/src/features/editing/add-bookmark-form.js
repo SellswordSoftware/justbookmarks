@@ -100,7 +100,7 @@ export function createAddBookmarkForm(options) {
     /** @type {TemplateTag} */ (
       template({
         root: ".add-bookmark-launcher",
-        onMount(_el, _parent, ctx) {
+        onMount(el, _parent, ctx) {
           const trigger = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "trigger"));
           const panel = /** @type {HTMLElement} */ (requireRef(ctx.refs, "panel"));
           const urlInput = /** @type {HTMLInputElement} */ (requireRef(ctx.refs, "urlInput"));
@@ -109,6 +109,7 @@ export function createAddBookmarkForm(options) {
           const error = /** @type {HTMLElement} */ (requireRef(ctx.refs, "error"));
           const submit = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "submit"));
           const cancel = requireRef(ctx.refs, "cancel");
+          const launcher = /** @type {HTMLElement} */ (el);
 
           const panelEl = panel;
           const detailPaneContent = panelEl.closest(".detail-pane__content");
@@ -349,15 +350,9 @@ export function createAddBookmarkForm(options) {
               return;
             }
 
-            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            if (event.key === "Enter") {
               event.preventDefault();
               void submitForm();
-              return;
-            }
-
-            if (event.key === "Enter" && event.target === urlInput) {
-              event.preventDefault();
-              titleInput.focus();
             }
           }
 
@@ -370,48 +365,78 @@ export function createAddBookmarkForm(options) {
             errorMessage("");
           }
 
-          cleanup.add(
-          listener(trigger, "click", handleTriggerClick),
-          listener(submit, "click", handleSubmitClick),
-          listener(cancel, "click", handleCancelClick),
-          listener(urlInput, "keydown", handleFieldKeydown),
-          listener(titleInput, "keydown", handleFieldKeydown),
-          listener(urlInput, "input", handleURLInput),
-          listener(titleInput, "input", handleTitleInput),
-        );
-
-        cleanup.add(
-          urlBinding.cleanup,
-          titleBinding.cleanup,
-          effect(() => {
-            const available = options.isAvailable
-              ? options.isAvailable()
-              : Boolean(appState.selectors.getCurrentFilePath());
-            trigger.disabled = !available;
-            if (!available) {
-              setOpen(false);
+          /** @param {FocusEvent} event */
+          function handleLauncherFocusOut(event) {
+            if (!open()) {
+              return;
             }
-          }),
-          show(panel, open),
-          fx(loading, (currentLoading) => {
-            const active = loadingState();
-            currentLoading.hidden = !active;
-            currentLoading.setAttribute(
-              "aria-hidden",
-              active ? "false" : "true",
-            );
-          }),
-          fx(error, (currentError) => {
-            const message = errorMessage();
-            currentError.hidden = message.length === 0;
-            currentError.textContent = message;
-          }),
-          fx(submit, (currentSubmit) => {
-            currentSubmit.disabled = busy();
-          }),
-          () => clearScheduledFetch(),
-          () => detachPositionListeners(),
-        );
+
+            const nextTarget = event.relatedTarget;
+            if (nextTarget instanceof Node && launcher.contains(nextTarget)) {
+              return;
+            }
+
+            setOpen(false);
+          }
+
+          /** @param {PointerEvent} event */
+          function handleDocumentPointerDown(event) {
+            if (!open()) {
+              return;
+            }
+
+            const target = event.target;
+            if (target instanceof Node && launcher.contains(target)) {
+              return;
+            }
+
+            setOpen(false);
+          }
+
+          cleanup.add(
+            listener(trigger, "click", handleTriggerClick),
+            listener(submit, "click", handleSubmitClick),
+            listener(cancel, "click", handleCancelClick),
+            listener(urlInput, "keydown", handleFieldKeydown),
+            listener(titleInput, "keydown", handleFieldKeydown),
+            listener(urlInput, "input", handleURLInput),
+            listener(titleInput, "input", handleTitleInput),
+            listener(launcher, "focusout", handleLauncherFocusOut),
+            listener(document, "pointerdown", handleDocumentPointerDown),
+          );
+
+          cleanup.add(
+            urlBinding.cleanup,
+            titleBinding.cleanup,
+            effect(() => {
+              const available = options.isAvailable
+                ? options.isAvailable()
+                : Boolean(appState.selectors.getCurrentFilePath());
+              trigger.disabled = !available;
+              if (!available) {
+                setOpen(false);
+              }
+            }),
+            show(panel, open),
+            fx(loading, (currentLoading) => {
+              const active = loadingState();
+              currentLoading.hidden = !active;
+              currentLoading.setAttribute(
+                "aria-hidden",
+                active ? "false" : "true",
+              );
+            }),
+            fx(error, (currentError) => {
+              const message = errorMessage();
+              currentError.hidden = message.length === 0;
+              currentError.textContent = message;
+            }),
+            fx(submit, (currentSubmit) => {
+              currentSubmit.disabled = busy();
+            }),
+            () => clearScheduledFetch(),
+            () => detachPositionListeners(),
+          );
         },
         onUnmount() {
           cleanup.run();

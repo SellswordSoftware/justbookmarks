@@ -1,31 +1,24 @@
 // @ts-check
 
-import { collectRowRefs, cleanupCollector, effect, list } from "../../shared/runtime/naf.js";
-
 /**
- * @typedef {{ title: string, subtitle: string }} ImportMergePreviewRow
- * @typedef {{ title: string, count: number, rows: ImportMergePreviewRow[] }} ImportMergePreviewSection
+ * @typedef {"folders" | "bookmarks" | "duplicates" | "updates"} ImportMergePreviewSectionKey
+ * @typedef {{
+ *   key: ImportMergePreviewSectionKey,
+ *   title: string,
+ *   shortLabel: string,
+ *   count: number,
+ *   tone: "neutral" | "success" | "muted" | "warning",
+ *   emptyMessage: string,
+ *   rows: ImportMergePreviewRow[],
+ * }} ImportMergePreviewSection
+ * @typedef {{
+ *   primary: string,
+ *   secondary: string,
+ *   meta?: string,
+ *   before?: string,
+ *   after?: string,
+ * }} ImportMergePreviewRow
  */
-
-/** @type {string} */
-const SECTION_ROW_HTML = /*html*/ `
-  <section class="import-merge-dialog__section">
-    <div class="import-merge-dialog__section-header">
-      <h3 class="import-merge-dialog__section-title" data-ref="title"></h3>
-      <span class="badge" data-ref="badge"></span>
-    </div>
-    <p class="import-merge-dialog__empty" hidden data-ref="empty">None</p>
-    <div class="import-merge-dialog__rows" data-ref="rows"></div>
-  </section>
-`;
-
-/** @type {string} */
-const PREVIEW_ROW_HTML = /*html*/ `
-  <div class="import-merge-dialog__row">
-    <div class="import-merge-dialog__row-title" data-ref="title"></div>
-    <div class="import-merge-dialog__row-subtitle" data-ref="subtitle"></div>
-  </div>
-`;
 
 /**
  * @param {MergePreview} preview
@@ -34,156 +27,379 @@ const PREVIEW_ROW_HTML = /*html*/ `
 export function buildImportMergePreviewSections(preview) {
   return [
     {
+      key: "folders",
       title: "Folders to add",
+      shortLabel: "Folders",
       count: preview.foldersToAdd.length,
+      tone: "success",
+      emptyMessage: "No new folders will be created.",
       rows: preview.foldersToAdd.map((item) => ({
-        title: item.path,
-        subtitle: item.name,
+        primary: item.name,
+        secondary: item.path || "Root",
       })),
     },
     {
+      key: "bookmarks",
       title: "Bookmarks to add",
+      shortLabel: "Bookmarks",
       count: preview.bookmarksToAdd.length,
+      tone: "success",
+      emptyMessage: "No new bookmarks will be added.",
       rows: preview.bookmarksToAdd.map((item) => ({
-        title: item.title || item.url,
-        subtitle: [item.folderPath || "Root", item.url].join("  •  "),
+        primary: item.title || item.url,
+        secondary: item.url,
+        meta: item.folderPath || "Root",
       })),
     },
     {
+      key: "duplicates",
       title: "Duplicates ignored",
+      shortLabel: "Duplicates",
       count: preview.duplicateBookmarks.length,
+      tone: "muted",
+      emptyMessage: "No duplicates were detected.",
       rows: preview.duplicateBookmarks.map((item) => ({
-        title: item.title || item.url,
-        subtitle: [item.folderPath || "Root", item.url].join("  •  "),
+        primary: item.title || item.url,
+        secondary: item.url,
+        meta: item.folderPath || "Root",
       })),
     },
     {
-      title: "Potential updates",
+      key: "updates",
+      title: "Existing matches",
+      shortLabel: "Matches",
       count: preview.potentialUpdates.length,
+      tone: "warning",
+      emptyMessage: "No existing matches were found.",
       rows: preview.potentialUpdates.map((item) => ({
-        title: `${item.existingTitle || item.url} -> ${item.incomingTitle || item.url}`,
-        subtitle: [item.folderPath || "Root", item.url].join("  •  "),
+        primary: item.url,
+        secondary: item.folderPath || "Root",
+        before: item.existingTitle || item.url,
+        after: item.incomingTitle || item.url,
       })),
     },
   ];
 }
 
 /**
- * @param {HTMLElement} body
+ * @param {HTMLElement} host
  * @param {MergePreview | null} preview
  * @param {boolean} previewLoading
  * @returns {() => void}
  */
-export function mountImportMergePreview(body, preview, previewLoading) {
+export function mountImportMergePreview(host, preview, previewLoading) {
+  host.replaceChildren();
+
   if (previewLoading) {
-    const loadingCard = document.createElement("div");
-    loadingCard.className = "import-merge-dialog__loading";
-
-    const spinner = document.createElement("span");
-    spinner.className = "spinner";
-
-    const loadingText = document.createElement("span");
-    loadingText.className = "import-merge-dialog__loading-text";
-    loadingText.textContent = "Computing merge preview...";
-
-    loadingCard.append(spinner, loadingText);
-    body.append(loadingCard);
-    return () => {};
+    host.append(createLoadingCard());
+    return () => {
+      host.replaceChildren();
+    };
   }
 
   if (!preview) {
-    return () => {};
+    host.append(createEmptyState());
+    return () => {
+      host.replaceChildren();
+    };
   }
 
-  const stats = document.createElement("div");
-  stats.className = "import-merge-dialog__stats";
+  const sections = buildImportMergePreviewSections(preview);
+  const visibleSections = sections.filter((section) => section.count > 0);
+  const initialSection = visibleSections[0] ?? sections[0] ?? null;
 
-  for (const [label, value, desc] of [
-    ["Folders", preview.foldersToAdd.length, "to add"],
-    ["Bookmarks", preview.bookmarksToAdd.length, "to add"],
-    ["Duplicates", preview.duplicateBookmarks.length, "ignored"],
-    ["Potential updates", preview.potentialUpdates.length, "not applied"],
-  ]) {
-    const stat = document.createElement("div");
-    stat.className = "import-merge-dialog__stat";
-
-    const statLabel = document.createElement("div");
-    statLabel.className = "import-merge-dialog__stat-label";
-    statLabel.textContent = String(label);
-
-    const statValue = document.createElement("div");
-    statValue.className = "import-merge-dialog__stat-value";
-    statValue.textContent = String(value);
-
-    const statDesc = document.createElement("div");
-    statDesc.className = "import-merge-dialog__stat-desc";
-    statDesc.textContent = String(desc);
-
-    stat.append(statLabel, statValue, statDesc);
-    stats.append(stat);
+  if (!initialSection) {
+    host.append(createEmptyState());
+    return () => {
+      host.replaceChildren();
+    };
   }
 
-  const sectionList = document.createElement("div");
-  sectionList.className = "import-merge-dialog__sections";
+  const workspace = document.createElement("section");
+  workspace.className = "import-merge-dialog__workspace";
 
-  body.append(stats, sectionList);
+  const summary = document.createElement("div");
+  summary.className = "import-merge-dialog__summary";
+  for (const section of sections) {
+    summary.append(createSummaryCard(section));
+  }
 
-  return list(
-    sectionList,
-    SECTION_ROW_HTML,
-    () => buildImportMergePreviewSections(preview),
-    (section) => section.title,
-    (el, section) => {
-      if (!(el instanceof HTMLElement)) {
-        throw new Error("Import merge section template must render an element");
+  const review = document.createElement("div");
+  review.className = "import-merge-dialog__review-shell";
+
+  const nav = document.createElement("div");
+  nav.className = "import-merge-dialog__nav";
+
+  const navHeader = document.createElement("div");
+  navHeader.className = "import-merge-dialog__nav-header";
+  navHeader.innerHTML = /*html*/ `
+    <div class="eyebrow import-merge-dialog__nav-eyebrow">Preview</div>
+    <h3 class="import-merge-dialog__nav-title">Review changes</h3>
+  `;
+
+  const navList = document.createElement("div");
+  navList.className = "import-merge-dialog__nav-list";
+
+  const content = document.createElement("div");
+  content.className = "import-merge-dialog__content";
+
+  /** @type {ImportMergePreviewSection | null} */
+  let activeSection = initialSection;
+  /** @type {Map<ImportMergePreviewSectionKey, HTMLButtonElement>} */
+  const navButtons = new Map();
+
+  /**
+   * @param {ImportMergePreviewSection} section
+   * @returns {void}
+   */
+  function renderSection(section) {
+    activeSection = section;
+
+    for (const candidate of sections) {
+      const button = navButtons.get(candidate.key);
+      if (!button) {
+        continue;
       }
+      const isActive = candidate.key === section.key;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-pressed", isActive ? "true" : "false");
+    }
 
-      const refs = collectRowRefs(el);
-      const titleEl = /** @type {HTMLElement} */ (refs.title);
-      const badgeEl = /** @type {HTMLElement} */ (refs.badge);
-      const emptyEl = /** @type {HTMLElement} */ (refs.empty);
-      const rowsEl = /** @type {HTMLElement} */ (refs.rows);
-      if (!(rowsEl instanceof HTMLElement)) {
-        throw new Error(
-          "Import merge section template must include a rows container",
-        );
-      }
+    content.replaceChildren(createSectionPanel(section));
+  }
 
-      const cleanup = cleanupCollector(
-        effect(() => {
-          const currentSection = section();
-          titleEl.textContent = currentSection.title;
-          badgeEl.textContent = String(currentSection.count);
-          emptyEl.hidden = currentSection.rows.length > 0;
-          rowsEl.hidden = currentSection.rows.length === 0;
-        }),
-        list(
-          rowsEl,
-          PREVIEW_ROW_HTML,
-          () => section().rows,
-          (row) => `${row.title}::${row.subtitle}`,
-          (rowEl, row) => {
-            if (!(rowEl instanceof HTMLElement)) {
-              throw new Error(
-                "Import merge row template must render an element",
-              );
-            }
+  for (const section of sections) {
+    const button = createSectionButton(section, () => {
+      renderSection(section);
+    });
+    navButtons.set(section.key, button);
+    navList.append(button);
+  }
 
-            const rowRefs = collectRowRefs(rowEl);
-            const rowTitle = /** @type {HTMLElement} */ (rowRefs.title);
-            const rowSubtitle = /** @type {HTMLElement} */ (rowRefs.subtitle);
-            return effect(() => {
-              const currentRow = row();
-              rowTitle.textContent = currentRow.title;
-              rowSubtitle.textContent = currentRow.subtitle;
-            });
-          },
-        ),
-      );
+  nav.append(navHeader, navList);
+  review.append(nav, content);
+  workspace.append(summary, review);
+  host.append(workspace);
 
-      return () => {
-        cleanup.run();
-      };
-    },
-  );
+  renderSection(initialSection);
+
+  return () => {
+    activeSection = null;
+    host.replaceChildren();
+  };
+}
+
+/**
+ * @returns {HTMLElement}
+ */
+function createLoadingCard() {
+  const loadingCard = document.createElement("div");
+  loadingCard.className = "import-merge-dialog__loading";
+
+  const spinner = document.createElement("span");
+  spinner.className = "spinner";
+
+  const copy = document.createElement("div");
+  copy.className = "import-merge-dialog__loading-copy";
+  copy.innerHTML = /*html*/ `
+    <strong class="import-merge-dialog__loading-title">Computing merge preview</strong>
+    <span class="import-merge-dialog__loading-text">Scanning the imported bookmark file for additive changes.</span>
+  `;
+
+  loadingCard.append(spinner, copy);
+  return loadingCard;
+}
+
+/**
+ * @returns {HTMLElement}
+ */
+function createEmptyState() {
+  const emptyState = document.createElement("section");
+  emptyState.className = "panel import-merge-dialog__empty-state";
+  emptyState.innerHTML = /*html*/ `
+    <div class="eyebrow import-merge-dialog__empty-eyebrow">Preview</div>
+    <h3 class="import-merge-dialog__empty-title">Choose a bookmark file to compare</h3>
+    <p class="import-merge-dialog__empty-copy">
+      The preview will show folders and bookmarks to add, duplicates to ignore, and possible title updates.
+    </p>
+  `;
+  return emptyState;
+}
+
+/**
+ * @param {ImportMergePreviewSection} section
+ * @returns {HTMLElement}
+ */
+function createSummaryCard(section) {
+  const card = document.createElement("article");
+  card.className = `import-merge-dialog__summary-card import-merge-dialog__summary-card--${section.tone}`;
+  card.innerHTML = /*html*/ `
+    <div class="import-merge-dialog__summary-label">${section.shortLabel}</div>
+    <div class="import-merge-dialog__summary-line">
+      <span class="import-merge-dialog__summary-value">${section.count}</span>
+      <span class="import-merge-dialog__summary-copy">${describeSectionCompact(section)}</span>
+    </div>
+  `;
+  return card;
+}
+
+/**
+ * @param {ImportMergePreviewSection} section
+ * @param {() => void} onClick
+ * @returns {HTMLButtonElement}
+ */
+function createSectionButton(section, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "import-merge-dialog__nav-button";
+  button.setAttribute("aria-pressed", "false");
+  button.innerHTML = /*html*/ `
+    <span class="import-merge-dialog__nav-button-copy">
+      <span class="import-merge-dialog__nav-button-title">${section.title}</span>
+      <span class="import-merge-dialog__nav-button-desc">${describeSection(section)}</span>
+    </span>
+    <span class="badge import-merge-dialog__nav-button-badge">${section.count}</span>
+  `;
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+/**
+ * @param {ImportMergePreviewSection} section
+ * @returns {HTMLElement}
+ */
+function createSectionPanel(section) {
+  const panel = document.createElement("section");
+  panel.className = "import-merge-dialog__section-panel";
+
+  const header = document.createElement("div");
+  header.className = "import-merge-dialog__section-panel-header";
+  header.innerHTML = /*html*/ `
+    <div>
+      <div class="eyebrow import-merge-dialog__section-eyebrow">${section.shortLabel}</div>
+      <h3 class="import-merge-dialog__section-title">${section.title}</h3>
+      <p class="import-merge-dialog__section-copy">${describeSection(section)}</p>
+    </div>
+    <span class="badge import-merge-dialog__section-badge">${section.count}</span>
+  `;
+
+  const rows = document.createElement("div");
+  rows.className = "import-merge-dialog__rows";
+
+  if (section.rows.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "import-merge-dialog__empty";
+    empty.textContent = section.emptyMessage;
+    rows.append(empty);
+  } else {
+    for (const row of section.rows) {
+      rows.append(createPreviewRow(section, row));
+    }
+  }
+
+  panel.append(header, rows);
+  return panel;
+}
+
+/**
+ * @param {ImportMergePreviewSection} section
+ * @param {ImportMergePreviewRow} row
+ * @returns {HTMLElement}
+ */
+function createPreviewRow(section, row) {
+  const article = document.createElement("article");
+  article.className = "import-merge-dialog__row";
+
+  if (section.key === "updates") {
+    article.classList.add("import-merge-dialog__row--update");
+    const meta = document.createElement("div");
+    meta.className = "import-merge-dialog__row-meta";
+    meta.textContent = row.secondary;
+
+    const title = document.createElement("div");
+    title.className = "import-merge-dialog__row-title";
+    title.textContent = row.primary;
+
+    const updateGrid = document.createElement("div");
+    updateGrid.className = "import-merge-dialog__update-grid";
+    updateGrid.append(
+      createUpdateSide("Existing title", row.before || ""),
+      createUpdateSide("Imported title", row.after || ""),
+    );
+
+    article.append(meta, title, updateGrid);
+    return article;
+  }
+
+  const main = document.createElement("div");
+  main.className = "import-merge-dialog__row-main";
+
+  const title = document.createElement("div");
+  title.className = "import-merge-dialog__row-title";
+  title.textContent = row.primary;
+
+  const subtitle = document.createElement("div");
+  subtitle.className = "import-merge-dialog__row-subtitle";
+  subtitle.textContent = row.secondary;
+
+  const meta = document.createElement("div");
+  meta.className = "import-merge-dialog__row-meta";
+  meta.textContent = row.meta || "";
+
+  main.append(title, subtitle);
+  article.append(main, meta);
+  return article;
+}
+
+/**
+ * @param {string} label
+ * @param {string} value
+ * @returns {HTMLElement}
+ */
+function createUpdateSide(label, value) {
+  const side = document.createElement("div");
+  side.className = "import-merge-dialog__update-side";
+
+  const labelEl = document.createElement("div");
+  labelEl.className = "import-merge-dialog__update-label";
+  labelEl.textContent = label;
+
+  const valueEl = document.createElement("div");
+  valueEl.className = "import-merge-dialog__update-value";
+  valueEl.textContent = value;
+
+  side.append(labelEl, valueEl);
+  return side;
+}
+
+/**
+ * @param {ImportMergePreviewSection} section
+ * @returns {string}
+ */
+function describeSection(section) {
+  if (section.key === "duplicates") {
+    return section.count === 1 ? "1 duplicate will be ignored" : `${section.count} duplicates will be ignored`;
+  }
+
+  if (section.key === "updates") {
+    return section.count === 1 ? "1 existing match found and skipped" : `${section.count} existing matches found and skipped`;
+  }
+
+  return section.count === 1 ? `1 ${section.shortLabel.toLowerCase().slice(0, -1)} to add` : `${section.count} ${section.shortLabel.toLowerCase()} to add`;
+}
+
+/**
+ * @param {ImportMergePreviewSection} section
+ * @returns {string}
+ */
+function describeSectionCompact(section) {
+  if (section.key === "duplicates") {
+    return section.count === 1 ? "duplicate ignored" : "duplicates ignored";
+  }
+
+  if (section.key === "updates") {
+    return section.count === 1 ? "found, not applied" : "found, not applied";
+  }
+
+  return section.count === 1 ? "to add" : "to add";
 }

@@ -4,7 +4,6 @@ import {
   attr,
   effect,
   mount,
-  raw,
   requireElement,
   requireRef,
   template,
@@ -17,7 +16,7 @@ import { mountImportMergePreview } from "./import-merge-dialog-preview.js";
  * @typedef {object} ImportMergeDialogElements
  * @property {HTMLDivElement} backdrop
  * @property {HTMLDivElement} dialog
- * @property {HTMLDivElement} body
+ * @property {HTMLDivElement} previewHost
  * @property {HTMLButtonElement} closeButton
  * @property {HTMLButtonElement} chooseFileButton
  * @property {HTMLButtonElement} cancelButton
@@ -38,28 +37,24 @@ import { mountImportMergePreview } from "./import-merge-dialog-preview.js";
 function createImportMergeDialog(view, onMountElements) {
   const applyLabel = view.applyLoading ? "Applying..." : "Apply Merge";
 
-  const errorComponent = view.error
-    ? raw(`
-        <div class="alert alert-error">
-          <span>${view.error}</span>
-        </div>
-      `)
-    : null;
-
   const renderDialog = /** @type {TemplateTag} */ (
     template({
       onMount(_el, _parent, ctx) {
         const backdrop = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "backdrop"));
         const dialog = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "dialog"));
-        const body = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "body"));
+        const previewHost = /** @type {HTMLDivElement} */ (requireRef(ctx.refs, "previewHost"));
         const closeButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "closeButton"));
         const chooseFileButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "chooseFileButton"));
         const cancelButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "cancelButton"));
         const applyButton = /** @type {HTMLButtonElement} */ (requireRef(ctx.refs, "applyButton"));
         const filePath = /** @type {HTMLElement} */ (requireRef(ctx.refs, "filePath"));
+        const errorBanner = /** @type {HTMLElement} */ (requireRef(ctx.refs, "errorBanner"));
+        const errorText = /** @type {HTMLElement} */ (requireRef(ctx.refs, "errorText"));
 
         filePath.textContent = view.importPath || "No file selected";
         applyButton.textContent = applyLabel;
+        errorBanner.hidden = !view.error;
+        errorText.textContent = view.error;
 
         ctx.cleanup.add(
           attr(chooseFileButton, "disabled", () => view.previewLoading || view.applyLoading),
@@ -70,7 +65,7 @@ function createImportMergeDialog(view, onMountElements) {
         onMountElements({
           backdrop,
           dialog,
-          body,
+          previewHost,
           closeButton,
           chooseFileButton,
           cancelButton,
@@ -80,7 +75,7 @@ function createImportMergeDialog(view, onMountElements) {
     })
   );
 
-  return renderDialog`
+  return renderDialog /*html*/ `
     <div class="modal-backdrop" role="presentation" data-ref="backdrop">
       <div
         class="modal import-merge-dialog"
@@ -91,25 +86,25 @@ function createImportMergeDialog(view, onMountElements) {
         tabindex="-1"
         data-ref="dialog"
       >
-        <div class="modal__body import-merge-dialog__body" data-ref="body">
-          <div class="import-merge-dialog__header">
-            <div>
-              <h2 id="import-merge-title" class="import-merge-dialog__title">Import and Merge</h2>
-              <p class="import-merge-dialog__subtitle">
-                Review additive changes before updating the current bookmark file.
-              </p>
-            </div>
-            <button
-              type="button"
-              class="btn btn-ghost btn-sm btn-square"
-              aria-label="Close import merge dialog"
-              data-ref="closeButton"
-            >
-              x
-            </button>
+        <div class="modal__header import-merge-dialog__header">
+          <div>
+            <h2 id="import-merge-title" class="import-merge-dialog__title">Import and Merge</h2>
+            <p class="import-merge-dialog__subtitle">
+              Review additive changes before updating the current bookmark file.
+            </p>
           </div>
-          <div class="import-merge-dialog__file-bar">
-            <div class="import-merge-dialog__file-meta">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm btn-square titlebar__window-button titlebar__window-button--close"
+            aria-label="Close import merge dialog"
+            data-ref="closeButton"
+          >
+            &#10005;
+          </button>
+        </div>
+        <div class="modal__body import-merge-dialog__body">
+          <section class="panel import-merge-dialog__source-panel">
+            <div class="import-merge-dialog__source-copy">
               <div class="eyebrow import-merge-dialog__file-label">Import file</div>
               <div class="import-merge-dialog__file-value" data-ref="filePath"></div>
             </div>
@@ -119,15 +114,18 @@ function createImportMergeDialog(view, onMountElements) {
               data-keyboard-action="import-choose-file"
               data-ref="chooseFileButton"
             >
-              Choose File
+              Choose Another File
             </button>
+          </section>
+          <div class="alert alert-error" hidden data-ref="errorBanner">
+            <span data-ref="errorText"></span>
           </div>
-          ${errorComponent}
+          <div class="import-merge-dialog__preview-host" data-ref="previewHost"></div>
         </div>
         <div class="modal__footer">
           <button
             type="button"
-            class="btn btn-ghost"
+            class="btn btn-ghost btn-sm"
             data-keyboard-action="import-cancel"
             data-ref="cancelButton"
           >
@@ -135,7 +133,7 @@ function createImportMergeDialog(view, onMountElements) {
           </button>
           <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-primary btn-sm"
             data-keyboard-action="import-apply"
             data-ref="applyButton"
           >
@@ -185,7 +183,7 @@ export function mountImportMergeDialog(root) {
       throw new Error("Expected import merge dialog elements after mount");
     }
 
-    const previewCleanup = mountImportMergePreview(elements.body, preview, previewLoading);
+    const previewCleanup = mountImportMergePreview(elements.previewHost, preview, previewLoading);
     const interactionCleanup = bindImportMergeDialogInteractions(elements, {
       preview,
       previewLoading,

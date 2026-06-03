@@ -9,7 +9,7 @@ const defaultState = {
   leftPaneWidth: 360,
   window: null,
   files: {},
-  theme: "light",
+  theme: "dark",
 };
 
 /**
