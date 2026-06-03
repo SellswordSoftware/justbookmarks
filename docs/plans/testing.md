@@ -13,7 +13,7 @@ After reading it, the engineer should be able to:
 ## Status
 
 - **Lane 1 (Node tests)** -- DONE. 181 tests across 10 test files, 180 passing, 1 skipped.
-- **Lane 2 (Browser tests)** -- IN PROGRESS. Harness built, 78 naf-dom tests written. Needs real browser to run.
+- **Lane 2 (Browser tests)** -- IN PROGRESS. Harness built, 105 browser tests (78 naf-dom + 27 component). Runs in Vite dev server at `/#test`.
 
 ## Design Principles
 
@@ -50,6 +50,7 @@ frontend/
     browser/
       run.js                # Browser test entry point
       naf-dom.test.js       # 78 DOM-specific NAF tests
+      component.test.js     # 27 component rendering tests
     run.js             # Entry point: discovers and runs all .test.js files
 ```
 
@@ -229,7 +230,7 @@ go test ./internal/...
 ## Decision Summary
 
 - **Lane 1** is complete: 181 tests covering all pure-logic modules with zero dependencies and instant execution
-- **Lane 2** is in progress: harness built with URL hash approach, 78 naf-dom tests written. Runs in Vite dev server at `/#test`
+- **Lane 2** is in progress: harness built with URL hash approach, 105 browser tests (78 naf-dom + 27 component). Runs in Vite dev server at `/#test`
 - The framework is ~250 lines total (`test.js` + `assert.js`)
 - No production impact -- test files are never imported by app code
 - Go backend already has adequate test coverage with stdlib `testing`

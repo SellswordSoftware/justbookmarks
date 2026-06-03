@@ -16,6 +16,8 @@ import { collectTests, runTests } from "../lib/test.js";
 // Import all browser test files (side-effect only, registers tests)
 // @ts-ignore
 import "./naf-dom.test.js";
+// @ts-ignore
+import "./component.test.js";
 
 // Collect and run all registered tests
 const allTests = collectTests();
