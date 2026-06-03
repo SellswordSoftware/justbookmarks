@@ -66,8 +66,13 @@ Browser tests (Lane 2):
 
 ```bash
 cd frontend && npm run dev
-# Open http://localhost:5173/#test in a browser
+# Open http://localhost:5173/#test          # HTML results in browser
+# Open http://localhost:5173/#test-json     # JSON output in page body
 ```
+
+For script consumption, use a headless browser to fetch `/#test-json`
+and read the page body text. The `#test-json` hash renders plain JSON
+to `document.body.textContent` instead of HTML.
 
 Production verification still works:
 

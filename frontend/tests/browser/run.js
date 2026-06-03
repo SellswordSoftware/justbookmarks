@@ -8,7 +8,8 @@
  *
  * Usage:
  *   cd frontend && npm run dev
- *   Open http://localhost:5173/#test
+ *   Open http://localhost:5173/#test          # HTML results in browser
+ *   curl http://localhost:5173/#test-json     # JSON results for scripts
  */
 
 import { collectTests, runTests } from "../lib/test.js";
@@ -22,28 +23,23 @@ import "./component.test.js";
 // Collect and run all registered tests
 const allTests = collectTests();
 
+/**
+ * Determine output mode from URL hash.
+ * @returns {"html" | "json"}
+ */
+function getMode() {
+  return window.location.hash === "#test-json" ? "json" : "html";
+}
+
 if (allTests.length === 0) {
   console.log("No browser tests registered.");
-  document.body.innerHTML = "<h1>No browser tests found</h1>";
+  if (getMode() === "json") {
+    document.body.textContent = JSON.stringify({ passed: 0, failed: 0, skipped: 0, results: [] });
+  } else {
+    document.body.innerHTML = "<h1>No browser tests found</h1>";
+  }
 } else {
-  // Create test results container
-  const container = document.createElement("div");
-  container.id = "test-results";
-  container.style.cssText = "font-family: monospace; padding: 20px; max-width: 900px; margin: 0 auto;";
-
-  const header = document.createElement("h1");
-  header.textContent = `Browser Tests (${allTests.length})`;
-  container.appendChild(header);
-
-  const resultsDiv = document.createElement("div");
-  resultsDiv.id = "test-output";
-  container.appendChild(resultsDiv);
-
-  // Clear the page and mount test results
-  document.body.innerHTML = "";
-  document.body.appendChild(container);
-
-  // Custom log function that writes to both console and page
+  // Custom log function that writes to both console and memory
   /** @type {string[]} */
   const logs = [];
   /** @param {string} msg */
@@ -54,25 +50,47 @@ if (allTests.length === 0) {
 
   // Run tests
   runTests(allTests, { log }).then((result) => {
-    // Render all logs to the page
-    const pre = document.createElement("pre");
-    pre.style.whiteSpace = "pre-wrap";
-    pre.textContent = logs.join("\n");
-    resultsDiv.appendChild(pre);
-
-    // Render summary badge
-    const summary = document.createElement("div");
-    summary.style.cssText = "margin-top: 16px; padding: 12px; border-radius: 4px; font-weight: bold;";
-
-    if (result.failed > 0) {
-      summary.style.backgroundColor = "#ff4444";
-      summary.style.color = "#fff";
+    if (getMode() === "json") {
+      // Output plain JSON to the page body for curl/wget consumption
+      document.body.textContent = JSON.stringify(result, null, 2);
     } else {
-      summary.style.backgroundColor = "#44aa44";
-      summary.style.color = "#fff";
-    }
+      // HTML output for browser viewing
+      const container = document.createElement("div");
+      container.id = "test-results";
+      container.style.cssText = "font-family: monospace; padding: 20px; max-width: 900px; margin: 0 auto;";
 
-    summary.textContent = `${result.passed} passed, ${result.failed} failed, ${result.skipped} skipped`;
-    resultsDiv.appendChild(summary);
+      const header = document.createElement("h1");
+      header.textContent = `Browser Tests (${allTests.length})`;
+      container.appendChild(header);
+
+      const resultsDiv = document.createElement("div");
+      resultsDiv.id = "test-output";
+      container.appendChild(resultsDiv);
+
+      // Clear the page and mount test results
+      document.body.innerHTML = "";
+      document.body.appendChild(container);
+
+      // Render all logs to the page
+      const pre = document.createElement("pre");
+      pre.style.whiteSpace = "pre-wrap";
+      pre.textContent = logs.join("\n");
+      resultsDiv.appendChild(pre);
+
+      // Render summary badge
+      const summary = document.createElement("div");
+      summary.style.cssText = "margin-top: 16px; padding: 12px; border-radius: 4px; font-weight: bold;";
+
+      if (result.failed > 0) {
+        summary.style.backgroundColor = "#ff4444";
+        summary.style.color = "#fff";
+      } else {
+        summary.style.backgroundColor = "#44aa44";
+        summary.style.color = "#fff";
+      }
+
+      summary.textContent = `${result.passed} passed, ${result.failed} failed, ${result.skipped} skipped`;
+      resultsDiv.appendChild(summary);
+    }
   });
 }
