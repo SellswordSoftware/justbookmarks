@@ -120,6 +120,14 @@
             ></div>
         </div>
 
-        <script type="module" src="./src/main.js"></script>
+        <script type="module">
+            if (window.location.hash === "#test") {
+                // Browser test harness -- loads test runner instead of app
+                import("./tests/browser/run.js");
+            } else {
+                // Normal app startup
+                import("./src/main.js");
+            }
+        </script>
     </body>
 </html>

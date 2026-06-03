@@ -13,7 +13,7 @@ After reading it, the engineer should be able to:
 ## Status
 
 - **Lane 1 (Node tests)** -- DONE. 181 tests across 10 test files, 180 passing, 1 skipped.
-- **Lane 2 (Browser tests)** -- NOT STARTED. Framework and harness still to build.
+- **Lane 2 (Browser tests)** -- IN PROGRESS. Harness built, 78 naf-dom tests written. Needs real browser to run.
 
 ## Design Principles
 
@@ -47,6 +47,9 @@ frontend/
       persistence.test.js     # 14 tests
     worker/
       tree-worker.test.js     # 14 tests
+    browser/
+      run.js                # Browser test entry point
+      naf-dom.test.js       # 78 DOM-specific NAF tests
     run.js             # Entry point: discovers and runs all .test.js files
 ```
 
@@ -54,8 +57,15 @@ frontend/
 
 ```bash
 cd frontend
-npm run test              # Run all tests
+npm run test              # Run all Lane 1 (Node) tests
 npm run test -- --grep "selection"  # Run tests matching pattern
+```
+
+Browser tests (Lane 2):
+
+```bash
+cd frontend && npm run dev
+# Open http://localhost:5173/#test in a browser
 ```
 
 Production verification still works:
@@ -91,13 +101,13 @@ These modules are fully tested:
 
 Tests use `beforeEach`/`afterEach` to set up and tear down a fake `Storage` object on `window.localStorage`. Lazy imports ensure the module loads fresh for each test suite.
 
-### Needs Browser Context (DOM required) -- NOT TESTED
+### Needs Browser Context (DOM required) -- PARTIALLY TESTED
 
 These modules can only be tested in Lane 2:
 
 | Module | Path | Reason |
 |--------|------|--------|
-| `naf.js` (DOM) | `shared/runtime/naf.js` | template/mount/list/fx/attr/setText |
+| `naf.js` (DOM) | `shared/runtime/naf.js` | template/mount/list/fx/attr/setText | **78 tests in `browser/naf-dom.test.js`** |
 | `app-state.js` | `shared/state/app-state.js` | imports from `api.js`, Wails runtime |
 | `tree-state.js` | `features/tree/state/tree-state.js` | imports from `api.js`, signals |
 | `selection-state.js` | `features/tree/state/selection-state.js` | depends on tree-state signals |
@@ -108,7 +118,7 @@ These modules can only be tested in Lane 2:
 | All components | `components/*.js` | DOM rendering |
 | All pages | `pages/*.js` | DOM rendering |
 
-## Lane 2: Browser Test Harness (Not Started)
+## Lane 2: Browser Test Harness (In Progress)
 
 ### Overview
 
@@ -218,8 +228,8 @@ go test ./internal/...
 
 ## Decision Summary
 
-- **Lane 1** is complete: 166 tests covering all pure-logic modules with zero dependencies and instant execution
-- **Lane 2** is planned but not started: will cover DOM-specific behavior with a real browser context
+- **Lane 1** is complete: 181 tests covering all pure-logic modules with zero dependencies and instant execution
+- **Lane 2** is in progress: harness built with URL hash approach, 78 naf-dom tests written. Runs in Vite dev server at `/#test`
 - The framework is ~250 lines total (`test.js` + `assert.js`)
 - No production impact -- test files are never imported by app code
 - Go backend already has adequate test coverage with stdlib `testing`

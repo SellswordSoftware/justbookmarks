@@ -132,7 +132,7 @@ function findTestFiles(dir) {
     const fullPath = resolve(dir, entry);
     const stat = statSync(fullPath);
 
-    if (stat.isDirectory() && entry !== "lib") {
+    if (stat.isDirectory() && entry !== "lib" && entry !== "browser") {
       results.push(...findTestFiles(fullPath));
     } else if (stat.isFile() && entry.endsWith(".test.js")) {
       results.push(fullPath);
