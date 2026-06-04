@@ -55,3 +55,5 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+chrome-headless-shell/

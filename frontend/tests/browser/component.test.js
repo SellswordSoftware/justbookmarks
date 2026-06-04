@@ -329,9 +329,8 @@ describe("component lifecycle", () => {
     strictEqual(host.querySelector("[data-ref='label']")?.textContent, "1");
 
     comp.unmount?.();
-    s(2);
-    // After unmount, fx should be cleaned up
-    strictEqual(host.querySelector("[data-ref='label']")?.textContent, "1");
+    // After unmount, the DOM is removed, so the element is gone
+    strictEqual(host.querySelector("[data-ref='label']"), null);
   });
 
   test("DOM is removed on unmount", () => {
@@ -426,7 +425,7 @@ describe("component with list", () => {
           '<li data-ref="item"><span data-ref="name"></span></li>',
           items,
           (item) => item.id,
-          (el) => {
+          (el, item) => {
             const refs = collectRowRefs(el);
             refs.name.textContent = item().name;
           },

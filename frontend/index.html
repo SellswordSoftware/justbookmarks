@@ -121,7 +121,7 @@
         </div>
 
         <script type="module">
-            if (window.location.hash === "#test") {
+            if (window.location.hash === "#test" || window.location.hash === "#test-json") {
                 // Browser test harness -- loads test runner instead of app
                 import("./tests/browser/run.js");
             } else {
