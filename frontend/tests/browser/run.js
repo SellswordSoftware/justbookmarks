@@ -21,6 +21,10 @@ import "./naf-dom.test.js";
 import "./component.test.js";
 // @ts-ignore
 import "./ui-state-dom.test.js";
+// @ts-ignore
+import "./confirm-modal.test.js";
+// @ts-ignore
+import "./toast-container.test.js";
 
 // Collect and run all registered tests
 const allTests = collectTests();
