@@ -19,6 +19,8 @@ import { collectTests, runTests } from "../lib/test.js";
 import "./naf-dom.test.js";
 // @ts-ignore
 import "./component.test.js";
+// @ts-ignore
+import "./ui-state-dom.test.js";
 
 // Collect and run all registered tests
 const allTests = collectTests();
