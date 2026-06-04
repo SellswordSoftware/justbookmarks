@@ -158,6 +158,12 @@ describe("searchState: results (debounced)", () => {
   test.beforeEach(installInstantTimers);
   test.afterEach(restoreRealTimers);
 
+  test("getResults returns empty array when index is empty", () => {
+    searchState.actions.setIndex([]);
+    searchState.actions.setQuery("anything");
+    deepEqual(searchState.selectors.getResults(), []);
+  });
+
   test("getResults returns empty array when query is empty", () => {
     searchState.actions.setIndex([
       { nodeId: "1", title: "Google", url: "https://google.com", folderPath: "" },
