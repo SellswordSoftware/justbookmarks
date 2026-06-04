@@ -8,4 +8,9 @@ export default defineConfig(({ command }) => ({
     outDir: "dist",
     emptyOutDir: true,
   },
+  // Inject __TEST_MODE__ constant: true in dev, false in production.
+  // Vite replaces the global at build time so test code is tree-shaken away.
+  define: {
+    __TEST_MODE__: JSON.stringify(command === "serve"),
+  },
 }));

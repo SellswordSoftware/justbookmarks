@@ -121,11 +121,21 @@
         </div>
 
         <script type="module">
-            if (window.location.hash === "#test" || window.location.hash === "#test-json") {
-                // Browser test harness -- loads test runner instead of app
-                import("./tests/browser/run.js");
+            // __TEST_MODE__ is injected by Vite: true in dev, false in production.
+            // In production builds, this entire block is tree-shaken away.
+            if (__TEST_MODE__) {
+                const url = new URL(window.location.href);
+                const testMode = url.searchParams.get("test");
+                if (testMode === "json" || testMode === "html") {
+                    // Browser test harness -- await blocks load event until tests complete,
+                    // which is required for --dump-dom to capture the final DOM state.
+                    await import("./tests/browser/run.js");
+                } else {
+                    // Normal app startup
+                    import("./src/main.js");
+                }
             } else {
-                // Normal app startup
+                // Normal app startup (production)
                 import("./src/main.js");
             }
         </script>

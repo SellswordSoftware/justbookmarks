@@ -8,12 +8,12 @@
     "build": "vite build",
     "lint:styles": "node ./scripts/lint-styles.mjs",
     "test": "node tests/run.js",
+    "test:browser": "node tests/browser/run-browser.js",
     "typecheck": "tsc -p jsconfig.json --noEmit",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@types/node": "^24.12.3",
-    "playwright": "^1.60.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14"
   }

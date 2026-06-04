@@ -3,6 +3,13 @@ import type * as HandlerBindings from "../wailsjs/go/wailsapi/Handler";
 
 declare global {
   // =============================================================================
+  // Vite build-time constants
+  // =============================================================================
+
+  /** True in dev (Vite serve), false in production builds. Injected by vite.config.js define. */
+  const __TEST_MODE__: boolean;
+
+  // =============================================================================
   // Wails runtime bindings
   // =============================================================================
 

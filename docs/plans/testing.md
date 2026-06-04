@@ -13,14 +13,14 @@ After reading it, the engineer should be able to:
 ## Status
 
 - **Lane 1 (Node tests)** -- DONE. 181 tests across 10 test files, 180 passing, 1 skipped.
-- **Lane 2 (Browser tests)** -- IN PROGRESS. Harness built, 105 browser tests (78 naf-dom + 27 component). Runs in Vite dev server at `/#test`.
+- **Lane 2 (Browser tests)** -- DONE. 105 browser tests (78 naf-dom + 27 component). Runs via `chrome-headless-shell --dump-dom` with auto-bootstrap.
 
 ## Design Principles
 
 - Zero npm dependencies for the test framework itself
 - Test files live in `frontend/tests/` and are never imported by app code, so they are automatically excluded from production builds
 - The framework provides `describe`, `test`, `test.skip`, `test.only`, and `assert` with `ok`, `equal`, `strictEqual`, `deepEqual`, `throws`, `notOk`
-- Tests run in Node (Lane 1) or in the Wails webview (Lane 2) depending on the module under test
+- Tests run in Node (Lane 1) or in chrome-headless-shell (Lane 2) depending on the module under test
 - No coverage reports, no parallelism, no snapshot testing -- keep it minimal
 
 ## Current File Structure
@@ -48,10 +48,11 @@ frontend/
     worker/
       tree-worker.test.js     # 14 tests
     browser/
-      run.js                # Browser test entry point
-      naf-dom.test.js       # 78 DOM-specific NAF tests
-      component.test.js     # 27 component rendering tests
-    run.js             # Entry point: discovers and runs all .test.js files
+      run-browser.js      # CLI runner: bootstraps chrome, starts Vite, runs --dump-dom
+      run.js              # Browser test entry point (loaded by index.html)
+      naf-dom.test.js     # 78 DOM-specific NAF tests
+      component.test.js   # 27 component rendering tests
+    run.js               # Entry point: discovers and runs all .test.js files
 ```
 
 ## Running Tests
@@ -60,30 +61,28 @@ frontend/
 cd frontend
 npm run test              # Run all Lane 1 (Node) tests
 npm run test -- --grep "selection"  # Run tests matching pattern
+npm run test:browser      # Run all Lane 2 (Browser) tests via chrome-headless-shell
 ```
 
-Browser tests (Lane 2):
+The `test:browser` script (`tests/browser/run-browser.js`) handles everything
+automatically:
+
+1. Detects platform (linux64, mac-arm64, mac-x64)
+2. Fetches the latest Stable chrome-headless-shell from Chrome for Testing API
+3. Downloads and extracts to `chrome-headless-shell/` at repo root (gitignored)
+4. Starts Vite dev server on port 5173
+5. Runs `chrome-headless-shell --dump-dom` against `/?test=json`
+6. Parses JSON results from the dumped DOM
+7. Reports results and exits with appropriate code
+
+For manual verification, you can also open the test page in a browser:
 
 ```bash
 cd frontend && npm run dev
-# Open http://localhost:5173/#test          # HTML results in browser
-# Open http://localhost:5173/#test-json     # JSON output in page body
+# Open http://localhost:5173/#test              # HTML results (manual viewing)
+# Open http://localhost:5173/?test=html         # HTML results (manual viewing)
+# Open http://localhost:5173/?test=json         # JSON output (for --dump-dom)
 ```
-
-For script consumption, use a headless browser to fetch `/#test-json`
-and read the page body text. The `#test-json` hash renders plain JSON
-to `document.body.textContent` instead of HTML.
-
-Example with chrome-headless-shell:
-```bash
-cd frontend && npm run dev &
-sleep 3
-chrome-headless-shell --dump-dom "http://localhost:5173/#test-json" | \
-  python3 -c "import sys,json; d=json.load(sys.stdin); sys.exit(1 if d['failed'] else 0)"
-```
-
-The JSON output includes `passed`, `failed`, `skipped` counts and
-a `results` array with individual test details.
 
 Production verification still works:
 
@@ -135,43 +134,73 @@ These modules can only be tested in Lane 2:
 | All components | `components/*.js` | DOM rendering |
 | All pages | `pages/*.js` | DOM rendering |
 
-## Lane 2: Browser Test Harness (In Progress)
+## Lane 2: Browser Test Harness (Done)
 
 ### Overview
 
-A lightweight in-app test page that runs inside the Wails webview with a real DOM and real browser APIs. No Mocha dependency -- the same `test.js` and `assert.js` framework from Lane 1, adapted for browser execution.
+A pure Node.js script (`tests/browser/run-browser.js`) that bootstraps
+chrome-headless-shell, starts Vite dev server, runs browser tests via
+`--dump-dom`, and reports results. Zero npm dependencies -- uses only
+Node.js built-in APIs (`fetch`, `child_process`, `fs`, `zlib`, `os`).
 
-### Planned File Structure
+### How It Works
+
+1. **Platform detection** -- Detects OS/arch and maps to Chrome for Testing
+   platform strings (linux64, mac-arm64, mac-x64, win64).
+
+2. **Chrome bootstrap** -- Fetches the Chrome for Testing JSON API for the
+   latest Stable version. Downloads and extracts chrome-headless-shell to
+   `chrome-headless-shell/` at repo root (already in `.gitignore`).
+   Subsequent runs reuse the installed version.
+
+3. **Vite dev server** -- Spawns `npx vite --port 5173 --host 127.0.0.1`
+   and polls until the server responds.
+
+4. **Test execution** -- Runs `chrome-headless-shell --dump-dom` against
+   `/?test=json`. The `index.html` script detects the `?test=json` query
+   parameter and loads the test runner instead of the app. Top-level `await`
+   in the test runner blocks the `load` event until all tests complete,
+   ensuring `--dump-dom` captures the final DOM state with JSON results.
+
+5. **Result parsing** -- Extracts JSON from the `<body>` content of the
+   dumped DOM and reports pass/fail counts with individual failure details.
+
+### File Structure
 
 ```
 frontend/
-  test-runner.html          # Test page served by Wails in test mode
   tests/
     browser/
-      run.js                # Browser test entry point
-      naf-dom.test.js       # DOM-specific NAF tests
-      component.test.js     # Component rendering tests
+      run-browser.js      # CLI runner (Node.js, zero deps)
+      run.js              # Browser entry point (loaded by index.html)
+      naf-dom.test.js     # 78 DOM-specific NAF tests
+      component.test.js   # 27 component rendering tests
+chrome-headless-shell/    # Auto-downloaded, gitignored
 ```
 
 ### Serving The Test Page
 
-**Approach B: URL Hash (Recommended)**
+**Approach: Query Parameter**
 
-Keep `index.html` as the entry point. Add a small script that checks `window.location.hash`:
+Keep `index.html` as the entry point. A script checks `?test` query
+parameter:
 
 ```html
-<script>
-  if (window.location.hash === "#test") {
-    // Load test runner instead of app
-    import('/tests/browser/run.js');
-  } else {
-    // Normal app startup
-    import('/src/app/main.js');
-  }
+<script type="module">
+    const url = new URL(window.location.href);
+    const testMode = url.searchParams.get("test");
+    if (testMode === "json" || testMode === "html") {
+        await import("./tests/browser/run.js");
+    } else {
+        import("./src/main.js");
+    }
 </script>
 ```
 
-This approach requires no Go changes. Launch the app with the test hash to run browser tests. The downside is the test page shares the same HTML shell as the app.
+Query parameters are used instead of URL hashes because they are more
+reliable with headless browser `--dump-dom` output. The `await import()`
+blocks the `load` event until tests complete, which is required for
+`--dump-dom` to capture the final DOM state.
 
 ### Browser Test Runner
 
@@ -179,12 +208,13 @@ This approach requires no Go changes. Launch the app with the test hash to run b
 
 - Imports test.js/assert.js (same framework, browser-compatible)
 - Imports all browser/*.test.js files
-- Runs tests and renders results to a `<div id="test-results">`
-- Also logs to console for programmatic consumption
+- Runs tests with top-level `await` (blocks load event)
+- In `?test=json` mode: writes JSON to `document.body.textContent`
+- In `?test=html` mode: renders HTML results page
 
-### Planned Browser Test Coverage
+### Browser Test Coverage
 
-#### `naf-dom.test.js`
+#### `naf-dom.test.js` (78 tests)
 
 Test DOM-specific NAF functions:
 
@@ -200,24 +230,16 @@ Test DOM-specific NAF functions:
 - `show()`/`hide()` -- toggles element visibility
 - `requireRef()` -- returns ref by name, throws if missing
 
-#### `component.test.js`
+#### `component.test.js` (27 tests)
 
 Test component rendering:
 
 - Components mount and render expected DOM structure
 - Signal-driven updates reflect in DOM
 - Data-ref elements are accessible via ctx.refs
-
-### Running Browser Tests (When Implemented)
-
-```bash
-# Vite dev server (manual verification)
-cd frontend && npm run dev
-# Open http://localhost:5173/#test in a browser
-
-# Wails dev (integration verification)
-JUSTBOOKMARKS_TEST=1 wails dev
-```
+- Component lifecycle (mount/unmount)
+- Component nesting and slot resolution
+- Component cleanup
 
 ## Go Backend Tests
 
@@ -246,7 +268,8 @@ go test ./internal/...
 ## Decision Summary
 
 - **Lane 1** is complete: 181 tests covering all pure-logic modules with zero dependencies and instant execution
-- **Lane 2** is in progress: harness built with URL hash approach, 105 browser tests (78 naf-dom + 27 component). Runs in Vite dev server at `/#test`
+- **Lane 2** is complete: 105 browser tests (78 naf-dom + 27 component). Runs via `npm run test:browser` which auto-bootstraps chrome-headless-shell, starts Vite, and runs `--dump-dom`
 - The framework is ~250 lines total (`test.js` + `assert.js`)
 - No production impact -- test files are never imported by app code
+- No npm dependencies for testing (no Playwright, no Vitest, no Jest)
 - Go backend already has adequate test coverage with stdlib `testing`
