@@ -57,3 +57,4 @@ go.work.sum
 # .vscode/
 
 chrome-headless-shell/
+vite.coverage.config.js

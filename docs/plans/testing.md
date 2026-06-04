@@ -8,12 +8,13 @@ After reading it, the engineer should be able to:
 
 1. understand which modules are covered and which remain
 2. add new tests following the established patterns
-3. implement Lane 2 (browser test harness) when needed
+3. run browser tests via `npm run test:browser`
 
 ## Status
 
 - **Lane 1 (Node tests)** -- DONE. 181 tests across 10 test files, 180 passing, 1 skipped.
 - **Lane 2 (Browser tests)** -- DONE. 105 browser tests (78 naf-dom + 27 component). Runs via `chrome-headless-shell --dump-dom` with auto-bootstrap.
+- **Coverage** -- DONE. Function-level coverage with lcov output. Zero npm dependencies.
 
 ## Design Principles
 
@@ -21,7 +22,7 @@ After reading it, the engineer should be able to:
 - Test files live in `frontend/tests/` and are never imported by app code, so they are automatically excluded from production builds
 - The framework provides `describe`, `test`, `test.skip`, `test.only`, and `assert` with `ok`, `equal`, `strictEqual`, `deepEqual`, `throws`, `notOk`
 - Tests run in Node (Lane 1) or in chrome-headless-shell (Lane 2) depending on the module under test
-- No coverage reports, no parallelism, no snapshot testing -- keep it minimal
+- No parallelism, no snapshot testing -- keep it minimal
 
 ## Current File Structure
 
@@ -31,6 +32,11 @@ frontend/
     lib/
       test.js          # describe/test/skip/only + runner (250 lines)
       assert.js        # ok/equal/strictEqual/deepEqual/throws/notOk
+      coverage-instrument.js   # Source transformation engine
+      coverage-lcov.js         # Lcov format writer
+      coverage-loader.js       # Node ES module loader
+      coverage-vite-plugin.js  # Vite transform plugin
+      coverage-merge.js        # Lcov file merger
     fixtures/
       tree-data.js     # Reusable tree/node/selection state builders
     infra/
@@ -63,6 +69,17 @@ npm run test              # Run all Lane 1 (Node) tests
 npm run test -- --grep "selection"  # Run tests matching pattern
 npm run test:browser      # Run all Lane 2 (Browser) tests via chrome-headless-shell
 ```
+
+### Coverage
+
+```bash
+cd frontend
+npm run test:coverage         # Node tests with coverage -> coverage.lcov
+npm run test:browser:coverage # Browser tests with coverage -> coverage-browser.lcov
+npm run test:coverage:all     # Both + merged -> coverage-all.lcov
+```
+
+Coverage uses function-level instrumentation via source transformation. The `__cov__()` function is injected at each function entry point and records all lines in the function as covered when called. Output is standard lcov format consumable by VS Code extensions (Coverage Gutters), codecov, etc.
 
 The `test:browser` script (`tests/browser/run-browser.js`) handles everything
 automatically:
@@ -180,27 +197,38 @@ chrome-headless-shell/    # Auto-downloaded, gitignored
 
 ### Serving The Test Page
 
-**Approach: Query Parameter**
+**Approach: Query Parameter and URL Hash**
 
 Keep `index.html` as the entry point. A script checks `?test` query
-parameter:
+parameter and `#test` hash:
 
 ```html
 <script type="module">
-    const url = new URL(window.location.href);
-    const testMode = url.searchParams.get("test");
-    if (testMode === "json" || testMode === "html") {
-        await import("./tests/browser/run.js");
+    // __TEST_MODE__ is injected by Vite: true in dev, false in production.
+    // In production builds, this entire block is tree-shaken away.
+    if (__TEST_MODE__) {
+        const url = new URL(window.location.href);
+        const testMode = url.searchParams.get("test");
+        if (testMode === "json" || testMode === "html" || window.location.hash === "#test") {
+            await import("./tests/browser/run.js");
+        } else {
+            import("./src/main.js");
+        }
     } else {
         import("./src/main.js");
     }
 </script>
 ```
 
-Query parameters are used instead of URL hashes because they are more
-reliable with headless browser `--dump-dom` output. The `await import()`
+Query parameters (`?test=json`) are used for the CLI runner because they
+are more reliable with headless browser `--dump-dom` output. The `#test`
+hash is supported for manual browser viewing. The `await import()`
 blocks the `load` event until tests complete, which is required for
 `--dump-dom` to capture the final DOM state.
+
+The `__TEST_MODE__` global is injected by Vite (`vite.config.js` define).
+In production builds it is `false`, so the test detection code is
+completely tree-shaken away -- no test code ships in the production bundle.
 
 ### Browser Test Runner
 
@@ -269,7 +297,8 @@ go test ./internal/...
 
 - **Lane 1** is complete: 181 tests covering all pure-logic modules with zero dependencies and instant execution
 - **Lane 2** is complete: 105 browser tests (78 naf-dom + 27 component). Runs via `npm run test:browser` which auto-bootstraps chrome-headless-shell, starts Vite, and runs `--dump-dom`
-- The framework is ~250 lines total (`test.js` + `assert.js`)
+- **Coverage** is complete: function-level coverage with lcov output via `npm run test:coverage`, `npm run test:browser:coverage`, or `npm run test:coverage:all`
+- The framework is ~250 lines total (`test.js` + `assert.js`), coverage engine is ~300 lines
 - No production impact -- test files are never imported by app code
 - No npm dependencies for testing (no Playwright, no Vitest, no Jest)
 - Go backend already has adequate test coverage with stdlib `testing`

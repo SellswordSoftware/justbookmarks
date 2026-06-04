@@ -8,7 +8,10 @@
     "build": "vite build",
     "lint:styles": "node ./scripts/lint-styles.mjs",
     "test": "node tests/run.js",
+    "test:coverage": "node --experimental-loader file://$(pwd)/tests/lib/coverage-loader.js tests/run.js --coverage",
     "test:browser": "node tests/browser/run-browser.js",
+    "test:browser:coverage": "node tests/browser/run-browser.js --coverage",
+    "test:coverage:all": "node --experimental-loader file://$(pwd)/tests/lib/coverage-loader.js tests/run.js --coverage && node tests/browser/run-browser.js --coverage && node -e \"import('./tests/lib/coverage-merge.js').then(m=>m.mergeLcovFiles(['coverage.lcov','coverage-browser.lcov'],'coverage-all.lcov'))\"",
     "typecheck": "tsc -p jsconfig.json --noEmit",
     "preview": "vite preview"
   },

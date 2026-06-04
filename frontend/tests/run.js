@@ -16,6 +16,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+const frontendRootPath = resolve(__dirname, '..');
+
 // Provide a minimal DOM mock so naf.js can load in Node.
 // This is only needed for modules that reference `document` at import time.
 setupMinimalDOM();
@@ -23,10 +25,14 @@ setupMinimalDOM();
 // Parse CLI args
 const args = process.argv.slice(2);
 let grepPattern = null;
+let enableCoverage = false;
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--grep" && i + 1 < args.length) {
     grepPattern = args[i + 1];
     i++;
+  }
+  if (args[i] === "--coverage") {
+    enableCoverage = true;
   }
 }
 
@@ -58,6 +64,46 @@ if (grepPattern) {
 console.log("");
 
 const result = await runTests(allTests, { grep: grepPattern });
+
+// Write coverage report if enabled
+if (enableCoverage && globalThis.__coverage__) {
+  // Include all source files in coverage report (even uncovered ones)
+  const { findExecutableLines } = await import('./lib/coverage-instrument.js');
+  const { readFileSync } = await import('node:fs');
+  const srcDir = resolve(frontendRootPath, 'src');
+  const allSourceFiles = findSourceFiles(srcDir);
+
+  for (const filePath of allSourceFiles) {
+    const relPath = filePath.replace(frontendRootPath + '/', '');
+    if (!globalThis.__coverage__[relPath]) {
+      const source = readFileSync(filePath, 'utf-8');
+      const execLines = findExecutableLines(source);
+      if (execLines.length > 0) {
+        const lines = {};
+        for (const n of execLines) lines[String(n)] = 0;
+        globalThis.__coverage__[relPath] = { lines };
+      }
+    }
+  }
+
+  const { writeLcovFile } = await import('./lib/coverage-lcov.js');
+  const lcovPath = resolve(__dirname, '../coverage.lcov');
+  writeLcovFile(globalThis.__coverage__, lcovPath, frontendRootPath);
+  console.log('');
+  console.log(`Coverage report written to: ${lcovPath}`);
+
+  // Print summary
+  let totalLines = 0;
+  let hitLines = 0;
+  for (const [path, data] of Object.entries(globalThis.__coverage__)) {
+    for (const [line, count] of Object.entries(data.lines)) {
+      totalLines++;
+      if (count > 0) hitLines++;
+    }
+  }
+  const pct = totalLines > 0 ? ((hitLines / totalLines) * 100).toFixed(1) : '0.0';
+  console.log(`Line coverage: ${hitLines}/${totalLines} (${pct}%)`);
+}
 
 if (result.failed > 0) {
   process.exit(1);
@@ -135,6 +181,30 @@ function findTestFiles(dir) {
     if (stat.isDirectory() && entry !== "lib" && entry !== "browser") {
       results.push(...findTestFiles(fullPath));
     } else if (stat.isFile() && entry.endsWith(".test.js")) {
+      results.push(fullPath);
+    }
+  }
+
+  return results.sort();
+}
+
+/**
+ * Recursively find all .js files under a directory.
+ * @param {string} dir
+ * @returns {string[]}
+ */
+function findSourceFiles(dir) {
+  /** @type {string[]} */
+  const results = [];
+
+  const entries = readdirSync(dir);
+  for (const entry of entries) {
+    const fullPath = resolve(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      results.push(...findSourceFiles(fullPath));
+    } else if (stat.isFile() && entry.endsWith(".js")) {
       results.push(fullPath);
     }
   }

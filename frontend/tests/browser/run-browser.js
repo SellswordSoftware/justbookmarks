@@ -14,7 +14,7 @@
  */
 
 import { spawn, spawnSync } from 'child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, chmodSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, chmodSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir, platform as osPlatform, arch as osArch } from 'os';
@@ -26,6 +26,30 @@ const chromeDir = join(repoRoot, 'chrome-headless-shell');
 
 const API_URL = 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json';
 const VITE_PORT = 5173;
+
+// Parse CLI args
+const enableCoverage = process.argv.includes('--coverage');
+
+/**
+ * Write a temporary Vite config that includes the coverage plugin.
+ * @returns {string} Path to the temp config file
+ */
+function writeCoverageViteConfig() {
+  const configPath = join(frontendRoot, 'vite.coverage.config.js');
+  const configContent = `
+import { defineConfig } from 'vite';
+import { coveragePlugin } from './tests/lib/coverage-vite-plugin.js';
+
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? './' : '/',
+  build: { outDir: 'dist', emptyOutDir: true },
+  define: { __TEST_MODE__: JSON.stringify(command === 'serve') },
+  plugins: [coveragePlugin()],
+}));
+`;
+  writeFileSync(configPath, configContent, 'utf-8');
+  return configPath;
+}
 
 /**
  * Detect the platform string for Chrome for Testing.
@@ -161,7 +185,8 @@ async function ensureChrome() {
 function startVite() {
   console.log(`Starting Vite dev server on port ${VITE_PORT}...`);
 
-  const vite = spawn('npx', ['vite', '--port', String(VITE_PORT), '--host', '127.0.0.1'], {
+  const configArg = enableCoverage ? ['--config', 'vite.coverage.config.js'] : [];
+  const vite = spawn('npx', ['vite', '--port', String(VITE_PORT), '--host', '127.0.0.1', ...configArg], {
     cwd: frontendRoot,
     stdio: ['pipe', 'pipe', 'pipe'],
     env: { ...process.env, BROWSER: 'none' },
@@ -274,6 +299,83 @@ function runTests(binary, viteInfo) {
 }
 
 /**
+ * Write coverage report from browser test results.
+ * @param {object} result  Test results with optional coverage field
+ */
+async function writeBrowserCoverage(result) {
+  if (!enableCoverage || !result.coverage) {
+    return;
+  }
+
+  // Include all source files in coverage report (even uncovered ones)
+  const { findExecutableLines } = await import('../lib/coverage-instrument.js');
+  const srcDir = join(frontendRoot, 'src');
+  const allSourceFiles = findSourceFiles(srcDir);
+
+  for (const filePath of allSourceFiles) {
+    const relPath = filePath.replace(frontendRoot + '/', '');
+    if (!result.coverage[relPath]) {
+      const source = readFileSync(filePath, 'utf-8');
+      const execLines = findExecutableLines(source);
+      if (execLines.length > 0) {
+        const lines = {};
+        for (const n of execLines) lines[String(n)] = 0;
+        result.coverage[relPath] = { lines };
+      }
+    }
+  }
+
+  // Build lcov text directly (avoids async import)
+  const lcovPath = join(frontendRoot, 'coverage-browser.lcov');
+  const records = [];
+
+  for (const [sourcePath, data] of Object.entries(result.coverage)) {
+    const lines = data.lines;
+    if (!lines || Object.keys(lines).length === 0) continue;
+
+    const fullPath = join(frontendRoot, sourcePath);
+    const relPath = sourcePath;
+
+    let hitLines = 0;
+    let totalLines = 0;
+    const daLines = [];
+
+    const sortedLineNums = Object.keys(lines).sort((a, b) => Number(a) - Number(b));
+    for (const lineNum of sortedLineNums) {
+      const count = lines[lineNum];
+      totalLines++;
+      if (count > 0) hitLines++;
+      daLines.push(`DA:${lineNum},${count}`);
+    }
+
+    records.push([
+      `TN:coverage-browser`,
+      `SF:${relPath}`,
+      ...daLines,
+      `LF:${totalLines}`,
+      `LH:${hitLines}`,
+      `end_of_record`,
+    ].join('\n'));
+  }
+
+  const lcovText = records.join('\n') + '\n';
+  writeFileSync(lcovPath, lcovText, 'utf-8');
+  console.log(`Browser coverage report written to: ${lcovPath}`);
+
+  // Print summary
+  let totalLines = 0;
+  let hitLines = 0;
+  for (const [path, data] of Object.entries(result.coverage)) {
+    for (const [line, count] of Object.entries(data.lines)) {
+      totalLines++;
+      if (count > 0) hitLines++;
+    }
+  }
+  const pct = totalLines > 0 ? ((hitLines / totalLines) * 100).toFixed(1) : '0.0';
+  console.log(`Browser line coverage: ${hitLines}/${totalLines} (${pct}%)`);
+}
+
+/**
  * Stop the Vite dev server if we own it.
  * @param {{ process: import('child_process').ChildProcess, owned: boolean }} viteInfo
  */
@@ -316,16 +418,47 @@ function reportResults(result) {
 }
 
 /**
+ * Recursively find all .js files under a directory.
+ * @param {string} dir
+ * @returns {string[]}
+ */
+function findSourceFiles(dir) {
+  /** @type {string[]} */
+  const results = [];
+
+  const entries = readdirSync(dir);
+  for (const entry of entries) {
+    const fullPath = join(dir, entry);
+    const stat = statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      results.push(...findSourceFiles(fullPath));
+    } else if (stat.isFile() && entry.endsWith('.js')) {
+      results.push(fullPath);
+    }
+  }
+
+  return results.sort();
+}
+
+/**
  * Main entry point.
  */
 async function main() {
   let viteInfo = null;
 
   try {
+    let covConfig = null;
+
     // 1. Ensure chrome-headless-shell is installed
     const binary = await ensureChrome();
 
-    // 2. Start Vite dev server
+    // 2. Write coverage Vite config if needed
+    if (enableCoverage) {
+      covConfig = writeCoverageViteConfig();
+    }
+
+    // 3. Start Vite dev server
     viteInfo = startVite();
 
     // 3. Wait for Vite to be ready
@@ -337,7 +470,10 @@ async function main() {
     // 5. Report results
     reportResults(result);
 
-    // 6. Exit with appropriate code
+    // 6. Write coverage report if enabled
+    await writeBrowserCoverage(result);
+
+    // 7. Exit with appropriate code
     process.exit(result.failed > 0 ? 1 : 0);
   } catch (e) {
     console.error(`Error: ${e.message}`);
@@ -345,6 +481,11 @@ async function main() {
   } finally {
     if (viteInfo) {
       stopVite(viteInfo);
+    }
+    // Clean up temp coverage config
+    if (enableCoverage) {
+      const covConfig = join(frontendRoot, 'vite.coverage.config.js');
+      if (existsSync(covConfig)) rmSync(covConfig);
     }
   }
 }

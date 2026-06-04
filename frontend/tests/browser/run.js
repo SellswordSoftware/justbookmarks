@@ -55,7 +55,14 @@ if (allTests.length === 0) {
 
   if (getMode() === "json") {
     // Output plain JSON to the page body for --dump-dom consumption
-    document.body.textContent = JSON.stringify(result, null, 2);
+    const output = {
+      passed: result.passed,
+      failed: result.failed,
+      skipped: result.skipped,
+      results: result.results,
+      coverage: globalThis.__coverage__ || null,
+    };
+    document.body.textContent = JSON.stringify(output, null, 2);
   } else {
     // HTML output for browser viewing
     const container = document.createElement("div");
