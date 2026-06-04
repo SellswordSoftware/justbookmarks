@@ -13,7 +13,7 @@ describe("signal", () => {
   test("updates on set", () => {
     const s = signal(42);
     strictEqual(s(100), 100);
-    strictEqual(s(), 100);
+    strictEqual(s(), 1100);
   });
 
   test("returns new value on set", () => {

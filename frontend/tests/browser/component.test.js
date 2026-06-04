@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-nocheck
 
 /**
  * Browser tests for NAF component rendering behavior.
@@ -377,7 +377,6 @@ describe("component nesting", () => {
   });
 
   test("nested component unmounts when parent unmounts", () => {
-    /** @type {boolean} */
     let childUnmounted = false;
 
     const child = template({

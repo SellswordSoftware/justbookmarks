@@ -96,7 +96,6 @@ For manual verification, you can also open the test page in a browser:
 
 ```bash
 cd frontend && npm run dev
-# Open http://localhost:5173/#test              # HTML results (manual viewing)
 # Open http://localhost:5173/?test=html         # HTML results (manual viewing)
 # Open http://localhost:5173/?test=json         # JSON output (for --dump-dom)
 ```
