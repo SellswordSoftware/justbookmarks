@@ -25,6 +25,30 @@ const _debouncedQuery = signal("", { label: "search.debouncedQuery" });
 let debounceTimer = null;
 
 /**
+ * Timer functions for debouncing. Defaults to real setTimeout/clearTimeout.
+ * Tests can override these via `setTimerFactory()` to avoid real delays.
+ *
+ * @type {(fn: () => void, delay: number) => ReturnType<typeof setTimeout>}
+ */
+let _scheduleTimer = setTimeout;
+
+/** @type {(id: ReturnType<typeof setTimeout>) => void} */
+let _cancelTimer = clearTimeout;
+
+/**
+ * Override the timer functions used by the debounce effect.
+ * Intended for tests that need to avoid real delays.
+ *
+ * @param {(fn: () => void, delay: number) => ReturnType<typeof setTimeout>} scheduleFn
+ * @param {(id: ReturnType<typeof setTimeout>) => void} cancelFn
+ * @returns {void}
+ */
+export function setSearchStateTimerFactory(scheduleFn, cancelFn) {
+  _scheduleTimer = scheduleFn;
+  _cancelTimer = cancelFn;
+}
+
+/**
  * Schedule a debounced update to `_debouncedQuery`.
  * Called by an effect that tracks `query`.
  *
@@ -33,9 +57,9 @@ let debounceTimer = null;
  */
 function scheduleDebouncedQuery(nextQuery) {
   if (debounceTimer !== null) {
-    clearTimeout(debounceTimer);
+    _cancelTimer(debounceTimer);
   }
-  debounceTimer = setTimeout(() => {
+  debounceTimer = _scheduleTimer(() => {
     _debouncedQuery(nextQuery);
     debounceTimer = null;
   }, 150);
