@@ -14,6 +14,11 @@
 
 import { collectTests, runTests } from "../lib/test.js";
 
+// Stub window.go so that api.js and tree-state.js can load in the browser test environment.
+// The api.js module uses optional chaining (window.go?.main?.App), so a null stub is sufficient.
+// @ts-ignore
+window.go = { main: { App: null }, wailsapi: { Handler: null } };
+
 // Import all browser test files (side-effect only, registers tests)
 // @ts-ignore
 import "./naf-dom.test.js";
