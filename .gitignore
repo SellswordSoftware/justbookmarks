@@ -58,8 +58,9 @@ go.work.sum
 
 chrome-headless-shell/
 vite.coverage.config.js
-.task/
-bin/
-darwin/
-linux/
-windows/
+.task
+bin
+frontend/dist
+frontend/node_modules
+build/linux/appimage/build
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe

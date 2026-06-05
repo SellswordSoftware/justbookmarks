@@ -12,9 +12,24 @@ includes:
 
 tasks:
   build:
-    summary: Builds the application
+    summary: Builds the application (Linux produces an RPM)
+    cmds:
+      - task: '{{if eq OS "linux"}}linux:create:rpm{{else}}{{OS}}:build{{end}}'
+
+  build:binary:
+    summary: Builds the raw application binary
     cmds:
       - task: "{{OS}}:build"
+
+  build:appimage:
+    summary: Builds an AppImage on Linux
+    cmds:
+      - task: linux:create:appimage
+
+  build:rpm:
+    summary: Builds an RPM on Linux
+    cmds:
+      - task: linux:create:rpm
 
   package:
     summary: Packages a production build of the application

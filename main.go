@@ -33,6 +33,9 @@ func main() {
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
+		Linux: application.LinuxOptions{
+			ProgramName: "justbookmarks",
+		},
 	})
 
 	// Create services
