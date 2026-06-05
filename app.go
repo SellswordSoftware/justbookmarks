@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,25 +8,23 @@ import (
 
 	"github.com/SellswordSoftware/justbookmarks/internal/bookmarks"
 	"github.com/SellswordSoftware/justbookmarks/internal/wailsapi"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// App struct
+// App is the main application service.
 type App struct {
-	ctx      context.Context
+	app      *application.App
 	handler  *wailsapi.Handler
 	filePath string
 }
 
-// NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
-}
-
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
-func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
+// NewApp creates a new App service.
+func NewApp(appInst *application.App, cliFilePath string, handler *wailsapi.Handler) *App {
+	return &App{
+		app:      appInst,
+		handler:  handler,
+		filePath: cliFilePath,
+	}
 }
 
 // GetFilePath returns the file path passed via CLI arg.
@@ -46,37 +43,25 @@ func (a *App) OpenImportFilePicker() string {
 }
 
 func (a *App) openHTMLFilePicker(title string) string {
-	if a.ctx == nil {
-		return ""
-	}
-
-	file, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title: title,
-		Filters: []runtime.FileFilter{
-			{DisplayName: "HTML Files", Pattern: "*.html"},
-			{DisplayName: "All Files", Pattern: "*.*"},
-		},
-	})
+	result, err := a.app.Dialog.OpenFile().
+		SetTitle(title).
+		AddFilter("HTML Files", "*.html").
+		AddFilter("All Files", "*.*").
+		PromptForSingleSelection()
 	if err != nil {
 		return ""
 	}
-	return file
+	return result
 }
 
 // CreateBookmarkFile shows a native save dialog, writes an empty Netscape bookmarks file,
 // and returns the created path.
 func (a *App) CreateBookmarkFile() (string, error) {
-	if a.ctx == nil {
-		return "", fmt.Errorf("app context not initialized")
-	}
-
-	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		Title:           "Create Bookmark File",
-		DefaultFilename: "bookmarks.html",
-		Filters: []runtime.FileFilter{
-			{DisplayName: "HTML Files", Pattern: "*.html"},
-		},
-	})
+	path, err := a.app.Dialog.SaveFile().
+		SetMessage("Create Bookmark File").
+		SetFilename("bookmarks.html").
+		AddFilter("HTML Files", "*.html").
+		PromptForSingleSelection()
 	if err != nil {
 		return "", err
 	}

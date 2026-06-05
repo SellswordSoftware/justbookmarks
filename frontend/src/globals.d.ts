@@ -1,5 +1,5 @@
-import type * as AppBindings from "../wailsjs/go/main/App";
-import type * as HandlerBindings from "../wailsjs/go/wailsapi/Handler";
+import type * as AppBindings from "../bindings/github.com/SellswordSoftware/justbookmarks/app";
+import type * as HandlerBindings from "../bindings/github.com/SellswordSoftware/justbookmarks/internal/wailsapi/handler";
 
 declare global {
   // =============================================================================
@@ -24,6 +24,22 @@ declare global {
       };
     };
     runtime?: unknown;
+    _wails?: {
+      environment?: {
+        OS: string;
+        Arch: string;
+        Debug: boolean;
+      };
+      flags?: Record<string, unknown>;
+      clientId?: string;
+      invoke?: (data: string) => void;
+      setResizable?: (resizable: boolean) => void;
+      dispatchWailsEvent?: (event: { name: string; data: unknown }) => void;
+      handlePlatformFileDrop?: (filenames: string[], x: number, y: number) => void;
+      handleDragEnter?: () => void;
+      handleDragLeave?: () => void;
+      handleDragOver?: (x: number, y: number) => void;
+    };
   }
 
   // =============================================================================

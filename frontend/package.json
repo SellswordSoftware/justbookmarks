@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:dev": "vite build --minify false --mode development",
     "lint:styles": "node ./scripts/lint-styles.mjs",
     "test": "node tests/run.js",
     "test:coverage": "node --experimental-loader file://$(pwd)/tests/lib/coverage-loader.js tests/run.js --coverage",
@@ -19,5 +20,8 @@
     "@types/node": "^24.12.3",
     "typescript": "^6.0.3",
     "vite": "^8.0.14"
+  },
+  "dependencies": {
+    "@wailsio/runtime": "latest"
   }
 }

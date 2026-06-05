@@ -15,6 +15,7 @@ import {
 import { mountToastContainer } from "../components/toast/toast-container.js";
 import { mountTitlebar } from "../components/titlebar/titlebar.js";
 import { mountPageHost } from "./page-host.js";
+import { mountWindowResize } from "./window-resize.js";
 
 /**
  * @typedef {object} AppShell
@@ -81,6 +82,7 @@ function collectShell(root) {
  */
 export function createApp(root) {
   const cleanupTitlebar = mountTitlebar(root);
+  const cleanupWindowResize = mountWindowResize(root);
   const shell = collectShell(root);
   const cleanupLayout = mountLayout(root);
   const toastContainer = mountToastContainer(root);
@@ -92,6 +94,7 @@ export function createApp(root) {
   const lifecycle = mountAppLifecycle({
     featureCleanups: [
       { cleanup: cleanupTitlebar },
+      { cleanup: cleanupWindowResize },
       { cleanup: cleanupLayout },
       toastContainer,
       confirmModal,
@@ -103,5 +106,7 @@ export function createApp(root) {
   });
   void bootstrapSession();
   void lifecycle;
+  // Reveal app now that JS has mounted everything -- removes FOUC guard.
+  root.removeAttribute("data-loading");
   return shell;
 }

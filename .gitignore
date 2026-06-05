@@ -58,3 +58,8 @@ go.work.sum
 
 chrome-headless-shell/
 vite.coverage.config.js
+.task/
+bin/
+darwin/
+linux/
+windows/

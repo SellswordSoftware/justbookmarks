@@ -1,4 +1,5 @@
 .app-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -41,6 +42,10 @@
 
 .app-shell[data-resizing="true"] {
   cursor: col-resize;
+  user-select: none;
+}
+
+.app-shell[data-window-resizing="true"] {
   user-select: none;
 }
 
@@ -92,6 +97,87 @@
 
 .overlay-root > * {
   pointer-events: auto;
+}
+
+.window-resize-handles {
+  position: absolute;
+  inset: 0;
+  z-index: 5000;
+  pointer-events: none;
+}
+
+.window-resize-handle {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.window-resize-handles[hidden] {
+  display: none;
+}
+
+.window-resize-handle--n {
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.window-resize-handle--e {
+  top: 12px;
+  right: 0;
+  bottom: 12px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.window-resize-handle--s {
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.window-resize-handle--w {
+  top: 12px;
+  bottom: 12px;
+  left: 0;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.window-resize-handle--ne,
+.window-resize-handle--nw,
+.window-resize-handle--se,
+.window-resize-handle--sw {
+  width: 14px;
+  height: 14px;
+}
+
+.window-resize-handle--ne {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.window-resize-handle--nw {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.window-resize-handle--se {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+
+.window-resize-handle--sw {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
 }
 
 .resizer {

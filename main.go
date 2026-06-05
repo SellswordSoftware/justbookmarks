@@ -1,17 +1,13 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"os"
 	"runtime"
 
 	"github.com/SellswordSoftware/justbookmarks/internal/wailsapi"
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	linuxoptions "github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 //go:embed all:frontend/dist
@@ -25,42 +21,39 @@ func main() {
 		_ = os.Setenv("GDK_BACKEND", "x11")
 	}
 
-	app := NewApp()
-	handler := wailsapi.NewHandler()
-
 	// Check for CLI file argument
 	var filePath string
 	if len(os.Args) > 1 {
 		filePath = os.Args[1]
 	}
 
-	app.filePath = filePath
-
-	err := wails.Run(&options.App{
-		Title:     "JustBookmarks",
-		Width:     1200,
-		Height:    800,
-		MinWidth:  900,
-		MinHeight: 640,
-		Frameless: true,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		Linux: &linuxoptions.Options{
-			Icon:             appIcon,
-			WebviewGpuPolicy: linuxoptions.WebviewGpuPolicyNever,
-		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		OnStartup: func(ctx context.Context) {
-			app.ctx = ctx
-			app.handler = handler
-		},
-		Bind: []interface{}{
-			app,
-			handler,
+	app := application.New(application.Options{
+		Name: "JustBookmarks",
+		Icon: appIcon,
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
 		},
 	})
 
+	// Create services
+	handler := wailsapi.NewHandler()
+	appService := NewApp(app, filePath, handler)
+
+	app.RegisterService(application.NewService(appService))
+	app.RegisterService(application.NewService(handler))
+
+	app.Window.NewWithOptions(application.WebviewWindowOptions{
+		Title:            "JustBookmarks",
+		Width:            1200,
+		Height:           800,
+		MinWidth:         900,
+		MinHeight:        640,
+		Frameless:        true,
+		BackgroundColour: application.NewRGB(32, 32, 32),
+		URL:              "/",
+	})
+
+	err := app.Run()
 	if err != nil {
 		fmt.Println("Error:", err.Error())
 	}

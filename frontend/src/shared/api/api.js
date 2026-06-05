@@ -1,24 +1,42 @@
 // @ts-check
 
 import { saving } from "../state/save-state.js";
+import {
+  CreateBookmarkFile as WailsCreateBookmarkFile,
+  GetFilePath as WailsGetFilePath,
+  LoadBookmarkFile as WailsLoadBookmarkFile,
+  OpenFilePicker as WailsOpenFilePicker,
+  OpenImportFilePicker as WailsOpenImportFilePicker,
+} from "../../../bindings/github.com/SellswordSoftware/justbookmarks/app.js";
+import {
+  AddBookmark as WailsAddBookmark,
+  AddFolder as WailsAddFolder,
+  ApplyImportMerge as WailsApplyImportMerge,
+  DeleteNode as WailsDeleteNode,
+  DeleteNodes as WailsDeleteNodes,
+  FetchFavicon as WailsFetchFavicon,
+  FetchFaviconsForNodes as WailsFetchFaviconsForNodes,
+  FetchPageTitle as WailsFetchPageTitle,
+  FilePath as WailsFilePath,
+  GetAllFolders as WailsGetAllFolders,
+  GetFlatIndex as WailsGetFlatIndex,
+  GetFlatTree as WailsGetFlatTree,
+  GetFolderChildren as WailsGetFolderChildren,
+  GetHistoryState as WailsGetHistoryState,
+  GetRootNodes as WailsGetRootNodes,
+  GetTreeStats as WailsGetTreeStats,
+  LoadFile as WailsLoadFile,
+  MoveNode as WailsMoveNode,
+  MoveNodes as WailsMoveNodes,
+  OpenURL as WailsOpenURL,
+  PreviewImportMerge as WailsPreviewImportMerge,
+  Redo as WailsRedo,
+  Undo as WailsUndo,
+  UpdateBookmark as WailsUpdateBookmark,
+  UpdateFolderName as WailsUpdateFolderName,
+} from "../../../bindings/github.com/SellswordSoftware/justbookmarks/internal/wailsapi/handler.js";
 
-/** @typedef {typeof import("../../../wailsjs/go/main/App")} WailsAppBindings */
-/** @typedef {typeof import("../../../wailsjs/go/wailsapi/Handler")} WailsHandlerBindings */
-/** @typedef {import("../../../wailsjs/go/models").wailsapi.NodeDTO} NodeDTO */
-
-/**
- * @returns {WailsAppBindings | null}
- */
-function getAppBindings() {
-  return window.go?.main?.App ?? null;
-}
-
-/**
- * @returns {WailsHandlerBindings | null}
- */
-function getHandlerBindings() {
-  return window.go?.wailsapi?.Handler ?? window.go?.main?.Handler ?? null;
-}
+/** @typedef {import("../../../bindings/github.com/SellswordSoftware/justbookmarks/internal/wailsapi/models.js").NodeDTO} NodeDTO */
 
 /**
  * Wrap a mutation promise with save state tracking.
@@ -126,26 +144,19 @@ function normalizeTreeNode(node) {
 }
 
 export async function GetFilePath() {
-  const app = getAppBindings();
-  return app ? app.GetFilePath() : "";
+  return WailsGetFilePath();
 }
 
 export async function CreateBookmarkFile() {
-  const app = getAppBindings();
-  if (!app) {
-    throw new Error("Wails bridge not ready");
-  }
-  return wrapMutation(app.CreateBookmarkFile());
+  return wrapMutation(WailsCreateBookmarkFile());
 }
 
 export async function OpenFilePicker() {
-  const app = getAppBindings();
-  return app ? app.OpenFilePicker() : "";
+  return WailsOpenFilePicker();
 }
 
 export async function OpenImportFilePicker() {
-  const app = getAppBindings();
-  return app ? app.OpenImportFilePicker() : "";
+  return WailsOpenImportFilePicker();
 }
 
 /**
@@ -153,11 +164,7 @@ export async function OpenImportFilePicker() {
  * @returns {Promise<void>}
  */
 export async function LoadBookmarkFile(path) {
-  const app = getAppBindings();
-  if (!app) {
-    return;
-  }
-  await app.LoadBookmarkFile(path);
+  await WailsLoadBookmarkFile(path);
 }
 
 /**
@@ -165,29 +172,17 @@ export async function LoadBookmarkFile(path) {
  * @returns {Promise<void>}
  */
 export async function LoadFile(path) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  await handler.LoadFile(path);
+  await WailsLoadFile(path);
 }
 
 /** @returns {Promise<FlatNode[]>} */
 export async function GetFlatTree() {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    return [];
-  }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetFlatTree()));
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await WailsGetFlatTree()));
 }
 
 /** @returns {Promise<FlatNode[]>} */
 export async function GetRootNodes() {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    return [];
-  }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetRootNodes()));
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await WailsGetRootNodes()));
 }
 
 /**
@@ -195,32 +190,22 @@ export async function GetRootNodes() {
  * @returns {Promise<FlatNode[]>}
  */
 export async function GetFolderChildren(folderId) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    return [];
-  }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await handler.GetFolderChildren(folderId)));
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await WailsGetFolderChildren(folderId)));
 }
 
 /** @returns {Promise<BookmarkIndexEntry[]>} */
 export async function GetFlatIndex() {
-  const handler = getHandlerBindings();
-  return handler ? handler.GetFlatIndex() : [];
+  return WailsGetFlatIndex();
 }
 
 /** @returns {Promise<TreeNode[]>} */
 export async function GetAllFolders() {
-  const handler = getHandlerBindings();
-  return handler ? (await handler.GetAllFolders()).map(normalizeTreeNode) : [];
+  return (await WailsGetAllFolders()).map(normalizeTreeNode);
 }
 
 /** @returns {Promise<TreeStats>} */
 export async function GetTreeStats() {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    return { folders: 0, bookmarks: 0 };
-  }
-  return /** @type {TreeStats} */ (/** @type {unknown} */ (await handler.GetTreeStats()));
+  return /** @type {TreeStats} */ (/** @type {unknown} */ (await WailsGetTreeStats()));
 }
 
 /**
@@ -229,12 +214,8 @@ export async function GetTreeStats() {
  * @returns {Promise<FlatNode>}
  */
 export async function AddBookmark(parentFolderId, bookmark) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
   return /** @type {FlatNode} */ (/** @type {unknown} */ (
-    await wrapMutation(handler.AddBookmark(parentFolderId, {
+    await wrapMutation(WailsAddBookmark(parentFolderId, {
       title: bookmark.title,
       url: bookmark.url,
       icon: bookmark.icon ?? "",
@@ -250,12 +231,8 @@ export async function AddBookmark(parentFolderId, bookmark) {
  * @returns {Promise<FlatNode>}
  */
 export async function AddFolder(parentFolderId, name) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
   return /** @type {FlatNode} */ (/** @type {unknown} */ (
-    await wrapMutation(handler.AddFolder(parentFolderId, name))
+    await wrapMutation(WailsAddFolder(parentFolderId, name))
   ));
 }
 
@@ -265,11 +242,7 @@ export async function AddFolder(parentFolderId, name) {
  * @returns {Promise<void>}
  */
 export async function UpdateBookmark(id, patch) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  await wrapMutation(handler.UpdateBookmark(id, patch));
+  await wrapMutation(WailsUpdateBookmark(id, /** @type {any} */ (patch)));
 }
 
 /**
@@ -278,29 +251,17 @@ export async function UpdateBookmark(id, patch) {
  * @returns {Promise<void>}
  */
 export async function UpdateFolderName(id, name) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  await wrapMutation(handler.UpdateFolderName(id, name));
+  await wrapMutation(WailsUpdateFolderName(id, name));
 }
 
 /** @param {string} id */
 export async function DeleteNode(id) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  await wrapMutation(handler.DeleteNode(id));
+  await wrapMutation(WailsDeleteNode(id));
 }
 
 /** @param {string[]} ids */
 export async function DeleteNodes(ids) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  await wrapMutation(handler.DeleteNodes(ids));
+  await wrapMutation(WailsDeleteNodes(ids));
 }
 
 /**
@@ -310,12 +271,8 @@ export async function DeleteNodes(ids) {
  * @returns {Promise<MoveResult>}
  */
 export async function MoveNode(draggedId, targetFolderId, index) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
   return /** @type {MoveResult} */ (/** @type {unknown} */ (
-    await wrapMutation(handler.MoveNode(draggedId, targetFolderId, index))
+    await wrapMutation(WailsMoveNode(draggedId, targetFolderId, index))
   ));
 }
 
@@ -325,31 +282,19 @@ export async function MoveNode(draggedId, targetFolderId, index) {
  * @returns {Promise<MoveResult>}
  */
 export async function MoveNodes(nodeIds, targetFolderId) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
   return /** @type {MoveResult} */ (/** @type {unknown} */ (
-    await wrapMutation(handler.MoveNodes(nodeIds, targetFolderId))
+    await wrapMutation(WailsMoveNodes(nodeIds, targetFolderId))
   ));
 }
 
 /** @param {string} url */
 export async function FetchPageTitle(url) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  return wrapMutation(handler.FetchPageTitle(url));
+  return wrapMutation(WailsFetchPageTitle(url));
 }
 
 /** @param {string} url */
 export async function FetchFavicon(url) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  return wrapMutation(handler.FetchFavicon(url));
+  return wrapMutation(WailsFetchFavicon(url));
 }
 
 /**
@@ -357,26 +302,17 @@ export async function FetchFavicon(url) {
  * @returns {Promise<FlatNode[]>}
  */
 export async function FetchFaviconsForNodes(ids) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await wrapMutation(handler.FetchFaviconsForNodes(ids))));
+  return /** @type {FlatNode[]} */ (/** @type {unknown} */ (await wrapMutation(WailsFetchFaviconsForNodes(ids))));
 }
 
 /** @param {string} url */
 export async function OpenURL(url) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  await handler.OpenURL(url);
+  await WailsOpenURL(url);
 }
 
 /** @returns {Promise<string>} */
 export async function FilePath() {
-  const handler = getHandlerBindings();
-  return handler ? handler.FilePath() : "";
+  return WailsFilePath();
 }
 
 /**
@@ -384,12 +320,7 @@ export async function FilePath() {
  * @returns {Promise<MergePreview>}
  */
 export async function PreviewImportMerge(path) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-
-  const preview = await handler.PreviewImportMerge(path);
+  const preview = await WailsPreviewImportMerge(path);
   return {
     foldersToAdd: (preview?.foldersToAdd ?? []).map(normalizeFolderMergeItem),
     bookmarksToAdd: (preview?.bookmarksToAdd ?? []).map(normalizeBookmarkMergeItem),
@@ -403,12 +334,7 @@ export async function PreviewImportMerge(path) {
  * @returns {Promise<MergeApplyResult>}
  */
 export async function ApplyImportMerge(path) {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-
-  const result = await wrapMutation(handler.ApplyImportMerge(path));
+  const result = await wrapMutation(WailsApplyImportMerge(path));
   return {
     foldersAdded: result?.foldersAdded ?? 0,
     bookmarksAdded: result?.bookmarksAdded ?? 0,
@@ -419,27 +345,15 @@ export async function ApplyImportMerge(path) {
 
 /** @returns {Promise<HistoryState>} */
 export async function GetHistoryState() {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    return normalizeHistoryState(null);
-  }
-  return normalizeHistoryState(await handler.GetHistoryState());
+  return normalizeHistoryState(await WailsGetHistoryState());
 }
 
 /** @returns {Promise<HistoryState>} */
 export async function Undo() {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  return normalizeHistoryState(await wrapMutation(handler.Undo()));
+  return normalizeHistoryState(await wrapMutation(WailsUndo()));
 }
 
 /** @returns {Promise<HistoryState>} */
 export async function Redo() {
-  const handler = getHandlerBindings();
-  if (!handler) {
-    throw new Error("Wails bridge not ready");
-  }
-  return normalizeHistoryState(await wrapMutation(handler.Redo()));
+  return normalizeHistoryState(await wrapMutation(WailsRedo()));
 }

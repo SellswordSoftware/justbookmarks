@@ -1,12 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" style="background-color: rgb(32, 32, 32);">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>JustBookmarks</title>
+        <style>
+            /* Hide app until JS is ready to prevent FOUC */
+            .app-shell[data-loading] {
+                visibility: hidden;
+            }
+        </style>
     </head>
     <body>
-        <div id="app" class="app-shell" data-theme="dark">
+        <div id="app" class="app-shell" data-theme="dark" data-loading>
+            <div
+                id="window-resize-handles"
+                class="window-resize-handles"
+                aria-hidden="true"
+            >
+                <div class="window-resize-handle window-resize-handle--n" data-resize-edge="n"></div>
+                <div class="window-resize-handle window-resize-handle--e" data-resize-edge="e"></div>
+                <div class="window-resize-handle window-resize-handle--s" data-resize-edge="s"></div>
+                <div class="window-resize-handle window-resize-handle--w" data-resize-edge="w"></div>
+                <div class="window-resize-handle window-resize-handle--ne" data-resize-edge="ne"></div>
+                <div class="window-resize-handle window-resize-handle--nw" data-resize-edge="nw"></div>
+                <div class="window-resize-handle window-resize-handle--se" data-resize-edge="se"></div>
+                <div class="window-resize-handle window-resize-handle--sw" data-resize-edge="sw"></div>
+            </div>
             <header
                 id="titlebar"
                 class="titlebar"

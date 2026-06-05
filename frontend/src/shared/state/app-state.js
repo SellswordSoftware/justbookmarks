@@ -13,12 +13,7 @@ import {
 } from "../../shared/infra/persistence.js";
 import { signal } from "../../shared/runtime/naf.js";
 import { saving } from "./save-state.js";
-import {
-  WindowGetSize,
-  WindowIsMaximised,
-  WindowIsNormal,
-  WindowSetSize,
-} from "../../../wailsjs/runtime/runtime.js";
+import { Window } from "@wailsio/runtime";
 
 /**
  * App/session state owner.
@@ -47,7 +42,7 @@ const persistedState = signal(loadPersistedUIState(), { label: "app.persistedSta
 
 /** @returns {boolean} */
 function hasWailsRuntime() {
-  return typeof window !== "undefined" && typeof window.runtime !== "undefined";
+  return typeof window !== "undefined" && typeof window._wails !== "undefined";
 }
 
 /** @returns {PersistedUIState} */
@@ -76,7 +71,7 @@ async function syncWindowState() {
   }
 
   try {
-    isMaximised(await WindowIsMaximised());
+    isMaximised(await Window.IsMaximised());
   } catch {
     isMaximised(false);
   }
@@ -152,7 +147,7 @@ export const appState = {
     async restoreWindowSize() {
       const state = persistedState();
       if (hasWailsRuntime() && state.window) {
-        WindowSetSize(state.window.width, state.window.height);
+        Window.SetSize(state.window.width, state.window.height);
       }
     },
     /**
@@ -184,13 +179,15 @@ export const appState = {
       }
 
       try {
-        const normal = await WindowIsNormal();
+        const maximised = await Window.IsMaximised();
+        const minimised = await Window.IsMinimised();
+        const normal = !maximised && !minimised;
         if (!normal) {
           return null;
         }
 
-        const size = await WindowGetSize();
-        const windowState = { width: size.w, height: size.h };
+        const size = await Window.Size();
+        const windowState = { width: size.width, height: size.height };
         persistWindowState(windowState);
         return windowState;
       } catch {

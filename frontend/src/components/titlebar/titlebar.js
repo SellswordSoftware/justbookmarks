@@ -1,20 +1,16 @@
 // @ts-check
 
+import { Application, Window } from "@wailsio/runtime";
 import { attr, effect, listener, mount, requireElement, requireRef, template } from "../../shared/runtime/naf.js";
 import { appState } from "../../shared/state/app-state.js";
 import { saving } from "../../shared/state/save-state.js";
-import {
-  Quit,
-  WindowMinimise,
-  WindowToggleMaximise,
-} from "../../../wailsjs/runtime/runtime.js";
 
 /** @returns {void} */
 function minimiseWindow() {
   if (!appState.selectors.hasWailsRuntime()) {
     return;
   }
-  WindowMinimise();
+  Window.Minimise();
 }
 
 /** @returns {Promise<void>} */
@@ -22,7 +18,7 @@ async function toggleMaximiseWindow() {
   if (!appState.selectors.hasWailsRuntime()) {
     return;
   }
-  WindowToggleMaximise();
+  Window.ToggleMaximise();
   await appState.actions.syncWindowState();
 }
 
@@ -31,7 +27,7 @@ function closeWindow() {
   if (!appState.selectors.hasWailsRuntime()) {
     return;
   }
-  Quit();
+  Application.Quit();
 }
 
 /**

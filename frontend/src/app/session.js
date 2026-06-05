@@ -85,7 +85,7 @@ export async function bootstrapSession() {
   const persistedState = appState.actions.reloadPersistedState();
   await appState.actions.restoreWindowSize();
 
-  if (!window.go) {
+  if (!appState.selectors.hasWailsRuntime()) {
     appState.actions.setPersistenceReady(true);
     return;
   }
