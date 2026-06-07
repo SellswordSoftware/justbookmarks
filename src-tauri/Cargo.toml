@@ -1,6 +1,6 @@
 [package]
 name = "justbookmarks"
-version = "0.1.0"
+version = "0.3.0"
 description = "A simple bookmark manager"
 authors = ["Sellsword Software"]
 edition = "2021"

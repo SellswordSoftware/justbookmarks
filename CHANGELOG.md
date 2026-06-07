@@ -2,13 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.2.0] - Next
+## [0.3.0] - Next
 
 ### Changed
 
 - Rewrote the frontend to remove the prior Svelte, Tailwind, and DaisyUI stack in favor of project-local, home-grown UI and state primitives.
 - Replaced framework-driven component patterns with a local `naf-html` runtime and explicit feature/state modules to reduce dependency churn and make behavior easier to trace.
 - Reworked styling around repo-owned CSS modules and local UI conventions instead of utility-framework and theme-library dependencies.
+- Switched the desktop host from Wails to Tauri, moving app packaging and native integration to the current Rust/Tauri stack.
 
 ### Improved
 
