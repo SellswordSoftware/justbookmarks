@@ -120,6 +120,38 @@ npm run test:browser
 
 The browser runner auto-downloads `chrome-headless-shell` into a repo-local directory when needed and uses `--dump-dom` to execute and validate frontend tests.
 
+Generate Node coverage:
+
+```bash
+npm run test:coverage
+```
+
+This writes LCOV output to `coverage/lcov.info`.
+
+Generate browser coverage:
+
+```bash
+npm run test:browser:coverage
+```
+
+This writes LCOV output to `coverage/browser.lcov`.
+
+Generate both and merge them:
+
+```bash
+npm run test:coverage:all
+```
+
+This writes merged LCOV output to `coverage/all.lcov`.
+
+Generate a browsable HTML coverage report:
+
+```bash
+npm run test:coverage:html
+```
+
+This requires `genhtml` from the `lcov` package. When installed, it writes the HTML report to `coverage/html/`.
+
 Run the standard verification flow:
 
 ```bash

@@ -35,7 +35,7 @@ dist-ssr
 
 # Code coverage profiles and other test artifacts
 *.out
-coverage.*
+coverage/
 *.coverprofile
 profile.cov
 
@@ -53,7 +53,7 @@ go.work.sum
 # .idea/
 # .vscode/
 
-chrome-headless-shell/
+.cache/
 vite.coverage.config.js
 .task
 bin

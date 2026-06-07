@@ -14,7 +14,7 @@
  */
 
 import { spawn, spawnSync } from 'child_process';
-import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, chmodSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, chmodSync, readdirSync } from 'fs';
 import { createServer as createNetServer } from 'net';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -22,8 +22,7 @@ import { tmpdir, platform as osPlatform, arch as osArch } from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const frontendRoot = join(__dirname, '..', '..');
-const repoRoot = join(frontendRoot, '..');
-const chromeDir = join(repoRoot, 'chrome-headless-shell');
+const chromeDir = join(frontendRoot, '.cache', 'chrome-headless-shell');
 
 const API_URL = 'https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json';
 const enableCoverage = process.argv.includes('--coverage');
@@ -336,7 +335,7 @@ async function writeBrowserCoverage(result) {
   }
 
   const { writeLcovFile } = await import('../lib/coverage-lcov.js');
-  const lcovPath = join(frontendRoot, 'coverage-browser.lcov');
+  const lcovPath = join(frontendRoot, 'coverage/browser.lcov');
   writeLcovFile(result.coverage, lcovPath, frontendRoot);
   console.log(`Browser coverage report written to: ${lcovPath}`);
 
@@ -437,10 +436,6 @@ async function main() {
       cwd: frontendRoot,
       stdio: "inherit",
     });
-
-    if (enableCoverage) {
-      throw new Error("Browser coverage is not wired for the non-Vite test server yet");
-    }
 
     // 1. Ensure chrome-headless-shell is installed
     const binary = await ensureChrome();

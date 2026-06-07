@@ -207,6 +207,14 @@ Add browser verification when the change affects rendered UI, focus handling, ke
 npm run test:browser
 ```
 
+Use the coverage commands when the task is specifically about test reach, instrumentation, or report generation:
+
+```bash
+npm run test:coverage
+npm run test:browser:coverage
+npm run test:coverage:all
+```
+
 If the task touches desktop integration, Tauri configuration, or Rust command wiring, also verify with:
 
 ```bash

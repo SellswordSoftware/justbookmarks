@@ -7,7 +7,7 @@ on:
       - "v*"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -19,103 +19,75 @@ jobs:
         include:
           - name: linux-x64
             runner: ubuntu-24.04
-            goos: linux
-            goarch: amd64
-            output_name: justbookmarks-linux-x64
-            output_file: build/bin/justbookmarks
-            asset_file: justbookmarks-linux-x64
-            wails_tags: webkit2_41
+            args: ""
           - name: windows-x64
             runner: windows-2022
-            goos: windows
-            goarch: amd64
-            output_name: justbookmarks-windows-x64
-            output_file: build/bin/justbookmarks.exe
-            asset_file: justbookmarks-windows-x64.exe
-            wails_tags: ""
+            args: ""
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: go.mod
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
 
       - name: Install frontend dependencies
-        working-directory: frontend
-        run: npm install
+        run: npm ci
 
-      - name: Install Wails CLI
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.12.0
+      - name: Build Tauri app
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: tauri-apps/tauri-action@v1
+        with:
+          args: ${{ matrix.args }}
 
-      - name: Build application (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          "$(go env GOPATH)/bin/wails" build -clean -platform ${{ matrix.goos }}/${{ matrix.goarch }} -tags "${{ matrix.wails_tags }}"
-
-      - name: Build application (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          & "$(go env GOPATH)\bin\wails.exe" build -clean -platform ${{ matrix.goos }}/${{ matrix.goarch }}
-
-      - name: Stage release asset
-        shell: bash
-        run: |
-          mkdir -p dist
-          cp "${{ matrix.output_file }}" "dist/${{ matrix.asset_file }}"
+      - name: Build And Publish Tauri app
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ format('JustBookmarks {0}', github.ref_name) }}
+          releaseBody: See the assets to download this version and install.
+          releaseDraft: false
+          prerelease: false
+          generateReleaseNotes: true
+          args: ${{ matrix.args }}
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.output_name }}
-          path: dist/${{ matrix.asset_file }}
+          name: ${{ matrix.name }}-bundle
+          path: src-tauri/target/release/bundle/
           if-no-files-found: error
 
-  release:
-    name: Publish GitHub Release
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: build
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download Linux artifact
-        uses: actions/download-artifact@v4
+      - name: Upload Windows portable artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v7
         with:
-          name: justbookmarks-linux-x64
-          path: release-assets/linux
+          name: windows-x64-portable-exe
+          path: src-tauri/target/release/justbookmarks.exe
+          if-no-files-found: error
 
-      - name: Download Windows artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: justbookmarks-windows-x64
-          path: release-assets/windows
-
-      - name: Publish release
+      - name: Publish Windows portable exe
+        if: ${{ runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v3
         with:
-          generate_release_notes: true
-          files: |
-            release-assets/linux/justbookmarks-linux-x64
-            release-assets/windows/justbookmarks-windows-x64.exe
+          files: src-tauri/target/release/justbookmarks.exe

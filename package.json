@@ -1,14 +1,16 @@
 {
-  "name": "taurijs",
+  "name": "justbookmarks",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": {
     "tauri": "tauri",
     "test": "node tests/run.js",
-    "test:coverage": "node tests/run.js --coverage",
+    "test:coverage": "node --import ./tests/lib/register-coverage-loader.js tests/run.js --coverage",
     "test:browser": "node tests/browser/run-browser.js",
     "test:browser:coverage": "node tests/browser/run-browser.js --coverage",
+    "test:coverage:all": "npm run test:coverage && npm run test:browser:coverage && node -e \"import('./tests/lib/coverage-merge.js').then(m => m.mergeLcovFiles(['coverage/lcov.info', 'coverage/browser.lcov'], 'coverage/all.lcov'))\"",
+    "test:coverage:html": "node scripts/coverage-html.mjs",
     "test:browser:server": "node scripts/test-dev-server.mjs --port 4173",
     "test:prepare:dev": "node scripts/use-dev-index.mjs",
     "test:prepare:prod": "node scripts/use-prod-index.mjs",

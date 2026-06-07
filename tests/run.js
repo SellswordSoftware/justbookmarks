@@ -70,7 +70,16 @@ console.log("");
 const result = await runTests(allTests, { grep: grepPattern });
 
 // Write coverage report if enabled
+if (enableCoverage && !(/** @type {any} */ (globalThis).__coverage__)) {
+  console.error('');
+  console.error('Coverage requested, but no instrumentation data was collected.');
+  console.error('Run this script through tests/lib/coverage-loader.js.');
+  process.exit(1);
+}
+
 if (enableCoverage && /** @type {any} */ (globalThis).__coverage__) {
+  const coverage = /** @type {CoverageMap} */ (/** @type {any} */ (globalThis).__coverage__);
+
   // Include all source files in coverage report (even uncovered ones)
   const { findExecutableLines } = await import('./lib/coverage-instrument.js');
   const { readFileSync } = await import('node:fs');
@@ -79,7 +88,6 @@ if (enableCoverage && /** @type {any} */ (globalThis).__coverage__) {
 
   for (const filePath of allSourceFiles) {
     const relPath = filePath.replace(frontendRootPath + '/', '');
-    const coverage = /** @type {CoverageMap} */ (/** @type {any} */ (globalThis).__coverage__);
     if (!coverage[relPath]) {
       const source = readFileSync(filePath, 'utf-8');
       const execLines = findExecutableLines(source);
@@ -93,15 +101,15 @@ if (enableCoverage && /** @type {any} */ (globalThis).__coverage__) {
   }
 
   const { writeLcovFile } = await import('./lib/coverage-lcov.js');
-  const lcovPath = resolve(__dirname, '../coverage.lcov');
-  writeLcovFile(/** @type {CoverageMap} */ (/** @type {any} */ (globalThis).__coverage__), lcovPath, frontendRootPath);
+  const lcovPath = resolve(__dirname, '../coverage/lcov.info');
+  writeLcovFile(coverage, lcovPath, frontendRootPath);
   console.log('');
   console.log(`Coverage report written to: ${lcovPath}`);
 
   // Print summary
   let totalLines = 0;
   let hitLines = 0;
-  for (const [, data] of Object.entries(/** @type {CoverageMap} */ (/** @type {any} */ (globalThis).__coverage))) {
+  for (const [, data] of Object.entries(coverage)) {
     for (const [, count] of Object.entries(data.lines)) {
       totalLines++;
       if (count > 0) hitLines++;

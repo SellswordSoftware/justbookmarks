@@ -7,7 +7,8 @@
  * multiple inputs, execution counts are summed.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 
 /**
  * Merge multiple lcov files into one.
@@ -80,6 +81,7 @@ export function mergeLcovFiles(inputPaths, outputPath) {
     ].join('\n'));
   }
 
+  mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, outputRecords.join('\n') + '\n', 'utf-8');
   return outputPath;
 }

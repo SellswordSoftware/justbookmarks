@@ -8,8 +8,8 @@
  * consumable by VS Code extensions (Coverage Gutters), codecov, gcovr, etc.
  */
 
-import { writeFileSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, relative, resolve } from 'node:path';
 
 /**
  * Convert __coverage__ data to lcov format text.
@@ -70,6 +70,7 @@ export function coverageToLcov(coverage, basePath) {
  */
 export function writeLcovFile(coverage, outputPath, basePath) {
   const lcovText = coverageToLcov(coverage, basePath);
+  mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, lcovText, 'utf-8');
   return outputPath;
 }
