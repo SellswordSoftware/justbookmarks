@@ -53,13 +53,13 @@ jobs:
 
       - name: Build Tauri app
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
-        uses: tauri-apps/tauri-action@v1
+        uses: tauri-apps/tauri-action@v0.6.2
         with:
           args: ${{ matrix.args }}
 
       - name: Build And Publish Tauri app
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
-        uses: tauri-apps/tauri-action@v1
+        uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
