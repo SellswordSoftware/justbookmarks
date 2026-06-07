@@ -13,7 +13,7 @@ After reading it, an agent should understand:
 
 ## What This Project Is
 
-JustBookmarks is a Wails desktop app for managing one bookmark HTML file in Netscape bookmark format.
+JustBookmarks is a Tauri desktop app for managing one bookmark HTML file in Netscape bookmark format.
 
 Core user workflows:
 
@@ -27,22 +27,27 @@ Core user workflows:
 
 The app is intentionally file-based. It is not a cloud product and does not use a proprietary local database.
 
+The project has two main sides:
+
+- `src/` for the frontend
+- `src-tauri/` for the Rust desktop host, Tauri config, and command wiring
+
 ## Frontend Status
 
 The frontend has recently gone through major restructuring.
 
 Current model:
 
-- one Wails `index.html` shell
+- one `src/index.html` shell
 - plain JavaScript with `// @ts-check`
-- one local runtime in `frontend/src/shared/runtime/naf.js`
+- one local runtime in `src/shared/runtime/naf.js`
 - signals/actions/computed/selectors shared state modules
 - layered frontend structure
 
 Current frontend layout:
 
 ```text
-frontend/src/
+src/
   app/
   pages/
   features/
@@ -54,7 +59,7 @@ frontend/src/
 
 Important rule:
 
-- do not assume older `domains/` or separate `naf-html.js` structure still applies
+- do not assume older `frontend/` paths, Wails integration, or separate `naf-html.js` structure still apply
 
 ## Current Frontend Architecture
 
@@ -84,18 +89,16 @@ Page switching is state-driven. There is no router.
 
 The single runtime entrypoint is:
 
-- `frontend/src/shared/runtime/naf.js`
+- `src/shared/runtime/naf.js`
 
 It currently owns both:
 
 - low-level helpers: `signal`, `computed`, `effect`, `fx`, `model`, `list`, `cleanupCollector`, `listener`, `show`, `hide`, `requireRef`, `requireElement`, `collectRowRefs`, `$`, `$$`, `attr`, `setText`, `text`
 - shell composition helpers: `template()`, `mount()`, and `when()`
 
-Note: `when()` is for simple two-way branches only. For multi-way branching,
-use an explicit `effect()` with if/else logic.
+Note: `when()` is for simple two-way branches only. For multi-way branching, use an explicit `effect()` with if/else logic.
 
-Note: `list()` accepts string template constants (e.g., `` `...` ``) in addition
-to `HTMLTemplateElement` -- strings are converted internally.
+Note: `list()` accepts string template constants (for example `` `...` ``) in addition to `HTMLTemplateElement`; strings are converted internally.
 
 Use NAF templates by default for:
 
@@ -129,7 +132,7 @@ Do not introduce a router for page switching.
 
 ## Shell Rules
 
-`frontend/index.html` is a shell, not a template graveyard.
+`src/index.html` is a shell, not a template graveyard.
 
 Keep it focused on:
 
@@ -138,7 +141,20 @@ Keep it focused on:
 - overlay roots
 - static templates still required by specialized imperative rendering
 
-Do not move page or dialog markup back into `index.html` unless there is a strong reason.
+Do not move page or dialog markup back into `src/index.html` unless there is a strong reason.
+
+## Desktop Host Boundary
+
+The desktop host lives under `src-tauri/`.
+
+Use that side of the repo for:
+
+- Tauri app configuration
+- Rust command handlers
+- file-system and desktop integration
+- native window behavior
+
+Frontend modules should talk to the desktop host through the shared API layer rather than scattering Tauri-specific calls through feature code.
 
 ## Recent Migration Reality
 
@@ -148,8 +164,9 @@ Important consequences:
 
 - prefer mechanical changes over opportunistic refactors
 - preserve behavior unless the task explicitly changes behavior
-- be careful around `frontend/src/app/create-app.js`
-- be careful around `frontend/src/app/page-host.js`
+- be careful around `src/app/create-app.js`
+- be careful around `src/app/page-host.js`
+- be careful around `src/shared/api/api.js` and `src/shared/api/tauri-api-bindings.js`
 - do not reintroduce old folder concepts that the layered structure replaced
 
 If you are touching frontend architecture, read these first:
@@ -180,12 +197,23 @@ When restructuring:
 For frontend changes, the standard verification is:
 
 ```bash
-cd frontend
 npm run typecheck
-npm run build
+npm test
 ```
 
-If the task touches Wails or Go integration, run relevant Go or Wails verification as well.
+Add browser verification when the change affects rendered UI, focus handling, keyboard behavior, or other DOM-heavy flows:
+
+```bash
+npm run test:browser
+```
+
+If the task touches desktop integration, Tauri configuration, or Rust command wiring, also verify with:
+
+```bash
+npm run tauri dev
+```
+
+Use `npm run tauri build` when release/build behavior is part of the change.
 
 ## Suggested First Read For Agents
 
@@ -202,7 +230,7 @@ If you are starting cold, read in this order:
 - introducing route-style navigation for page state
 - forcing `template()` into tree or detail modules just for consistency
 - putting product workflows into `components/`
-- growing `index.html` with page or dialog markup
+- growing `src/index.html` with page or dialog markup
 - promoting unstable code into `shared/`
 - mixing architectural migration with unrelated cleanup
 
@@ -214,4 +242,4 @@ When unsure:
 2. preserve current behavior
 3. follow the existing layer ownership
 4. use `naf.js` as the only runtime entrypoint
-5. verify with typecheck and build
+5. verify with typecheck and tests

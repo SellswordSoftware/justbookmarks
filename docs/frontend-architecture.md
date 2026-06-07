@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This frontend is a single-window Wails app built with:
+This frontend is the web UI hosted inside a Tauri desktop app and built with:
 
 - one static HTML shell
 - plain JavaScript with `// @ts-check`
@@ -22,12 +22,23 @@ After reading it, you should be able to:
 - decide whether a module should use NAF templates or direct DOM code
 - change the app shell without accidentally mixing page and feature responsibilities
 
+## Repo Split
+
+The app is split into two major areas:
+
+- `src/`
+  - the frontend shell, modules, styles, and entrypoints
+- `src-tauri/`
+  - Tauri config, Rust commands, and desktop host wiring
+
+This document covers the frontend side under `src/`.
+
 ## Frontend Shape
 
 The frontend uses these top-level layers:
 
 ```text
-frontend/src/
+src/
   app/
   pages/
   features/
@@ -43,16 +54,16 @@ There is no router. Page switching is driven by app state.
 
 ## Shell Model
 
-The app uses one `index.html` file as a stable shell.
+The app uses one `src/index.html` file as a stable shell.
 
-`index.html` should contain:
+`src/index.html` should contain:
 
 - the app frame
 - stable mount anchors
 - overlay roots
 - static templates still required by specialized imperative rendering
 
-`index.html` should not contain:
+`src/index.html` should not contain:
 
 - page-specific markup
 - dialog markup that can live with its module
@@ -209,8 +220,6 @@ Current shared areas include:
 
 Shared state should expose the smallest clear surface that matches the domain.
 
-Shared state should expose the smallest clear surface that matches the domain.
-
 Canonical state module shape (signals/actions/computed/selectors):
 
 ```js
@@ -231,9 +240,9 @@ Rules:
 - actions mutate state and have clear JSDoc types
 - selectors read state by calling signals or computed values
 - computed values are exposed via the `computed` namespace for reactive reads
-- internal helpers stay as module-scoped functions (not exported)
+- internal helpers stay as module-scoped functions, not exported
 
-This pattern provides clear read vs write boundaries and prevents accidental signal mutation from outside the module. All state modules in this project follow this shape.
+This pattern provides clear read versus write boundaries and prevents accidental signal mutation from outside the module. All state modules in this project follow this shape.
 
 Only put code in `shared/` when the abstraction is genuinely reused and still clear.
 
@@ -350,6 +359,7 @@ Use these as placement shortcuts:
 - change titlebar, toolbar, or dialog chrome: `components`
 - change pane layout or resizing: `layouts`
 - change runtime helpers: `shared/runtime`
+- change desktop host behavior: `src-tauri/` and the frontend API boundary, not random feature modules
 
 ## Maintenance Rule
 

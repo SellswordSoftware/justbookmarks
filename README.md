@@ -1,8 +1,8 @@
 # JustBookmarks
 
-`JustBookmarks` is a simple desktop bookmark manager for people who want one clean, browser-independent source of truth.
+`JustBookmarks` is a desktop bookmark manager for people who want one clean, browser-independent source of truth.
 
-It keeps everything in a plain Netscape Bookmarks HTML file, so you can manage your bookmarks outside of any specific browser and import them wherever you want later.
+It keeps everything in a plain Netscape Bookmarks HTML file, so you can manage your bookmarks outside any specific browser and import them wherever you want later.
 
 ![justbookmarks main window](docs/app.png)
 
@@ -11,8 +11,6 @@ It keeps everything in a plain Netscape Bookmarks HTML file, so you can manage y
 Prebuilt binaries are available on GitHub Releases:
 
 - https://github.com/SellswordSoftware/justbookmarks/releases/latest
-
-If you just want to use the app, that is the easiest place to start.
 
 ## Why I Made This
 
@@ -76,19 +74,67 @@ That is the whole idea: one file, one source of truth, less browser lock-in.
 
 ## Development
 
-If you do not already have Wails installed, follow the official installation guide:
+This repo is a Tauri app with:
 
-- https://wails.io/docs/gettingstarted/installation
+- the frontend under `src/`
+- the Rust desktop host under `src-tauri/`
+- repo-root npm scripts for testing and launch
 
-Run the app in live development mode:
+### Prerequisites
+
+Install:
+
+- Node.js and npm
+- Rust and Cargo
+- Tauri platform prerequisites for your OS
+
+On Linux, that usually includes WebKitGTK and related build dependencies required by Tauri.
+
+### Install Dependencies
 
 ```bash
-wails dev
+npm install
 ```
 
-This starts the Wails app with the frontend dev server for fast iteration.
+### Run In Development
 
-### Frontend Docs
+```bash
+npm run tauri dev
+```
+
+Tauri uses the repo-root scripts in `package.json` to prepare the frontend entrypoint before launch.
+
+## Testing
+
+Run the non-browser test suite:
+
+```bash
+npm test
+```
+
+Run the browser test suite:
+
+```bash
+npm run test:browser
+```
+
+The browser runner auto-downloads `chrome-headless-shell` into a repo-local directory when needed and uses `--dump-dom` to execute and validate frontend tests.
+
+Run the standard verification flow:
+
+```bash
+npm run verify
+```
+
+## Building
+
+Build a production desktop app:
+
+```bash
+npm run tauri build
+```
+
+## Frontend Docs
 
 For frontend work, start with:
 
@@ -97,11 +143,3 @@ For frontend work, start with:
 - `docs/frontend-maintainability-guidelines.md`
 - `docs/naf-html-usage-guidelines.md`
 - `guide.md`
-
-## Building
-
-Build a production desktop app:
-
-```bash
-wails build
-```

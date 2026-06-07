@@ -23,7 +23,7 @@ Keep each layer narrow:
 
 ## Theme Rules
 
-- Theme selectors like `[data-theme="light"]` and `[data-theme="dark"]` belong only in `frontend/src/styles/themes/`.
+- Theme selectors like `[data-theme="light"]` and `[data-theme="dark"]` belong only in `src/styles/themes/`.
 - Component and feature CSS should consume semantic variables instead of branching on theme.
 - If a new visual state needs theme-specific values, add a semantic token in `tokens.css` and assign it in each theme file.
 
@@ -45,13 +45,19 @@ Keep each layer narrow:
 Run this before finishing style work:
 
 ```bash
-cd frontend
-npm run lint:styles
 npm run typecheck
-npm run build
+npm test
 ```
 
-The style guardrail script currently enforces:
+Add browser verification when the style change affects rendered UI behavior, focus treatment, or layout-sensitive interactions:
+
+```bash
+npm run test:browser
+```
+
+There is no current repo script for style-only linting. Do not document `npm run lint:styles` unless that script is restored.
+
+Current styling guardrails are enforced by convention and review:
 
 - no `[data-theme=...]` selectors outside `src/styles/themes/`
 - no raw color values outside `tokens.css` and `themes/*.css`
