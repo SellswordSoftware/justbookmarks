@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="./styles/app.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tauri App!</title>
+  <script type="module" src="/main.entry.js" defer></script>
+</head>
+
+<body>
+  <div id="app" class="app-shell" data-loading>
+    <div id="window-resize-handles" class="window-resize-handles" aria-hidden="true">
+      <div class="window-resize-handle window-resize-handle--n" data-tauri-drag-resize-region="Top"></div>
+      <div class="window-resize-handle window-resize-handle--e" data-tauri-drag-resize-region="Right"></div>
+      <div class="window-resize-handle window-resize-handle--s" data-tauri-drag-resize-region="Bottom"></div>
+      <div class="window-resize-handle window-resize-handle--w" data-tauri-drag-resize-region="Left"></div>
+      <div class="window-resize-handle window-resize-handle--ne" data-tauri-drag-resize-region="TopRight"></div>
+      <div class="window-resize-handle window-resize-handle--nw" data-tauri-drag-resize-region="TopLeft"></div>
+      <div class="window-resize-handle window-resize-handle--se" data-tauri-drag-resize-region="BottomRight"></div>
+      <div class="window-resize-handle window-resize-handle--sw" data-tauri-drag-resize-region="BottomLeft"></div>
+    </div>
+
+    <header id="titlebar" class="titlebar" data-shell-region="titlebar" data-tauri-drag-region></header>
+
+    <div class="app-toolbar">
+      <section class="search-shell" aria-label="Search">
+        <input id="search-input" class="input search-shell__input" type="search" placeholder="Search bookmarks..."
+          autocomplete="off" data-focus-zone="search" data-keyboard-action="search-input" />
+      </section>
+      <div id="toolbar-actions"></div>
+    </div>
+
+    <div id="page-host" class="page-host"></div>
+    <main id="main-content" class="shell-layout">
+      <div id="empty-library-host" class="empty-library-host"></div>
+      <section id="tree-pane" class="shell-panel tree-pane" aria-labelledby="tree-pane-title">
+        <div class="shell-panel__header">
+          <div class="tree-pane__heading">
+            <span class="eyebrow shell-panel__eyebrow">Library</span>
+            <span id="tree-pane-meta" class="shell-panel__subtitle">Waiting for state modules</span>
+            <h2 id="tree-pane-title" class="shell-panel__title visually-hidden">
+              Bookmark Tree
+            </h2>
+          </div>
+          <div class="tree-pane__header-right">
+            <div id="tree-pane-actions" class="tree-pane__actions"></div>
+          </div>
+        </div>
+        <div id="tree-pane-content" class="shell-panel__body tree-pane__list" data-focus-zone="tree" tabindex="0">
+          <div id="tree-list"></div>
+        </div>
+      </section>
+
+      <button id="pane-resizer" class="resizer" type="button" aria-label="Resize panes"></button>
+
+      <section id="detail-pane" class="shell-panel detail-pane" aria-labelledby="detail-pane-title">
+        <div class="shell-panel__header">
+          <div>
+            <span class="eyebrow shell-panel__eyebrow">Detail</span>
+          </div>
+          <span id="detail-pane-meta" class="shell-panel__subtitle">No selection yet</span>
+        </div>
+        <div id="detail-pane-content" class="shell-panel__body detail-pane__content" data-focus-zone="detail"
+          tabindex="-1"></div>
+      </section>
+    </main>
+
+    <div id="toast-container" class="overlay-root" aria-live="polite" aria-atomic="true"></div>
+    <div id="confirm-modal-container" class="overlay-root"></div>
+    <div id="move-dialog-container" class="overlay-root"></div>
+    <div id="import-merge-dialog-container" class="overlay-root"></div>
+    <div id="keyboard-shortcuts-dialog-container" class="overlay-root"></div>
+  </div>
+</body>
+
+</html>

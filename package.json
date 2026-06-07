@@ -1,0 +1,23 @@
+{
+  "name": "taurijs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "test": "node tests/run.js",
+    "test:coverage": "node tests/run.js --coverage",
+    "test:browser": "node tests/browser/run-browser.js",
+    "test:browser:coverage": "node tests/browser/run-browser.js --coverage",
+    "test:browser:server": "node scripts/test-dev-server.mjs --port 4173",
+    "test:prepare:dev": "node scripts/use-dev-index.mjs",
+    "test:prepare:prod": "node scripts/use-prod-index.mjs",
+    "typecheck": "tsc -p jsconfig.json --pretty false && tsc -p jsconfig.tooling.json --pretty false && node --check tests/browser/run-browser.js",
+    "verify": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@tauri-apps/api": "^2.11.0",
+    "@tauri-apps/cli": "^2",
+    "@types/node": "^25.9.2"
+  }
+}
