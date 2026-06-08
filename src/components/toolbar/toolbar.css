@@ -17,3 +17,36 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+
+.toolbar-actions-runtime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolbar-action-btn {
+  color: var(--color-icon);
+}
+
+.toolbar-action-btn:hover {
+  color: var(--color-icon-selected);
+}
+
+.toolbar-action-icon {
+  --icon-size: 1rem;
+}
+
+.toolbar-action-icon--open::before {
+  mask-image: var(--mask-folder-open);
+  -webkit-mask-image: var(--mask-folder-open);
+}
+
+.toolbar-action-icon--create::before {
+  mask-image: var(--mask-file-plus);
+  -webkit-mask-image: var(--mask-file-plus);
+}
+
+.toolbar-action-icon--import::before {
+  mask-image: var(--mask-file-import);
+  -webkit-mask-image: var(--mask-file-import);
+}

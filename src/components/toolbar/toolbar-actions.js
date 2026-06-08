@@ -64,27 +64,33 @@ function createToolbarActionsComponent(actions) {
     <div class="toolbar-actions-runtime">
       <button
         type="button"
-        class="btn btn-ghost btn-sm"
+        class="btn btn-ghost btn-sm btn-square toolbar-action-btn"
         data-toolbar-action="open"
         data-ref="openButton"
+        aria-label="Open bookmark file"
+        title="Open bookmark file"
       >
-        Open File
+        <span class="icon-mask toolbar-action-icon toolbar-action-icon--open" aria-hidden="true"></span>
       </button>
       <button
         type="button"
-        class="btn btn-ghost btn-sm"
+        class="btn btn-ghost btn-sm btn-square toolbar-action-btn"
         data-toolbar-action="create"
         data-ref="createButton"
+        aria-label="Create bookmark file"
+        title="Create bookmark file"
       >
-        Create File
+        <span class="icon-mask toolbar-action-icon toolbar-action-icon--create" aria-hidden="true"></span>
       </button>
       <button
         type="button"
-        class="btn btn-ghost btn-sm"
+        class="btn btn-ghost btn-sm btn-square toolbar-action-btn"
         data-toolbar-action="import"
         data-ref="importButton"
+        aria-label="Import another bookmark file into the current library"
+        title="Import another bookmark file into the current library"
       >
-        Import File
+        <span class="icon-mask toolbar-action-icon toolbar-action-icon--import" aria-hidden="true"></span>
       </button>
     </div>
   `;

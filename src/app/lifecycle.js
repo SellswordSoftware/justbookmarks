@@ -12,6 +12,19 @@ const WINDOW_SIZE_PERSIST_DELAY_MS = 150;
 const TREE_STATE_PERSIST_DELAY_MS = 200;
 
 /**
+ * Allow the native context menu only when running from a local dev host.
+ *
+ * @returns {boolean}
+ */
+function shouldAllowNativeContextMenu() {
+  const { protocol, hostname } = window.location;
+  return (
+    (protocol === "http:" || protocol === "https:") &&
+    (hostname === "localhost" || hostname === "127.0.0.1")
+  );
+}
+
+/**
  * @param {{ cleanup: () => void }[]} cleanups
  * @returns {() => void}
  */
@@ -108,6 +121,11 @@ export function mountAppLifecycle(options) {
 
   const cleanup = cleanupCollector(
     listener(window, "resize", handleWindowResize),
+    listener(window, "contextmenu", (event) => {
+      if (!shouldAllowNativeContextMenu()) {
+        event.preventDefault();
+      }
+    }),
     listener(window, "beforeunload", () => {
       if (saveWindowSizeTimer) {
         clearTimeout(saveWindowSizeTimer);
