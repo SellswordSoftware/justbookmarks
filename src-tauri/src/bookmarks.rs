@@ -149,8 +149,9 @@ fn parse_dl_lines(lines: &[String], index: &mut usize) -> Result<Vec<Node>, Stri
             break;
         }
         if lower.starts_with("<dt><h3") {
-            let (attrs, name) = parse_tag(line, "h3")?;
-            *index += 1;
+            let (tag_block, next_index) = collect_tag_block(lines, *index, "h3")?;
+            let (attrs, name) = parse_tag(&tag_block, "h3")?;
+            *index = next_index;
             while *index < lines.len() && lines[*index].trim().is_empty() {
                 *index += 1;
             }
@@ -174,7 +175,8 @@ fn parse_dl_lines(lines: &[String], index: &mut usize) -> Result<Vec<Node>, Stri
             continue;
         }
         if lower.starts_with("<dt><a") {
-            let (attrs, title) = parse_tag(line, "a")?;
+            let (tag_block, next_index) = collect_tag_block(lines, *index, "a")?;
+            let (attrs, title) = parse_tag(&tag_block, "a")?;
             let mut bookmark = Node::bookmark(
                 generate_id(),
                 unescape_html(&title),
@@ -195,10 +197,29 @@ fn parse_dl_lines(lines: &[String], index: &mut usize) -> Result<Vec<Node>, Stri
                 b.meta = attrs.get("meta").cloned().unwrap_or_default();
             }
             nodes.push(bookmark);
+            *index = next_index;
+            continue;
         }
         *index += 1;
     }
     Ok(nodes)
+}
+
+fn collect_tag_block(lines: &[String], start_index: usize, tag: &str) -> Result<(String, usize), String> {
+    let close = format!("</{tag}>");
+    let mut block = String::new();
+    let mut index = start_index;
+    while index < lines.len() {
+        if !block.is_empty() {
+            block.push('\n');
+        }
+        block.push_str(lines[index].trim());
+        index += 1;
+        if block.to_ascii_lowercase().contains(&close) {
+            return Ok((block, index));
+        }
+    }
+    Err(format!("missing </{tag}>"))
 }
 
 fn parse_tag(line: &str, tag: &str) -> Result<(std::collections::HashMap<String, String>, String), String> {
@@ -842,6 +863,28 @@ mod tests {
         assert_eq!(reparsed.len(), 1);
         assert_eq!(reparsed[0].folder.as_ref().unwrap().name, "Folder");
         assert_eq!(reparsed[0].folder.as_ref().unwrap().children[0].bookmark.as_ref().unwrap().title, "Example");
+    }
+
+    #[test]
+    fn parses_multiline_bookmark_tag_with_meta() {
+        let html = r#"<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks</H1>
+<DL><p>
+    <DT><H3 ADD_DATE="1" LAST_MODIFIED="2">favorites bar!</H3>
+    <DL><p>
+        <DT><A HREF="https://radarr.hubspar.com" ADD_DATE="3" LAST_MODIFIED="4" META="Radarr is a thing
+
+And stuff">Login - Radarr</A>
+    </DL><p>
+</DL><p>"#;
+
+        let reparsed = parse_bookmarks_html(html).unwrap();
+        let folder = reparsed[0].folder.as_ref().unwrap();
+        let bookmark = folder.children[0].bookmark.as_ref().unwrap();
+        assert_eq!(bookmark.title, "Login - Radarr");
+        assert_eq!(bookmark.url, "https://radarr.hubspar.com");
+        assert_eq!(bookmark.meta, "Radarr is a thing\n\nAnd stuff");
     }
 
     #[test]
