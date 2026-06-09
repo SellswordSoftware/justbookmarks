@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.1-4]
+
+### Changed
+
+ - Github Action fixes
+ - Resolved issue with parser to inrease compatibility with differently formatted bookmark files
+
+ 
 ## [0.3.0] - Next
 
 ### Changed
